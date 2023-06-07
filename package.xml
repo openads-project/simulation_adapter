@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>carla_its_interface</name>
+  <name>carla_its_adapter</name>
   <version>1.0.0</version>
-  <description>This package contains the CarlaInterfaceNode that acts as an Converter to the FB-FI definitions and publishes necessary transforms.</description>
+  <description>This package contains the CarlaAdapterNode that acts as an Converter to the FB-FI definitions and publishes necessary transforms.</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -53,8 +53,12 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
 
   <!-- Common -->
+  <depend>carla_msgs</depend>
   <depend>derived_object_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>lanelet2_map_interface</depend>
+  <depend>lanelet2_map_server</depend>
+  <depend>lanelet2_map_server_interfaces</depend>
   <depend>perception_interfaces</depend>
   <depend>std_msgs</depend>
   <depend>tf2_perception_msgs</depend>
@@ -67,15 +71,7 @@
   <depend condition="$ROS_VERSION == 2">rclcpp</depend>
   <depend condition="$ROS_VERSION == 2">tf2_geometry_msgs</depend>
 
-
-  <!-- ROS1 -->
-  <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
-  <depend condition="$ROS_VERSION == 1">roscpp</depend>
-  <depend condition="$ROS_VERSION == 1">roslaunch</depend>
-  <exec_depend condition="$ROS_VERSION == 1">message_runtime</exec_depend>
-
   <export>
-    <build_type condition="$ROS_VERSION == 1">catkin</build_type>
     <build_type condition="$ROS_VERSION == 2">ament_cmake</build_type>
   </export>
 
