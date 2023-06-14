@@ -1,8 +1,9 @@
-stages:
-  - Build
+include:
+  - remote: 'https://raw.githubusercontent.com/ika-rwth-aachen/docker-ros/fix/gitlab-ci-run-image/.gitlab-ci/docker-ros.yml'
 
-ros2:
-  stage: Build
-  trigger:
-    include: docker/.gitlab-ci-ros2.yml
-    strategy: depend
+variables:
+  BASE_IMAGE: rwthika/ros2:rolling
+  COMMAND: ros2 launch carla_its_adapter carla_its_adapter.launch.py
+  TARGET: dev,run
+  PLATFORM: amd64
+  ENABLE_INDUSTRIAL_CI: 'true'
