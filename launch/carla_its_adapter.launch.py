@@ -17,7 +17,7 @@ def generate_launch_description():
     launch_ros.actions.Node(
       package='carla_its_adapter',
       executable='carla_its_adapter_node',
-      name='ItsAdapterNode',
+      name='carla_its_adapter',
       output='screen',
       emulate_tty=True,
       parameters=[

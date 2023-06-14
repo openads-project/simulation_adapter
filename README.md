@@ -1,6 +1,6 @@
 # carla_its_adapter
 
-This package contains the CarlaItsAdapterNode - a simple ROS Node that converts incoming messages from the [carla-ros-bridge](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/ros-bridge) and publishes some of the [fb-fi defined ros messages](https://gitlab.ika.rwth-aachen.de/fb-fi/definitions) for various its-applications. Moreover the node is capable to broadcast necessary tf's for different its-applications (e.g. carla_map->map).
+This package contains the CarlaItsAdapterNode - a simple ROS Node that converts incoming messages from the [carla-its-converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_its_converter) and publishes some of the [fb-fi defined ros messages](https://gitlab.ika.rwth-aachen.de/fb-fi/definitions) in map and base_link frame. Moreover the node is capable to call a service to load a lanelet-map.
 
 - [Nodes](#nodes)
   - [carla_its_adapter/CarlaItsAdapterNode](#carla_its_adaptercarlait_adapternode)
@@ -25,28 +25,22 @@ This package contains the CarlaItsAdapterNode - a simple ROS Node that converts 
 
 | Topic | Type | Description | 
 | --- | --- | --- |
-| `/carla/ego_vehicle/objects` | `dom::ObjectArray` | Objects in the carla environment |
-| `/carla/ego_vehicle/odometry` | `nam::Odometry` | Odometry of the ego vehicle |
+| `/carla/world_info` | `cm::CarlaWorldInfo` | World info of the CARLA environment |
+| `/carla_its_converter/object_list/carla_map` | `pi::ObjectList` | Objects in the carla environment in ITS format|
+| `/carla/ego_vehicle/odometry` | `nm::Odometry` | Odometry of the ego vehicle |
 
 #### Published Topics
 
 | Topic | Type | Description |
 | --- | --- | --- |
-| `/carla_its_adapter/objectList/carla_map` | `pin::ObjectList` | Object list in carla map frame |
-| `/carla_its_adapter/objectList/ego_vehicle` | `pin::ObjectList` | Object list in ego vehicle frame |
-| `/carla_its_adapter/objectList/map` | `pin::ObjectList` | Object list in map frame |
-| `/carla_its_adapter/objectList/base_link` | `pin::ObjectList` | Object list in base link frame |
+| `/carla_its_adapter/object_list/map` | `pi::ObjectList` | Object list in map frame |
+| `/carla_its_adapter/object_list/base_link` | `pi::ObjectList` | Object list in base link frame |
 
 #### Parameters
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| publish.carla_map | bool | Whether to publish object list in carla map frame or not. |
-| publish.ego_vehicle | bool | Whether to publish object list in ego vehicle frame or not. |
-| publish.map | bool | Whether to publish object list in map frame or not. |
-| publish.base_link | bool | Whether to publish object list in base link frame or not. |
-| fov_range | float | Maximum field of view range for objects in the base link frame. Only objects within the FOV will be published. |
-| center_to_baselink | float | Distance between center of the vehicle and its base link. |
+| ` `  |  |  |
 
 ## Usage of docker-ros Images
 
@@ -58,28 +52,23 @@ This package contains the CarlaItsAdapterNode - a simple ROS Node that converts 
 
 ### Default Command
 
-##### ROS1
-```bash
-roslaunch carla_its_adapter carla_its_adapter_ros1.launch
-```
 ##### ROS2
 ```bash
-ros2 launch carla_its_adapter carla_its_adapter_ros2.launch
+ros2 launch carla_its_adapter carla_its_adapter.launch.py
 ```
 
 ### Launch Files
 
 | Package | File | Path | Description |
 | --- | --- | --- | --- |
-| `carla_its_adapter` | `carla_its_adapter_ros1.launch` | `launch/` | Launches CarlaItsAdapterNode for ROS1. |
-| `carla_its_adapter` | `carla_its_adapter_ros2.launch` | `launch/` | Launches CarlaItsAdapterNode for ROS2. |
+| `carla_its_adapter` | `carla_its_adapter.launch.py` | `launch/` | Launches CarlaItsAdapterNode for ROS2. |
 
 
 ### Configuration Files
 
 | Package | File | Path | Description |
 | --- | --- | --- | --- |
-| `carla_its_adapter` | `carla_its_adapter_params.yaml` | `config/` | ROS parameters for the CarlaItsAdapterNode |
+| ` `  |  |  |
 
 ### Additional Remarks
 
