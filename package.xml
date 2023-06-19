@@ -56,7 +56,6 @@
   <depend>carla_msgs</depend>
   <depend>derived_object_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>lanelet2_map_interface</depend>
   <depend>lanelet2_map_server</depend>
   <depend>lanelet2_map_server_interfaces</depend>
   <depend>perception_interfaces</depend>
@@ -70,9 +69,5 @@
   <depend condition="$ROS_VERSION == 2">nav_msgs</depend>
   <depend condition="$ROS_VERSION == 2">rclcpp</depend>
   <depend condition="$ROS_VERSION == 2">tf2_geometry_msgs</depend>
-
-  <export>
-    <build_type condition="$ROS_VERSION == 2">ament_cmake</build_type>
-  </export>
 
 </package>

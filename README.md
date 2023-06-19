@@ -1,6 +1,6 @@
 # carla_its_adapter
 
-This package contains the CarlaItsAdapterNode - a simple ROS Node that converts incoming messages from the [carla-its-converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_its_converter) and publishes some of the [fb-fi defined ros messages](https://gitlab.ika.rwth-aachen.de/fb-fi/definitions) in map and base_link frame. Moreover the node is capable to call a service to load a lanelet-map.
+This package contains the CarlaItsAdapterNode - a simple ROS Node that converts incoming messages from the [carla-its-converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_its_converter) and publishes some of the [fb-fi defined ros messages](https://gitlab.ika.rwth-aachen.de/fb-fi/definitions) in map and base_link frame. Moreover the node is capable to call a service to load a lanelet-map by parsing the available OpenDRIVE map.
 
 - [Nodes](#nodes)
   - [carla_its_adapter/CarlaItsAdapterNode](#carla_its_adaptercarlait_adapternode)
@@ -40,7 +40,9 @@ This package contains the CarlaItsAdapterNode - a simple ROS Node that converts 
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| ` `  |  |  |
+| fov_range | float | Maximum field of view range for objects in the base link frame. Only objects within the FOV will be published. |
+| center_to_baselink | float | Distance between center of the vehicle and its base link. |
+
 
 ## Usage of docker-ros Images
 
@@ -52,7 +54,6 @@ This package contains the CarlaItsAdapterNode - a simple ROS Node that converts 
 
 ### Default Command
 
-##### ROS2
 ```bash
 ros2 launch carla_its_adapter carla_its_adapter.launch.py
 ```

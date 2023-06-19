@@ -1,9 +1,6 @@
 import launch
 import launch_ros.actions
 
-#TODO center_to_baselink_
-#TODO optional fov_range_ (ansonsten alles publishen)
-
 def generate_launch_description():
   carla_its_adapter_launch = launch.LaunchDescription([
     launch.actions.DeclareLaunchArgument(

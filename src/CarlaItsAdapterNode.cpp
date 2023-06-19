@@ -3,32 +3,34 @@
 
 namespace carla {
 
-ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
+ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {  
   tf2_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
-  
+  tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
+
+  // create client for lanelet2 map change
   client_ = this->create_client<lanelet2_map_server_interfaces::srv::ChangeMapParams>("/ll2_map_server/change_map_parameters");
 
   rclcpp::QoS qosLatching = rclcpp::QoS(rclcpp::KeepLast(1));
   qosLatching.transient_local();
   qosLatching.reliable();
 
+  // setup subscriber
   sub_world_info_ = this->create_subscription<cm::CarlaWorldInfo>("/carla/world_info", qosLatching, std::bind(&ItsAdapter::worldInfoCallback, this, std::placeholders::_1));
   sub_its_converter_ = this->create_subscription<pi::ObjectList>("/carla_its_converter/object_list/carla_map", 1, std::bind(&ItsAdapter::itsConverterCallback, this, std::placeholders::_1));
   sub_odometry_ = this->create_subscription<nm::Odometry>("/carla/ego_vehicle/odometry", 1, std::bind(&ItsAdapter::odometryCallback, this, std::placeholders::_1));
 
+  // setup publisher
   pub_objects_map_ = this->create_publisher<pi::ObjectList>("/carla_its_adapter/object_list/map", 1);
   pub_objects_base_link_ = this->create_publisher<pi::ObjectList>("/carla_its_adapter/object_list/base_link", 1);
 
-  tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
-
-  // Load Parameters and if not successful, return
+  // load Parameters and if not successful, return
   if(!loadParameters()) return;
 
   ROS_LOG_STREAM(INFO, "CarlaItsAdapter running...");  
 }
 
 bool ItsAdapter::loadParameters() {
-  // Load value parameters
+  // load value parameters
   try {
     this->declare_parameter("fov_range", rclcpp::ParameterType::PARAMETER_DOUBLE);
     fov_range_ = this->get_parameter("fov_range").as_double();
@@ -228,7 +230,7 @@ int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<carla::ItsAdapter>();
-  node->initializeMapInterface();
+  // node->initializeMapInterface();
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;

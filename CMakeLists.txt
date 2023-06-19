@@ -9,9 +9,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 # === ROS2 (AMENT) =============================================================
-# set compile definitions for ROS2
-add_compile_definitions(MODE_ROS2)
-
 # find dependencies
 find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
@@ -20,7 +17,6 @@ find_package(ament_cmake REQUIRED)
 find_package(carla_msgs REQUIRED)
 find_package(derived_object_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(lanelet2_map_interface REQUIRED)
 find_package(lanelet2_map_server REQUIRED)
 find_package(lanelet2_map_server_interfaces REQUIRED)
 find_package(nav_msgs REQUIRED)
@@ -43,7 +39,6 @@ ament_target_dependencies(${PROJECT_NAME}_node
   carla_msgs
   derived_object_msgs
   geometry_msgs
-  lanelet2_map_interface
   lanelet2_map_server
   lanelet2_map_server_interfaces
   nav_msgs
@@ -58,7 +53,6 @@ ament_export_dependencies(
   carla_msgs
   derived_object_msgs
   geometry_msgs
-  lanelet2_map_interface
   lanelet2_map_server
   lanelet2_map_server_interfaces
   nav_msgs
