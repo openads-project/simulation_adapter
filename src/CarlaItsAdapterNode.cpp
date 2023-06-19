@@ -191,7 +191,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
     // broadcast transformation between map and carla_map (always 0)
     tf2::Transform map_carla_map_tf;
     map_carla_map_tf.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
-    map_carla_map_tf.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
+    map_carla_map_tf.setRotation(tf2::Quaternion(1.0, 0.0, 0.0, 0.0));
 
     gm::TransformStamped map_carla_map;
     tf2::convert(map_carla_map.transform, map_carla_map_tf);
@@ -225,7 +225,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
     } catch (const tf2::TransformException& e) {
       tf2::Transform ego_vehicle_base_link_tf;
       ego_vehicle_base_link_tf.setOrigin(tf2::Vector3(center_to_baselink_, 0.0, 0.0));
-      ego_vehicle_base_link_tf.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
+      ego_vehicle_base_link_tf.setRotation(tf2::Quaternion(1.0, 0.0, 0.0, 0.0));
 
       gm::TransformStamped ego_vehicle_base_link;
       tf2::convert(ego_vehicle_base_link.transform, ego_vehicle_base_link_tf);
