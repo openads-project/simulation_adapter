@@ -15,7 +15,6 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <carla_msgs/msg/carla_world_info.hpp>
 #include <lanelet2_map_server_interfaces/srv/change_map_params.hpp>
-// #include <lanelet2_map_interface/lanelet2_map_interface.hpp>
 
 
 #define ROS_LOG_STREAM(level, ...) RCLCPP_##level##_STREAM(this->get_logger(), __VA_ARGS__)
@@ -38,14 +37,6 @@ class ItsAdapter : public rclcpp::Node {
   public:
     ItsAdapter();
 
-    // initialization of map-interface
-    // void initializeMapInterface()
-    // {
-    //   std::string map_server_name = "ll2_map_server";
-    //   // Important: shared_from_this() can not be called from within the constructor
-    //   ll2if_ = new LL2MapInterface(shared_from_this(), map_server_name);
-    // }
-
   private:
     bool loadParameters();
     void itsConverterCallback(const pi::ObjectList::ConstPtr &msg);
@@ -53,7 +44,6 @@ class ItsAdapter : public rclcpp::Node {
     void worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg);
 
     rclcpp::Client<lanelet2_map_server_interfaces::srv::ChangeMapParams>::SharedPtr client_;
-    // LL2MapInterface *ll2if_;
 
     std::unique_ptr<tf2_ros::Buffer> tf2_buffer_;
 

@@ -42,9 +42,8 @@ bool ItsAdapter::loadParameters() {
   this->declare_parameter("center_to_baselink", rclcpp::ParameterType::PARAMETER_DOUBLE);
   try {
     center_to_baselink_ = this->get_parameter("center_to_baselink").as_double();
-  // } catch (rclcpp::exceptions::InvalidParameterTypeException&) {
-  //   ROS_LOG_STREAM(INFO, "Parameter \'center_to_baselink\' is not set correctly");
-  // TODO ausprobieren mit keinem Double
+  } catch (rclcpp::exceptions::InvalidParameterTypeException&) {
+    ROS_LOG_STREAM(INFO, "Parameter \'center_to_baselink\' is not set correctly");
   } catch (rclcpp::exceptions::ParameterUninitializedException&) {
     ROS_LOG_STREAM(ERROR, "Parameter \'center_to_baselink\' is required");
     return false;
@@ -118,6 +117,11 @@ void ItsAdapter::itsConverterCallback(const pi::ObjectList::ConstPtr &msg){
   auto timeout = rclcpp::Duration::from_seconds(1.0);
 
   // transform the object list from carla_map to map frame
+  if(!tf2_buffer_->_frameExists("carla_map")){
+    ROS_LOG_STREAM(WARN, "Frame 'carla_map' does not exist");
+    return;
+  }
+
   pi::ObjectList msg_object_list_map;
   gm::TransformStamped carla_map_to_map_tf;
   try {
@@ -181,7 +185,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
   }
   catch(const tf2::TransformException& e)
   {
-    ROS_LOG_STREAM(WARN, "Transform between map and base_link not available");
+    ROS_LOG_STREAM(WARN, "Tranformation from 'map' to 'base_link' not available");
     static tf2_ros::StaticTransformBroadcaster static_br_tf_(this);
 
     // broadcast transformation between map and carla_map (always 0)
@@ -197,11 +201,28 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
 
     static_br_tf_.sendTransform(map_carla_map);
 
+    // check if transformation between carla_map and ego_vehicle is available
+    if(!tf2_buffer_->_frameExists("carla_map")){
+      ROS_LOG_STREAM(WARN, "Frame 'carla_map' does not exist");
+      return;
+    }
+
+    try
+    {
+      gm::TransformStamped carla_ego_vehicle;
+      carla_ego_vehicle = tf2_buffer_->lookupTransform("ego_vehicle", "carla_map", timezero);
+    }
+    catch(const tf2::TransformException& e)
+    {
+      ROS_LOG_STREAM(WARN, "Tranformation from 'carla_map' to 'ego_vehicle' not available");
+      return;
+    }
+
     // broadcast transformation between ego_vehicle and base_link if it does not exist
-    // try {
-    //   gm::TransformStamped base_link_map_transform;
-    //   transform = tf2_buffer_->lookupTransform("base_link", "map", timezero);   
-    // } catch {
+    try {
+      gm::TransformStamped base_link_ego_vehicle_transform;
+      base_link_ego_vehicle_transform = tf2_buffer_->lookupTransform("ego_vehicle", "base_link", timezero);   
+    } catch (const tf2::TransformException& e) {
       tf2::Transform ego_vehicle_base_link_tf;
       ego_vehicle_base_link_tf.setOrigin(tf2::Vector3(center_to_baselink_, 0.0, 0.0));
       ego_vehicle_base_link_tf.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
@@ -213,9 +234,9 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
       ego_vehicle_base_link.child_frame_id = "base_link";
 
       static_br_tf_.sendTransform(ego_vehicle_base_link);
-    // }
+    }
 
-    ROS_LOG_STREAM(INFO, "Published static transform between map and base_link");
+    ROS_LOG_STREAM(INFO, "Published static transform between map and base_link successfully");
   }
 
 }

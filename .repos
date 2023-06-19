@@ -15,7 +15,3 @@ repositories:
     type: git
     url: https://gitlab.ika.rwth-aachen.de/fb-fi/its-modules/localization/lanelet2_map_server
     version: main
-  # lanelet2_map_interface:
-  #     type: git
-  #     url: https://gitlab.ika.rwth-aachen.de/fb-fi/its-modules/localization/lanelet2_map_interface
-  #     version: main
