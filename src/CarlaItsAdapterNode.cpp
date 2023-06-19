@@ -35,13 +35,16 @@ bool ItsAdapter::loadParameters() {
     this->declare_parameter("fov_range", rclcpp::ParameterType::PARAMETER_DOUBLE);
     fov_range_ = this->get_parameter("fov_range").as_double();
   } catch (rclcpp::exceptions::InvalidParameterTypeException&) {
-    ROS_LOG_STREAM(INFO, "Parameter \'fov_range\' is not set");
+    ROS_LOG_STREAM(INFO, "Parameter \'fov_range\' is not set correctly");
   } catch (rclcpp::exceptions::ParameterUninitializedException&) {
     ROS_LOG_STREAM(INFO, "Parameter \'fov_range\' is not set");
   }
   this->declare_parameter("center_to_baselink", rclcpp::ParameterType::PARAMETER_DOUBLE);
   try {
     center_to_baselink_ = this->get_parameter("center_to_baselink").as_double();
+  // } catch (rclcpp::exceptions::InvalidParameterTypeException&) {
+  //   ROS_LOG_STREAM(INFO, "Parameter \'center_to_baselink\' is not set correctly");
+  // TODO ausprobieren mit keinem Double
   } catch (rclcpp::exceptions::ParameterUninitializedException&) {
     ROS_LOG_STREAM(ERROR, "Parameter \'center_to_baselink\' is required");
     return false;
@@ -51,6 +54,8 @@ bool ItsAdapter::loadParameters() {
 }
 
 void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
+  // get CARLA world info to set the correct map for the lanelet2 map server so that the maps and the origin of maps are equal
+
   // derive latitude and longitude from OpenDRIVE file
   std::string opendrive_string = msg->opendrive;
 
@@ -94,18 +99,19 @@ void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
   // this->set_parameter(rclcpp::Parameter("origin_lat", latValue));
   // this->set_parameter(rclcpp::Parameter("origin_lon", lonValue));
 
-  // lanelet service call
+  // lanelet service call to change map of lanelet2 map server
   auto request = std::make_shared<lanelet2_map_server_interfaces::srv::ChangeMapParams::Request>();
   request->map_filename = map_filenpath;
   request->map_frame_id = map_frame_id;
   request->origin_lat = std::stod(latValue);
   request->origin_lon = std::stod(lonValue);
 
-  // check if service is available
+  // check if service is available and send request
   if (!client_->wait_for_service(std::chrono::seconds(1))) {
     RCLCPP_WARN(rclcpp::get_logger("rclcpp"), "Failed to call service ChangeMapParams");
+  } else {
+    auto result = client_->async_send_request(request);
   }
-  auto result = client_->async_send_request(request);
 }
 
 void ItsAdapter::itsConverterCallback(const pi::ObjectList::ConstPtr &msg){
@@ -117,7 +123,7 @@ void ItsAdapter::itsConverterCallback(const pi::ObjectList::ConstPtr &msg){
   try {
     carla_map_to_map_tf = tf2_buffer_->lookupTransform("map", "carla_map", msg->header.stamp, timeout);
   } catch (tf2::TransformException& ex) {
-    ROS_LOG_STREAM(WARN, "Tranformation from 'carla_map' to 'map' is not available");
+    ROS_LOG_STREAM(WARN, "Tranformation from 'carla_map' to 'map' is not available. No transformed object list could be published.");
     return;
   }
   tf2::doTransform(*msg, msg_object_list_map, carla_map_to_map_tf);
@@ -191,31 +197,23 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
 
     static_br_tf_.sendTransform(map_carla_map);
 
-    // get transformation between carla_map and ego_vehicle
-    tf2::Transform carla_ego_vehicle_tf;
-    try
-    {
-      gm::TransformStamped carla_ego_vehicle;
-      carla_ego_vehicle = tf2_buffer_->lookupTransform("ego_vehicle", "carla_map", timezero);
-      tf2::convert(carla_ego_vehicle.transform, carla_ego_vehicle_tf);
-    }
-    catch(const tf2::TransformException& e)
-    {
-      return;
-    }
+    // broadcast transformation between ego_vehicle and base_link if it does not exist
+    // try {
+    //   gm::TransformStamped base_link_map_transform;
+    //   transform = tf2_buffer_->lookupTransform("base_link", "map", timezero);   
+    // } catch {
+      tf2::Transform ego_vehicle_base_link_tf;
+      ego_vehicle_base_link_tf.setOrigin(tf2::Vector3(center_to_baselink_, 0.0, 0.0));
+      ego_vehicle_base_link_tf.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
 
-    // broadcast transformation between ego_vehicle and base_link
-    tf2::Transform ego_vehicle_base_link_tf;
-    ego_vehicle_base_link_tf.setOrigin(tf2::Vector3(1.0, 0.0, 0.0)); //TODO center_to_baselink_
-    ego_vehicle_base_link_tf.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
+      gm::TransformStamped ego_vehicle_base_link;
+      tf2::convert(ego_vehicle_base_link.transform, ego_vehicle_base_link_tf);
+      ego_vehicle_base_link.header.stamp = this->get_clock()->now();
+      ego_vehicle_base_link.header.frame_id = "ego_vehicle";
+      ego_vehicle_base_link.child_frame_id = "base_link";
 
-    gm::TransformStamped ego_vehicle_base_link;
-    tf2::convert(ego_vehicle_base_link.transform, ego_vehicle_base_link_tf);
-    ego_vehicle_base_link.header.stamp = this->get_clock()->now();
-    ego_vehicle_base_link.header.frame_id = "ego_vehicle";
-    ego_vehicle_base_link.child_frame_id = "base_link";
-
-    static_br_tf_.sendTransform(ego_vehicle_base_link);
+      static_br_tf_.sendTransform(ego_vehicle_base_link);
+    // }
 
     ROS_LOG_STREAM(INFO, "Published static transform between map and base_link");
   }
