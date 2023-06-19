@@ -33,7 +33,7 @@ This package contains the CarlaItsAdapterNode - a simple ROS Node that converts 
 
 | Topic | Type | Description |
 | --- | --- | --- |
-| `/carla_its_adapter/object_list/map` | `pi::ObjectList` | Object list in map frame |
+| `/carla_its_adapter/object_list/map` | `perception_interfaces::ObjectList` | Object list in map frame |
 | `/carla_its_adapter/object_list/base_link` | `pi::ObjectList` | Object list in base link frame |
 
 #### Parameters

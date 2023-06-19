@@ -20,8 +20,8 @@ ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
   sub_odometry_ = this->create_subscription<nm::Odometry>("/carla/ego_vehicle/odometry", 1, std::bind(&ItsAdapter::odometryCallback, this, std::placeholders::_1));
 
   // setup publisher
-  pub_objects_map_ = this->create_publisher<pi::ObjectList>("/carla_its_adapter/object_list/map", 1);
-  pub_objects_base_link_ = this->create_publisher<pi::ObjectList>("/carla_its_adapter/object_list/base_link", 1);
+  pub_objects_map_ = this->create_publisher<pi::ObjectList>("~/object_list/map", 1);
+  pub_objects_base_link_ = this->create_publisher<pi::ObjectList>("~/object_list/base_link", 1);
 
   // load Parameters and if not successful, return
   if(!loadParameters()) return;
@@ -66,7 +66,7 @@ void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
       size_t latValueEnd = opendrive_string.find(" ", latValueStart);
       latValue = opendrive_string.substr(latValueStart, latValueEnd - latValueStart);
   } else {
-    ROS_LOG_STREAM(ERROR, "OpenDRIVE-Map is not valid. Latitude is needed.");
+    ROS_LOG_STREAM(ERROR, "OpenDRIVE-Header is invalid. Latitude is required.");
     return;
   }
 

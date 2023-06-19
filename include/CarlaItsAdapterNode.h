@@ -38,7 +38,7 @@ class ItsAdapter : public rclcpp::Node {
   public:
     ItsAdapter();
 
-    // Initialization of Map-Interface
+    // initialization of map-interface
     // void initializeMapInterface()
     // {
     //   std::string map_server_name = "ll2_map_server";
@@ -47,27 +47,27 @@ class ItsAdapter : public rclcpp::Node {
     // }
 
   private:
-    void worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg);
+    bool loadParameters();
     void itsConverterCallback(const pi::ObjectList::ConstPtr &msg);
     void odometryCallback(const nm::Odometry::ConstPtr &msg);
-    bool loadParameters();
+    void worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg);
 
     rclcpp::Client<lanelet2_map_server_interfaces::srv::ChangeMapParams>::SharedPtr client_;
     // LL2MapInterface *ll2if_;
 
     std::unique_ptr<tf2_ros::Buffer> tf2_buffer_;
 
+    Subscriber<pi::ObjectList> sub_its_converter_;
     Subscriber<nm::Odometry> sub_odometry_;
     Subscriber<cm::CarlaWorldInfo> sub_world_info_;
-    Subscriber<pi::ObjectList> sub_its_converter_;
 
-    Publisher<pi::ObjectList> pub_objects_map_;
     Publisher<pi::ObjectList> pub_objects_base_link_;
+    Publisher<pi::ObjectList> pub_objects_map_;
 
     std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
 
-    double fov_range_;
     double center_to_baselink_;
+    double fov_range_;
 };
 
 }  // end of namespace carla
