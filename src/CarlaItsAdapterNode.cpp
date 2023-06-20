@@ -179,64 +179,87 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
 
   try
   {
-    // check if transformation is already defined
+    // check if final transformation is already defined
     gm::TransformStamped transform;
     transform = tf2_buffer_->lookupTransform("base_link", "map", timezero);
   }
   catch(const tf2::TransformException& e)
   {
-    ROS_LOG_STREAM(WARN, "Tranformation from 'map' to 'base_link' not available");
+    ROS_LOG_STREAM(WARN, "Tranformation from 'map' to 'base_link' is not available");
     static tf2_ros::StaticTransformBroadcaster static_br_tf_(this);
 
-    // broadcast transformation between map and carla_map (always 0)
-    tf2::Transform map_carla_map_tf;
-    map_carla_map_tf.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
-    map_carla_map_tf.setRotation(tf2::Quaternion(1.0, 0.0, 0.0, 0.0));
-
-    gm::TransformStamped map_carla_map;
-    tf2::convert(map_carla_map.transform, map_carla_map_tf);
-    map_carla_map.header.stamp = this->get_clock()->now();
-    map_carla_map.header.frame_id = "carla_map";
-    map_carla_map.child_frame_id = "map";
-
-    static_br_tf_.sendTransform(map_carla_map);
-
-    // check if transformation between carla_map and ego_vehicle is available
-    if(!tf2_buffer_->_frameExists("carla_map")){
-      ROS_LOG_STREAM(WARN, "Frame 'carla_map' does not exist");
-      return;
-    }
-
+    // step 1: carla_map -> map
     try
     {
-      gm::TransformStamped carla_ego_vehicle;
-      carla_ego_vehicle = tf2_buffer_->lookupTransform("ego_vehicle", "carla_map", timezero);
+      tf2_buffer_->lookupTransform("carla_map", "map", timezero);
     }
     catch(const tf2::TransformException& e)
     {
-      ROS_LOG_STREAM(WARN, "Tranformation from 'carla_map' to 'ego_vehicle' not available");
+      ROS_LOG_STREAM(WARN, "\tTranformation from 'map' to 'carla_map' is not available");
+    
+      // transformation between map and carla_map is always 0
+      gm::TransformStamped map_carla_map_transform;
+      map_carla_map_transform.header.stamp = this->get_clock()->now();
+      map_carla_map_transform.header.frame_id = "map";
+      map_carla_map_transform.child_frame_id = "carla_map";
+
+      map_carla_map_transform.transform.translation.x = 0.0;
+      map_carla_map_transform.transform.translation.y = 0.0;
+      map_carla_map_transform.transform.translation.z = 0.0;
+
+      tf2::Quaternion q;
+      q.setRPY(0, 0, 0);
+      map_carla_map_transform.transform.rotation.x = q.x();
+      map_carla_map_transform.transform.rotation.y = q.y();
+      map_carla_map_transform.transform.rotation.z = q.z();
+      map_carla_map_transform.transform.rotation.w = q.w();
+
+      static_br_tf_.sendTransform(map_carla_map_transform);
+      ROS_LOG_STREAM(WARN, "\tTranformation from 'map' to 'base_link' was published");
+    }
+
+    // step 2: ego_vehicle -> carla_map
+    try
+    {
+      tf2_buffer_->lookupTransform("ego_vehicle", "carla_map", timezero);
+    }
+    catch(const tf2::TransformException& e)
+    {
+      ROS_LOG_STREAM(WARN, "\tTranformation from 'carla_map' to 'ego_vehicle' not available");
+      ROS_LOG_STREAM(WARN, "\tSkipped ...");
       return;
     }
 
-    // broadcast transformation between ego_vehicle and base_link if it does not exist
+    // step 3: base_link -> ego_vehicle
     try {
-      gm::TransformStamped base_link_ego_vehicle_transform;
-      base_link_ego_vehicle_transform = tf2_buffer_->lookupTransform("ego_vehicle", "base_link", timezero);   
-    } catch (const tf2::TransformException& e) {
-      tf2::Transform ego_vehicle_base_link_tf;
-      ego_vehicle_base_link_tf.setOrigin(tf2::Vector3(center_to_baselink_, 0.0, 0.0));
-      ego_vehicle_base_link_tf.setRotation(tf2::Quaternion(1.0, 0.0, 0.0, 0.0));
-
+      tf2_buffer_->lookupTransform("base_link", "ego_vehicle", timezero);   
+    } 
+    catch (const tf2::TransformException& e) 
+    {
+      ROS_LOG_STREAM(WARN, "\tTranformation from 'ego_vehicle' to 'base_link' is not available");
+      
+      // transformation between map and carla_map is always 0
       gm::TransformStamped ego_vehicle_base_link;
-      tf2::convert(ego_vehicle_base_link.transform, ego_vehicle_base_link_tf);
       ego_vehicle_base_link.header.stamp = this->get_clock()->now();
       ego_vehicle_base_link.header.frame_id = "ego_vehicle";
       ego_vehicle_base_link.child_frame_id = "base_link";
 
+      ego_vehicle_base_link.transform.translation.x = center_to_baselink_;
+      ego_vehicle_base_link.transform.translation.y = 0.0;
+      ego_vehicle_base_link.transform.translation.z = 0.0;
+
+      tf2::Quaternion q;
+      q.setRPY(0, 0, 0);
+      ego_vehicle_base_link.transform.rotation.x = q.x();
+      ego_vehicle_base_link.transform.rotation.y = q.y();
+      ego_vehicle_base_link.transform.rotation.z = q.z();
+      ego_vehicle_base_link.transform.rotation.w = q.w();
+
       static_br_tf_.sendTransform(ego_vehicle_base_link);
+      ROS_LOG_STREAM(WARN, "\tTranformation from 'map' to 'base_link' was published");
     }
 
-    ROS_LOG_STREAM(INFO, "Published static transform between map and base_link successfully");
+    ROS_LOG_STREAM(INFO, "Static transformation from 'base_link' to 'map' was published");
   }
 
 }
