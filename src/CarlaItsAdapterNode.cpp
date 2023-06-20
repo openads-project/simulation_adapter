@@ -26,7 +26,7 @@ ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
   // load Parameters and if not successful, return
   if(!loadParameters()) return;
 
-  ROS_LOG_STREAM(INFO, "CarlaItsAdapter running...");  
+  ROS_LOG_STREAM(INFO, "carla_its_adapter running...");  
 }
 
 bool ItsAdapter::loadParameters() {
@@ -221,7 +221,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
       map_carla_map_transform.transform.rotation.w = q.w();
 
       static_br_tf_.sendTransform(map_carla_map_transform);
-      ROS_LOG_STREAM(WARN, "\tTranformation from 'map' to 'carla_map' was published");
+      ROS_LOG_STREAM(INFO, "\tTranformation from 'map' to 'carla_map' was published");
     }
 
     // step 2: ego_vehicle -> carla_map
@@ -262,7 +262,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
       ego_vehicle_base_link.transform.rotation.w = q.w();
 
       static_br_tf_.sendTransform(ego_vehicle_base_link);
-      ROS_LOG_STREAM(WARN, "\tTranformation from 'ego_vehicle' to 'base_link' was published");
+      ROS_LOG_STREAM(INFO, "\tTranformation from 'ego_vehicle' to 'base_link' was published");
     }
 
     ROS_LOG_STREAM(INFO, "Static transformation from 'base_link' to 'map' is now available");
