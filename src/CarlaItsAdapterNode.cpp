@@ -181,7 +181,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
   {
     // check if final transformation is already defined
     gm::TransformStamped transform;
-    transform = tf2_buffer_->lookupTransform("base_link", "map", timezero);
+    transform = tf2_buffer_->lookupTransform("map", "base_link", timezero);
   }
   catch(const tf2::TransformException& e)
   {
@@ -191,7 +191,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
     // step 1: carla_map -> map
     try
     {
-      tf2_buffer_->lookupTransform("carla_map", "map", timezero);
+      tf2_buffer_->lookupTransform("map", "carla_map", timezero);
     }
     catch(const tf2::TransformException& e)
     {
@@ -215,13 +215,13 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
       map_carla_map_transform.transform.rotation.w = q.w();
 
       static_br_tf_.sendTransform(map_carla_map_transform);
-      ROS_LOG_STREAM(WARN, "\tTranformation from 'map' to 'base_link' was published");
+      ROS_LOG_STREAM(WARN, "\tTranformation from 'map' to 'carla_map' was published");
     }
 
     // step 2: ego_vehicle -> carla_map
     try
     {
-      tf2_buffer_->lookupTransform("ego_vehicle", "carla_map", timezero);
+      tf2_buffer_->lookupTransform("carla_map", "ego_vehicle", timezero);
     }
     catch(const tf2::TransformException& e)
     {
@@ -232,7 +232,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
 
     // step 3: base_link -> ego_vehicle
     try {
-      tf2_buffer_->lookupTransform("base_link", "ego_vehicle", timezero);   
+      tf2_buffer_->lookupTransform("ego_vehicle", "base_link", timezero);   
     } 
     catch (const tf2::TransformException& e) 
     {
@@ -256,7 +256,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
       ego_vehicle_base_link.transform.rotation.w = q.w();
 
       static_br_tf_.sendTransform(ego_vehicle_base_link);
-      ROS_LOG_STREAM(WARN, "\tTranformation from 'map' to 'base_link' was published");
+      ROS_LOG_STREAM(WARN, "\tTranformation from 'ego_vehicle' to 'base_link' was published");
     }
 
     ROS_LOG_STREAM(INFO, "Static transformation from 'base_link' to 'map' was published");
