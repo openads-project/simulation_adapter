@@ -173,7 +173,13 @@ void ItsAdapter::itsConverterCallback(const pi::ObjectList::ConstPtr &msg){
 void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg) 
 {
   // set up a transformation link between map and base_link
-  // map -> carla_map -> ego_vehicle -> base_link
+
+  // carla_map -----static-----> map 
+  //   |
+  //   dynamic
+  //   |
+  //   v
+  // ego_vehicle ---static---> base_link
 
   auto timezero = tf2::TimePointZero;
 
@@ -181,7 +187,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
   {
     // check if final transformation is already defined
     gm::TransformStamped transform;
-    transform = tf2_buffer_->lookupTransform("map", "base_link", timezero);
+    transform = tf2_buffer_->lookupTransform("base_link", "map", timezero);
   }
   catch(const tf2::TransformException& e)
   {
@@ -200,8 +206,8 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
       // transformation between map and carla_map is always 0
       gm::TransformStamped map_carla_map_transform;
       map_carla_map_transform.header.stamp = this->get_clock()->now();
-      map_carla_map_transform.header.frame_id = "map";
-      map_carla_map_transform.child_frame_id = "carla_map";
+      map_carla_map_transform.header.frame_id = "carla_map";
+      map_carla_map_transform.child_frame_id = "map";
 
       map_carla_map_transform.transform.translation.x = 0.0;
       map_carla_map_transform.transform.translation.y = 0.0;
@@ -221,7 +227,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
     // step 2: ego_vehicle -> carla_map
     try
     {
-      tf2_buffer_->lookupTransform("carla_map", "ego_vehicle", timezero);
+      tf2_buffer_->lookupTransform("ego_vehicle", "carla_map", timezero);
     }
     catch(const tf2::TransformException& e)
     {
@@ -232,7 +238,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
 
     // step 3: base_link -> ego_vehicle
     try {
-      tf2_buffer_->lookupTransform("ego_vehicle", "base_link", timezero);   
+      tf2_buffer_->lookupTransform("base_link", "ego_vehicle", timezero);   
     } 
     catch (const tf2::TransformException& e) 
     {
@@ -259,7 +265,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
       ROS_LOG_STREAM(WARN, "\tTranformation from 'ego_vehicle' to 'base_link' was published");
     }
 
-    ROS_LOG_STREAM(INFO, "Static transformation from 'base_link' to 'map' was published");
+    ROS_LOG_STREAM(INFO, "Static transformation from 'base_link' to 'map' is now available");
   }
 
 }
