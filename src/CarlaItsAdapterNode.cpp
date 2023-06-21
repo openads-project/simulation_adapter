@@ -76,7 +76,7 @@ void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
       size_t lonValueEnd = opendrive_string.find(" ", lonValueStart);
       lonValue = opendrive_string.substr(lonValueStart, lonValueEnd - lonValueStart);
   } else {
-    ROS_LOG_STREAM(ERROR, "OpenDRIVE-Map is not valid. Longitude is needed.");
+    ROS_LOG_STREAM(ERROR, "OpenDRIVE-Header is invalid. Longitude is required.");
     return;
   }
 
