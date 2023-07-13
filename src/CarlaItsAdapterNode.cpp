@@ -16,7 +16,7 @@ ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
 
   // setup subscriber
   sub_world_info_ = this->create_subscription<cm::CarlaWorldInfo>("/carla/world_info", qosLatching, std::bind(&ItsAdapter::worldInfoCallback, this, std::placeholders::_1));
-  sub_its_converter_ = this->create_subscription<pi::ObjectList>("/carla_its_converter/object_list/carla_map", 1, std::bind(&ItsAdapter::itsConverterCallback, this, std::placeholders::_1));
+  sub_its_converter_ = this->create_subscription<pi::ObjectList>("/carla_its_converter/ego_vehicle/objects", 1, std::bind(&ItsAdapter::itsConverterCallback, this, std::placeholders::_1));
   sub_odometry_ = this->create_subscription<nm::Odometry>("/carla/ego_vehicle/odometry", 1, std::bind(&ItsAdapter::odometryCallback, this, std::placeholders::_1));
 
   // setup publisher
