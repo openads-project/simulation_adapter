@@ -5,7 +5,7 @@ def generate_launch_description():
   carla_its_adapter_launch = launch.LaunchDescription([
     launch.actions.DeclareLaunchArgument(
         name='center_to_baselink',
-        default_value='1.2645'
+        default_value='-1.2645'
     ),
     launch.actions.DeclareLaunchArgument(
         name='fov_range',
