@@ -16,12 +16,14 @@ ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
 
   // setup subscriber
   sub_world_info_ = this->create_subscription<cm::CarlaWorldInfo>("/carla/world_info", qosLatching, std::bind(&ItsAdapter::worldInfoCallback, this, std::placeholders::_1));
-  sub_its_converter_ = this->create_subscription<pi::ObjectList>("/carla_its_converter/objects", 1, std::bind(&ItsAdapter::itsConverterCallback, this, std::placeholders::_1));
+  sub_its_converter_objects_ = this->create_subscription<pi::ObjectList>("/carla_its_converter/objects", 1, std::bind(&ItsAdapter::itsConverterObjectsCallback, this, std::placeholders::_1));
+  sub_its_converter_egoData_ = this->create_subscription<pi::EgoData>("/carla_its_converter/ego_vehicle/ego_data", 1, std::bind(&ItsAdapter::itsConverterEgoCallback, this, std::placeholders::_1));
   sub_odometry_ = this->create_subscription<nm::Odometry>("/carla/ego_vehicle/odometry", 1, std::bind(&ItsAdapter::odometryCallback, this, std::placeholders::_1));
 
   // setup publisher
   pub_objects_map_ = this->create_publisher<pi::ObjectList>("~/object_list/map", 1);
   pub_objects_base_link_ = this->create_publisher<pi::ObjectList>("~/object_list/base_link", 1);
+  pub_ego_data_base_link_ = this->create_publisher<pi::EgoData>("~/ego_data/base_link", 1);
 
   // load Parameters and if not successful, return
   if(!loadParameters()) return;
@@ -113,7 +115,30 @@ void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
   }
 }
 
-void ItsAdapter::itsConverterCallback(const pi::ObjectList::ConstPtr &msg){
+void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
+  auto timeout = rclcpp::Duration::from_seconds(1.0);
+
+  // transform the EgoData from ego_vehicle (geometric center) to base_link
+  pi::EgoData ego_data_base_link = *msg;
+  gm::TransformStamped carla_map_to_base_link_tf;
+  try {
+    carla_map_to_base_link_tf = tf2_buffer_->lookupTransform("base_link", "carla_map", msg->header.stamp, timeout);
+  } catch (tf2::TransformException& ex) {
+    ROS_LOG_STREAM(WARN, "Tranformation from 'carla_map' to 'base_link' is not available. No transformed object list could be published.");
+    return;
+  }
+  ego_data_base_link.header.frame_id = "map";
+  
+  oa::setX(ego_data_base_link, carla_map_to_base_link_tf.transform.translation.x);
+  oa::setY(ego_data_base_link, carla_map_to_base_link_tf.transform.translation.y);
+  oa::setZ(ego_data_base_link, carla_map_to_base_link_tf.transform.translation.z);
+  ego_data_base_link.state.reference_point.value = pi::ObjectReferencePoint::REAR_AXLE_GROUND;
+
+  // publish object list in map frame
+  pub_ego_data_base_link_->publish(ego_data_base_link);
+}
+
+void ItsAdapter::itsConverterObjectsCallback(const pi::ObjectList::ConstPtr &msg){
   auto timeout = rclcpp::Duration::from_seconds(1.0);
 
   // transform the object list from carla_map to map frame
