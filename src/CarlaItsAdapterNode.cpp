@@ -189,6 +189,7 @@ void ItsAdapter::itsConverterObjectsCallback(const pi::ObjectList::ConstPtr &msg
         if (std::abs(std::abs(x)-std::abs(center_to_baselink_)) > 0.1 || std::abs(y) > 0.1) {
           msg_object_list_base_link_filtered.objects.push_back(msg_object_list_base_link.objects[i]);
         }
+      }
     }
   } else {
     // Filter Ego-Object from List
