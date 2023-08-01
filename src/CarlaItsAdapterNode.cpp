@@ -133,6 +133,7 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
   oa::setY(ego_data_base_link, carla_map_to_base_link_tf.transform.translation.y);
   oa::setZ(ego_data_base_link, carla_map_to_base_link_tf.transform.translation.z);
   ego_data_base_link.state.reference_point.value = pi::ObjectReferencePoint::REAR_AXLE_GROUND;
+  ego_data_base_link.state.reference_point.translation_to_geometric_center.x = -center_to_baselink_;
 
   // publish object list in map frame
   pub_ego_data_base_link_->publish(ego_data_base_link);
