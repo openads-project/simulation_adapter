@@ -184,11 +184,13 @@ void ItsAdapter::itsConverterObjectsCallback(const pi::ObjectList::ConstPtr &msg
       double x = oa::getX(msg_object_list_base_link.objects[i]);
       double y = oa::getY(msg_object_list_base_link.objects[i]);
       if (sqrt(x*x + y*y) <= fov_range_) {
-        msg_object_list_base_link_filtered.objects.push_back(msg_object_list_base_link.objects[i]);
-      }
+        // Filter Ego-Object from List
+        if (std::abs(std::abs(x)-std::abs(center_to_baselink_)) > 0.1 || std::abs(y) > 0.1) {
+          msg_object_list_base_link_filtered.objects.push_back(msg_object_list_base_link.objects[i]);
+        }
     }
   } else {
-    // publish objectList in base_link frame
+    // Filter Ego-Object from List
     msg_object_list_base_link_filtered.objects = msg_object_list_base_link.objects;
     for (size_t i = 0; i < msg_object_list_base_link.objects.size(); i++) {
       double x = oa::getX(msg_object_list_base_link.objects[i]);
