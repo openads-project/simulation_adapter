@@ -191,20 +191,22 @@ void ItsAdapter::itsConverterObjectsCallback(const pi::ObjectList::ConstPtr &msg
         }
       }
     }
+    // publish filtered objectList in base_link frame
+    pub_objects_base_link_->publish(msg_object_list_base_link_filtered);
   } else {
     // Filter Ego-Object from List
-    msg_object_list_base_link_filtered.objects = msg_object_list_base_link.objects;
     for (size_t i = 0; i < msg_object_list_base_link.objects.size(); i++) {
       double x = oa::getX(msg_object_list_base_link.objects[i]);
       double y = oa::getY(msg_object_list_base_link.objects[i]);
       if (std::abs(std::abs(x)-std::abs(center_to_baselink_)) < 0.1 && std::abs(y) < 0.1) {
-        msg_object_list_base_link_filtered.objects.erase(msg_object_list_base_link.objects.begin() + i);
+        msg_object_list_base_link.objects.erase(msg_object_list_base_link.objects.begin() + i);
         break;
       }
     }
+    // publish objectList in base_link frame
+    pub_objects_base_link_->publish(msg_object_list_base_link);
   }
-  // publish filtered objectList in base_link frame
-  pub_objects_base_link_->publish(msg_object_list_base_link_filtered);
+
 }
 
 void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg) 
