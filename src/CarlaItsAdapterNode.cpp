@@ -55,18 +55,18 @@ bool ItsAdapter::loadParameters() {
   try {
     ego_veh_filter_thr_x_ = this->get_parameter("ego_veh_filter_thr_x").as_double();
   } catch (rclcpp::exceptions::InvalidParameterTypeException&) {
-    ROS_LOG_STREAM(INFO, "Parameter \'ego_veh_filter_thr_x\' is not set correctly, using default value:", ego_veh_filter_thr_x_);
+    ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_x\' is not set correctly, using default value: "+std::to_string(ego_veh_filter_thr_x_));
   } catch (rclcpp::exceptions::ParameterUninitializedException&) {
-    ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_x\' is not set, using default value:", ego_veh_filter_thr_x_);
+    ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_x\' is not set, using default value: "+std::to_string(ego_veh_filter_thr_x_));
   }
 
   this->declare_parameter("ego_veh_filter_thr_y", rclcpp::ParameterType::PARAMETER_DOUBLE);
   try {
     ego_veh_filter_thr_y_ = this->get_parameter("ego_veh_filter_thr_y").as_double();
   } catch (rclcpp::exceptions::InvalidParameterTypeException&) {
-    ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_y\' is not set correctly, using default value:", ego_veh_filter_thr_y_);
+    ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_y\' is not set correctly, using default value: "+std::to_string(ego_veh_filter_thr_y_));
   } catch (rclcpp::exceptions::ParameterUninitializedException&) {
-    ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_y\' is not set, using default value:", ego_veh_filter_thr_y_);
+    ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_y\' is not set, using default value: "+std::to_string(ego_veh_filter_thr_y_));
   }
 
   return true;
