@@ -23,7 +23,7 @@ ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
   // setup publisher
   pub_objects_map_ = this->create_publisher<pi::ObjectList>("~/object_list/map", 1);
   pub_objects_base_link_ = this->create_publisher<pi::ObjectList>("~/object_list/base_link", 1);
-  pub_ego_data_base_link_ = this->create_publisher<pi::EgoData>("~/ego_data/base_link", 1);
+  pub_ego_data_base_link_ = this->create_publisher<pi::EgoData>("~/ego_data", 1);
 
   // load Parameters and if not successful, return
   if(!loadParameters()) return;
