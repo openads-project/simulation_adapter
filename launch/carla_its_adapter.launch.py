@@ -23,6 +23,9 @@ def generate_launch_description():
         },
         {
           'fov_range': launch.substitutions.LaunchConfiguration('fov_range')
+        },
+        {
+           'use_sim_time': True
         }
       ]
     )
