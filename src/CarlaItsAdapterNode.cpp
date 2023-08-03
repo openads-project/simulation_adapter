@@ -51,6 +51,24 @@ bool ItsAdapter::loadParameters() {
     return false;
   }
 
+  this->declare_parameter("ego_veh_filter_thr_x", rclcpp::ParameterType::PARAMETER_DOUBLE);
+  try {
+    ego_veh_filter_thr_x_ = this->get_parameter("ego_veh_filter_thr_x").as_double();
+  } catch (rclcpp::exceptions::InvalidParameterTypeException&) {
+    ROS_LOG_STREAM(INFO, "Parameter \'ego_veh_filter_thr_x\' is not set correctly, using default value:", ego_veh_filter_thr_x_);
+  } catch (rclcpp::exceptions::ParameterUninitializedException&) {
+    ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_x\' is not set, using default value:", ego_veh_filter_thr_x_);
+  }
+
+  this->declare_parameter("ego_veh_filter_thr_y", rclcpp::ParameterType::PARAMETER_DOUBLE);
+  try {
+    ego_veh_filter_thr_y_ = this->get_parameter("ego_veh_filter_thr_y").as_double();
+  } catch (rclcpp::exceptions::InvalidParameterTypeException&) {
+    ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_y\' is not set correctly, using default value:", ego_veh_filter_thr_y_);
+  } catch (rclcpp::exceptions::ParameterUninitializedException&) {
+    ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_y\' is not set, using default value:", ego_veh_filter_thr_y_);
+  }
+
   return true;
 }
 
@@ -186,7 +204,7 @@ void ItsAdapter::itsConverterObjectsCallback(const pi::ObjectList::ConstPtr &msg
       double y = oa::getY(msg_object_list_base_link.objects[i]);
       if (sqrt(x*x + y*y) <= fov_range_) {
         // Filter Ego-Object from List
-        if (std::abs(std::abs(x)-std::abs(center_to_baselink_)) > 0.1 || std::abs(y) > 0.1) {
+        if (std::abs(std::abs(x)-std::abs(center_to_baselink_)) > ego_veh_filter_thr_x_ || std::abs(y) > ego_veh_filter_thr_y_) {
           msg_object_list_base_link_filtered.objects.push_back(msg_object_list_base_link.objects[i]);
         }
       }
@@ -198,7 +216,7 @@ void ItsAdapter::itsConverterObjectsCallback(const pi::ObjectList::ConstPtr &msg
     for (size_t i = 0; i < msg_object_list_base_link.objects.size(); i++) {
       double x = oa::getX(msg_object_list_base_link.objects[i]);
       double y = oa::getY(msg_object_list_base_link.objects[i]);
-      if (std::abs(std::abs(x)-std::abs(center_to_baselink_)) < 0.1 && std::abs(y) < 0.1) {
+      if (std::abs(std::abs(x)-std::abs(center_to_baselink_)) < ego_veh_filter_thr_x_ && std::abs(y) < ego_veh_filter_thr_y_) {
         msg_object_list_base_link.objects.erase(msg_object_list_base_link.objects.begin() + i);
         break;
       }

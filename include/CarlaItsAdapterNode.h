@@ -61,6 +61,9 @@ class ItsAdapter : public rclcpp::Node {
 
     double center_to_baselink_;
     double fov_range_;
+
+    double ego_veh_filter_thr_x_=0.5;
+    double ego_veh_filter_thr_y_=0.5;
 };
 
 }  // end of namespace carla
