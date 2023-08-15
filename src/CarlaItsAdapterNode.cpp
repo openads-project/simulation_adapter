@@ -140,7 +140,7 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
   pi::EgoData ego_data_base_link = *msg;
   gm::TransformStamped carla_map_to_base_link_tf;
   try {
-    carla_map_to_base_link_tf = tf2_buffer_->lookupTransform("base_link", msg->header.frame_id, msg->header.stamp, timeout);
+    carla_map_to_base_link_tf = tf2_buffer_->lookupTransform(msg->header.frame_id, "base_link", msg->header.stamp, timeout);
   } catch (tf2::TransformException& ex) {
     ROS_LOG_STREAM(WARN, "Tranformation from '"+msg->header.frame_id+"' to 'base_link' is not available. No transformed object list could be published.");
     return;
@@ -152,6 +152,7 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
   oa::setZ(ego_data_base_link, carla_map_to_base_link_tf.transform.translation.z);
   ego_data_base_link.state.reference_point.value = pi::ObjectReferencePoint::REAR_AXLE_GROUND;
   ego_data_base_link.state.reference_point.translation_to_geometric_center.x = -center_to_baselink_;
+  ego_data_base_link.state.reference_point.translation_to_geometric_center.z = msg->height/2.0;
 
   // publish object list in map frame
   pub_ego_data_base_link_->publish(ego_data_base_link);
