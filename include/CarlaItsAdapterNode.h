@@ -39,7 +39,8 @@ class ItsAdapter : public rclcpp::Node {
 
   private:
     bool loadParameters();
-    void itsConverterCallback(const pi::ObjectList::ConstPtr &msg);
+    void itsConverterObjectsCallback(const pi::ObjectList::ConstPtr &msg);
+    void itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg);
     void odometryCallback(const nm::Odometry::ConstPtr &msg);
     void worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg);
 
@@ -47,17 +48,22 @@ class ItsAdapter : public rclcpp::Node {
 
     std::unique_ptr<tf2_ros::Buffer> tf2_buffer_;
 
-    Subscriber<pi::ObjectList> sub_its_converter_;
+    Subscriber<pi::ObjectList> sub_its_converter_objects_;
+    Subscriber<pi::EgoData> sub_its_converter_egoData_;
     Subscriber<nm::Odometry> sub_odometry_;
     Subscriber<cm::CarlaWorldInfo> sub_world_info_;
 
     Publisher<pi::ObjectList> pub_objects_base_link_;
     Publisher<pi::ObjectList> pub_objects_map_;
+    Publisher<pi::EgoData> pub_ego_data_base_link_;
 
     std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
 
     double center_to_baselink_;
     double fov_range_;
+
+    double ego_veh_filter_thr_x_=0.5;
+    double ego_veh_filter_thr_y_=0.5;
 };
 
 }  // end of namespace carla

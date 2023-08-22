@@ -16,12 +16,14 @@ ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
 
   // setup subscriber
   sub_world_info_ = this->create_subscription<cm::CarlaWorldInfo>("/carla/world_info", qosLatching, std::bind(&ItsAdapter::worldInfoCallback, this, std::placeholders::_1));
-  sub_its_converter_ = this->create_subscription<pi::ObjectList>("/carla_its_converter/objects", 1, std::bind(&ItsAdapter::itsConverterCallback, this, std::placeholders::_1));
+  sub_its_converter_objects_ = this->create_subscription<pi::ObjectList>("/carla_its_converter/ego_vehicle/objects", 1, std::bind(&ItsAdapter::itsConverterObjectsCallback, this, std::placeholders::_1));
+  sub_its_converter_egoData_ = this->create_subscription<pi::EgoData>("/carla_its_converter/ego_vehicle/ego_data", 1, std::bind(&ItsAdapter::itsConverterEgoCallback, this, std::placeholders::_1));
   sub_odometry_ = this->create_subscription<nm::Odometry>("/carla/ego_vehicle/odometry", 1, std::bind(&ItsAdapter::odometryCallback, this, std::placeholders::_1));
 
   // setup publisher
   pub_objects_map_ = this->create_publisher<pi::ObjectList>("~/object_list/map", 1);
   pub_objects_base_link_ = this->create_publisher<pi::ObjectList>("~/object_list/base_link", 1);
+  pub_ego_data_base_link_ = this->create_publisher<pi::EgoData>("~/ego_data", 1);
 
   // load Parameters and if not successful, return
   if(!loadParameters()) return;
@@ -47,6 +49,24 @@ bool ItsAdapter::loadParameters() {
   } catch (rclcpp::exceptions::ParameterUninitializedException&) {
     ROS_LOG_STREAM(ERROR, "Parameter \'center_to_baselink\' is required");
     return false;
+  }
+
+  this->declare_parameter("ego_veh_filter_thr_x", rclcpp::ParameterType::PARAMETER_DOUBLE);
+  try {
+    ego_veh_filter_thr_x_ = this->get_parameter("ego_veh_filter_thr_x").as_double();
+  } catch (rclcpp::exceptions::InvalidParameterTypeException&) {
+    ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_x\' is not set correctly, using default value: "+std::to_string(ego_veh_filter_thr_x_));
+  } catch (rclcpp::exceptions::ParameterUninitializedException&) {
+    ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_x\' is not set, using default value: "+std::to_string(ego_veh_filter_thr_x_));
+  }
+
+  this->declare_parameter("ego_veh_filter_thr_y", rclcpp::ParameterType::PARAMETER_DOUBLE);
+  try {
+    ego_veh_filter_thr_y_ = this->get_parameter("ego_veh_filter_thr_y").as_double();
+  } catch (rclcpp::exceptions::InvalidParameterTypeException&) {
+    ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_y\' is not set correctly, using default value: "+std::to_string(ego_veh_filter_thr_y_));
+  } catch (rclcpp::exceptions::ParameterUninitializedException&) {
+    ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_y\' is not set, using default value: "+std::to_string(ego_veh_filter_thr_y_));
   }
 
   return true;
@@ -113,19 +133,44 @@ void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
   }
 }
 
-void ItsAdapter::itsConverterCallback(const pi::ObjectList::ConstPtr &msg){
+void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
   auto timeout = rclcpp::Duration::from_seconds(1.0);
 
-  // transform the object list from carla_map to map frame
-  if(!tf2_buffer_->_frameExists("carla_map")){
-    ROS_LOG_STREAM(WARN, "Frame 'carla_map' does not exist");
+  // transform the EgoData from ego_vehicle (geometric center) to base_link
+  pi::EgoData ego_data_base_link = *msg;
+  gm::TransformStamped carla_map_to_base_link_tf;
+  try {
+    carla_map_to_base_link_tf = tf2_buffer_->lookupTransform(msg->header.frame_id, "base_link", msg->header.stamp, timeout);
+  } catch (tf2::TransformException& ex) {
+    ROS_LOG_STREAM(WARN, "Tranformation from '"+msg->header.frame_id+"' to 'base_link' is not available. No transformed object list could be published.");
+    return;
+  }
+  ego_data_base_link.header.frame_id = "map";
+  
+  oa::setX(ego_data_base_link, carla_map_to_base_link_tf.transform.translation.x);
+  oa::setY(ego_data_base_link, carla_map_to_base_link_tf.transform.translation.y);
+  oa::setZ(ego_data_base_link, carla_map_to_base_link_tf.transform.translation.z);
+  ego_data_base_link.state.reference_point.value = pi::ObjectReferencePoint::REAR_AXLE_GROUND;
+  ego_data_base_link.state.reference_point.translation_to_geometric_center.x = -center_to_baselink_;
+  ego_data_base_link.state.reference_point.translation_to_geometric_center.z = msg->height/2.0;
+
+  // publish object list in map frame
+  pub_ego_data_base_link_->publish(ego_data_base_link);
+}
+
+void ItsAdapter::itsConverterObjectsCallback(const pi::ObjectList::ConstPtr &msg){
+  auto timeout = rclcpp::Duration::from_seconds(1.0);
+
+  // transform the object list to map frame
+  if(!tf2_buffer_->_frameExists(msg->header.frame_id)){
+    ROS_LOG_STREAM(WARN, "Frame '"+msg->header.frame_id+"' does not exist");
     return;
   }
 
   pi::ObjectList msg_object_list_map;
   gm::TransformStamped carla_map_to_map_tf;
   try {
-    carla_map_to_map_tf = tf2_buffer_->lookupTransform("map", "carla_map", msg->header.stamp, timeout);
+    carla_map_to_map_tf = tf2_buffer_->lookupTransform("map", msg->header.frame_id, msg->header.stamp, timeout);
   } catch (tf2::TransformException& ex) {
     ROS_LOG_STREAM(WARN, "Tranformation from 'carla_map' to 'map' is not available. No transformed object list could be published.");
     return;
@@ -135,7 +180,7 @@ void ItsAdapter::itsConverterCallback(const pi::ObjectList::ConstPtr &msg){
   // publish object list in map frame
   pub_objects_map_->publish(msg_object_list_map);
   
-  // transform the object list from carla_map to base_link frame
+  // transform the object list to base_link frame
   if(!tf2_buffer_->_frameExists("base_link")){
     ROS_LOG_STREAM(WARN, "Frame 'base_link' does not exist");
     return;
@@ -144,30 +189,43 @@ void ItsAdapter::itsConverterCallback(const pi::ObjectList::ConstPtr &msg){
   pi::ObjectList msg_object_list_base_link;
   gm::TransformStamped carla_map_to_base_link_tf;
   try {
-    carla_map_to_base_link_tf = tf2_buffer_->lookupTransform("base_link", "carla_map", msg->header.stamp, timeout);
+    carla_map_to_base_link_tf = tf2_buffer_->lookupTransform("base_link", msg->header.frame_id, msg->header.stamp, timeout);
   } catch (tf2::TransformException& ex) {
-    ROS_LOG_STREAM(WARN, "Tranformation from 'carla_map' to 'base_link' is not available");
+    ROS_LOG_STREAM(WARN, "Tranformation from '"+msg->header.frame_id+"' to 'base_link' is not available");
     return;
   }
   tf2::doTransform(*msg, msg_object_list_base_link, carla_map_to_base_link_tf);
 
+  pi::ObjectList msg_object_list_base_link_filtered;
+  msg_object_list_base_link_filtered.header = msg_object_list_base_link.header;
   if(fov_range_){
     // Only consider objects that are within the fov_range
-    pi::ObjectList msg_object_list_base_link_filtered;
-    msg_object_list_base_link_filtered.header = msg_object_list_base_link.header;
     for (size_t i = 0; i < msg_object_list_base_link.objects.size(); i++) {
       double x = oa::getX(msg_object_list_base_link.objects[i]);
       double y = oa::getY(msg_object_list_base_link.objects[i]);
       if (sqrt(x*x + y*y) <= fov_range_) {
-        msg_object_list_base_link_filtered.objects.push_back(msg_object_list_base_link.objects[i]);
+        // Filter Ego-Object from List
+        if (std::abs(std::abs(x)-std::abs(center_to_baselink_)) > ego_veh_filter_thr_x_ || std::abs(y) > ego_veh_filter_thr_y_) {
+          msg_object_list_base_link_filtered.objects.push_back(msg_object_list_base_link.objects[i]);
+        }
       }
     }
-    // publish objectList in base_link frame within fov_range
+    // publish filtered objectList in base_link frame
     pub_objects_base_link_->publish(msg_object_list_base_link_filtered);
   } else {
+    // Filter Ego-Object from List
+    for (size_t i = 0; i < msg_object_list_base_link.objects.size(); i++) {
+      double x = oa::getX(msg_object_list_base_link.objects[i]);
+      double y = oa::getY(msg_object_list_base_link.objects[i]);
+      if (std::abs(std::abs(x)-std::abs(center_to_baselink_)) < ego_veh_filter_thr_x_ && std::abs(y) < ego_veh_filter_thr_y_) {
+        msg_object_list_base_link.objects.erase(msg_object_list_base_link.objects.begin() + i);
+        break;
+      }
+    }
     // publish objectList in base_link frame
     pub_objects_base_link_->publish(msg_object_list_base_link);
   }
+
 }
 
 void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg) 
