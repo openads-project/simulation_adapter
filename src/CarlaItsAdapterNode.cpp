@@ -122,8 +122,14 @@ void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
   auto request = std::make_shared<lanelet2_map_server_interfaces::srv::ChangeMapParams::Request>();
   request->map_filename = map_filenpath;
   request->map_frame_id = map_frame_id;
-  request->origin_lat = std::stod(latValue);
-  request->origin_lon = std::stod(lonValue);
+  double origin_lat = std::stod(latValue);
+  double origin_lon = std::stod(lonValue);
+  request->origin_lat = origin_lat;
+  request->origin_lon = origin_lon;
+
+  int utm_zone = std::ceil((origin_lat + 180.0)/6);
+  int center_lon = 6 * utm_zone - 183;
+  grid_convergence_ = atan(tan(origin_lon * M_PI / 180.0 - (double)center_lon * M_PI / 180.0) * sin(origin_lat * M_PI / 180.0));
 
   // check if service is available and send request
   if (!client_->wait_for_service(std::chrono::seconds(1))) {
@@ -272,7 +278,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
       map_carla_map_transform.transform.translation.z = 0.0;
 
       tf2::Quaternion q;
-      q.setRPY(0, 0, 0);
+      q.setRPY(0, 0, -grid_convergence_);
       map_carla_map_transform.transform.rotation.x = q.x();
       map_carla_map_transform.transform.rotation.y = q.y();
       map_carla_map_transform.transform.rotation.z = q.z();
