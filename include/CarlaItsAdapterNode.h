@@ -64,6 +64,8 @@ class ItsAdapter : public rclcpp::Node {
 
     double ego_veh_filter_thr_x_=0.5;
     double ego_veh_filter_thr_y_=0.5;
+
+    double grid_convergence_=0.0;
 };
 
 }  // end of namespace carla

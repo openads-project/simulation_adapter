@@ -122,8 +122,14 @@ void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
   auto request = std::make_shared<lanelet2_map_server_interfaces::srv::ChangeMapParams::Request>();
   request->map_filename = map_filenpath;
   request->map_frame_id = map_frame_id;
-  request->origin_lat = std::stod(latValue);
-  request->origin_lon = std::stod(lonValue);
+  double origin_lat = std::stod(latValue);
+  double origin_lon = std::stod(lonValue);
+  request->origin_lat = origin_lat;
+  request->origin_lon = origin_lon;
+
+  int utm_zone = std::ceil((origin_lon + 180.0)/6);
+  double center_lon = 6.0 * (double)utm_zone - 183.0;
+  grid_convergence_ = atan(tan(origin_lon * M_PI / 180.0 - center_lon * M_PI / 180.0) * sin(origin_lat * M_PI / 180.0));
 
   // check if service is available and send request
   if (!client_->wait_for_service(std::chrono::seconds(1))) {
@@ -138,18 +144,28 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
 
   // transform the EgoData from ego_vehicle (geometric center) to base_link
   pi::EgoData ego_data_base_link = *msg;
-  gm::TransformStamped carla_map_to_base_link_tf;
+  gm::TransformStamped carla_map_to_base_link_tf, base_link_in_map_tf, base_link_to_map_link_transform;
   try {
     carla_map_to_base_link_tf = tf2_buffer_->lookupTransform(msg->header.frame_id, "base_link", msg->header.stamp, timeout);
   } catch (tf2::TransformException& ex) {
-    ROS_LOG_STREAM(WARN, "Tranformation from '"+msg->header.frame_id+"' to 'base_link' is not available. No transformed object list could be published.");
+    ROS_LOG_STREAM(WARN, "Tranformation from '"+msg->header.frame_id+"' to 'base_link' is not available. No transformed ego-data could be published.");
     return;
   }
-  ego_data_base_link.header.frame_id = "map";
+
+  // Transform from carla_map to map in case the frames are not equal
+  try {
+    base_link_to_map_link_transform = tf2_buffer_->lookupTransform("map", carla_map_to_base_link_tf.header.frame_id, carla_map_to_base_link_tf.header.stamp, timeout);
+  } catch (tf2::TransformException& ex) {
+    ROS_LOG_STREAM(WARN, "Tranformation from '"+carla_map_to_base_link_tf.header.frame_id+"' to 'map' is not available. No transformed ego-data could be published.");
+    return;
+  }
+  tf2::doTransform(carla_map_to_base_link_tf, base_link_in_map_tf, base_link_to_map_link_transform);
+  ego_data_base_link.header.frame_id = base_link_in_map_tf.header.frame_id;
   
-  oa::setX(ego_data_base_link, carla_map_to_base_link_tf.transform.translation.x);
-  oa::setY(ego_data_base_link, carla_map_to_base_link_tf.transform.translation.y);
-  oa::setZ(ego_data_base_link, carla_map_to_base_link_tf.transform.translation.z);
+  oa::setX(ego_data_base_link, base_link_in_map_tf.transform.translation.x);
+  oa::setY(ego_data_base_link, base_link_in_map_tf.transform.translation.y);
+  oa::setZ(ego_data_base_link, base_link_in_map_tf.transform.translation.z);
+  oa::setOrientation(ego_data_base_link, base_link_in_map_tf.transform.rotation);
   ego_data_base_link.state.reference_point.value = pi::ObjectReferencePoint::REAR_AXLE_GROUND;
   ego_data_base_link.state.reference_point.translation_to_geometric_center.x = -center_to_baselink_;
   ego_data_base_link.state.reference_point.translation_to_geometric_center.z = msg->height/2.0;
@@ -261,7 +277,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
     {
       ROS_LOG_STREAM(WARN, "\tTranformation from 'map' to 'carla_map' is not available");
     
-      // transformation between map and carla_map is always 0
+      // translation between map and carla_map is always 0
       gm::TransformStamped map_carla_map_transform;
       map_carla_map_transform.header.stamp = this->get_clock()->now();
       map_carla_map_transform.header.frame_id = "carla_map";
@@ -272,7 +288,8 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
       map_carla_map_transform.transform.translation.z = 0.0;
 
       tf2::Quaternion q;
-      q.setRPY(0, 0, 0);
+      // add yaw offset due to grid-convergence
+      q.setRPY(0, 0, -grid_convergence_);
       map_carla_map_transform.transform.rotation.x = q.x();
       map_carla_map_transform.transform.rotation.y = q.y();
       map_carla_map_transform.transform.rotation.z = q.z();
