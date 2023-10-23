@@ -4,6 +4,10 @@ import launch_ros.actions
 def generate_launch_description():
   carla_its_adapter_launch = launch.LaunchDescription([
     launch.actions.DeclareLaunchArgument(
+      name='use_sim_time',
+      default_value='True',
+    ),
+    launch.actions.DeclareLaunchArgument(
         name='center_to_baselink',
         default_value='-1.2645'
     ),
@@ -19,13 +23,13 @@ def generate_launch_description():
       emulate_tty=True,
       parameters=[
         {
+          'use_sim_time': launch.substitutions.LaunchConfiguration('use_sim_time')
+        },
+        {
           'center_to_baselink': launch.substitutions.LaunchConfiguration('center_to_baselink')
         },
         {
           'fov_range': launch.substitutions.LaunchConfiguration('fov_range')
-        },
-        {
-           'use_sim_time': True
         }
       ]
     )
