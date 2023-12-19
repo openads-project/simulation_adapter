@@ -20,7 +20,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(lanelet2_map_server REQUIRED)
 find_package(lanelet2_map_server_interfaces REQUIRED)
 find_package(nav_msgs REQUIRED)
-find_package(perception_interfaces REQUIRED)
+find_package(perception_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
@@ -42,7 +42,7 @@ ament_target_dependencies(${PROJECT_NAME}_node
   lanelet2_map_server
   lanelet2_map_server_interfaces
   nav_msgs
-  perception_interfaces
+  perception_msgs
   rclcpp
   tf2
   tf2_geometry_msgs
@@ -56,7 +56,7 @@ ament_export_dependencies(
   lanelet2_map_server
   lanelet2_map_server_interfaces
   nav_msgs
-  perception_interfaces
+  perception_msgs
   rclcpp
   tf2
   tf2_geometry_msgs

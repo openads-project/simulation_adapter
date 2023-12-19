@@ -26,15 +26,15 @@ This package contains the CarlaItsAdapterNode - a simple ROS 2 Node that convert
 | Topic | Type | Description | 
 | --- | --- | --- |
 | `/carla/world_info` | `carla_msgs::msg::CarlaWorldInfo` | World info of the CARLA environment |
-| `/carla_its_converter/object_list/carla_map` | `perception_interfaces::ObjectList` | Objects in the carla environment in ITS format|
+| `/carla_its_converter/object_list/carla_map` | `perception_msgs::ObjectList` | Objects in the carla environment in ITS format|
 | `/carla/ego_vehicle/odometry` | `nav_msgs::msg::Odometry` | Odometry of the ego vehicle |
 
 #### Published Topics
 
 | Topic | Type | Description |
 | --- | --- | --- |
-| `/carla_its_adapter/object_list/map` | `perception_interfaces::ObjectList` | Object list in map frame |
-| `/carla_its_adapter/object_list/base_link` | `perception_interfaces::ObjectList` | Object list in base link frame |
+| `/carla_its_adapter/object_list/map` | `perception_msgs::ObjectList` | Object list in map frame |
+| `/carla_its_adapter/object_list/base_link` | `perception_msgs::ObjectList` | Object list in base link frame |
 
 #### Parameters
 
