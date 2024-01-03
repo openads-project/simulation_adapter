@@ -20,10 +20,10 @@
 #define ROS_LOG_STREAM(level, ...) RCLCPP_##level##_STREAM(this->get_logger(), __VA_ARGS__)
 
 namespace nm = nav_msgs::msg;
-namespace pi = perception_interfaces::msg;
+namespace pi = perception_msgs::msg;
 namespace gm = geometry_msgs::msg;
 namespace cm = carla_msgs::msg;
-namespace oa = perception_interfaces::object_access;
+namespace oa = perception_msgs::object_access;
 
 template<typename T>
 using Subscriber = typename rclcpp::Subscription<T>::SharedPtr;
