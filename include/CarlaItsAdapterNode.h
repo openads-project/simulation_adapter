@@ -55,7 +55,7 @@ class ItsAdapter : public rclcpp::Node {
 
     Publisher<pi::ObjectList> pub_objects_base_link_;
     Publisher<pi::ObjectList> pub_objects_map_;
-    Publisher<pi::EgoData> pub_ego_data_base_link_;
+    Publisher<pi::EgoData> pub_ego_data_;
 
     std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
 
@@ -64,7 +64,6 @@ class ItsAdapter : public rclcpp::Node {
 
     double ego_veh_filter_thr_x_=0.5;
     double ego_veh_filter_thr_y_=0.5;
-
     double grid_convergence_=0.0;
 };
 
