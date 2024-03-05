@@ -23,7 +23,7 @@ ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
   // setup publisher
   pub_objects_map_ = this->create_publisher<pi::ObjectList>("~/object_list/map", 1);
   pub_objects_base_link_ = this->create_publisher<pi::ObjectList>("~/object_list/base_link", 1);
-  pub_ego_data_base_link_ = this->create_publisher<pi::EgoData>("~/ego_data", 1);
+  pub_ego_data_ = this->create_publisher<pi::EgoData>("~/ego_data", 1);
 
   // load Parameters and if not successful, return
   if(!loadParameters()) return;
@@ -129,7 +129,6 @@ void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
 
   int utm_zone = std::ceil((origin_lon + 180.0)/6);
   double center_lon = 6.0 * (double)utm_zone - 183.0;
-  grid_convergence_ = atan(tan(origin_lon * M_PI / 180.0 - center_lon * M_PI / 180.0) * sin(origin_lat * M_PI / 180.0));
 
   // check if service is available and send request
   if (!client_->wait_for_service(std::chrono::seconds(1))) {
@@ -140,38 +139,43 @@ void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
 }
 
 void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
+
   auto timeout = rclcpp::Duration::from_seconds(1.0);
+  gm::TransformStamped base_link_to_carla_map_tf, base_link_in_map_tf, carla_map_to_map_tf;
 
-  // transform the EgoData from ego_vehicle (geometric center) to base_link
-  pi::EgoData ego_data_base_link = *msg;
-  gm::TransformStamped carla_map_to_base_link_tf, base_link_in_map_tf, base_link_to_map_link_transform;
+  // transform ego_data (input header is carla_map, output header is map) 
+  pi::EgoData ego_data = *msg;
+
+  // get transform from carla_map to base_link
   try {
-    carla_map_to_base_link_tf = tf2_buffer_->lookupTransform(msg->header.frame_id, "base_link", msg->header.stamp, timeout);
+    base_link_to_carla_map_tf = tf2_buffer_->lookupTransform(msg->header.frame_id, "base_link", msg->header.stamp, timeout);
   } catch (tf2::TransformException& ex) {
-    ROS_LOG_STREAM(WARN, "Tranformation from '"+msg->header.frame_id+"' to 'base_link' is not available. No transformed ego-data could be published.");
+    ROS_LOG_STREAM(WARN, "Tranformation from 'base_link' to '"+msg->header.frame_id+"' is not available. No transformed ego-data could be published.");
     return;
   }
 
-  // Transform from carla_map to map in case the frames are not equal
+  // get transform from map to carla_map
   try {
-    base_link_to_map_link_transform = tf2_buffer_->lookupTransform("map", carla_map_to_base_link_tf.header.frame_id, carla_map_to_base_link_tf.header.stamp, timeout);
+    carla_map_to_map_tf = tf2_buffer_->lookupTransform("map", base_link_to_carla_map_tf.header.frame_id, base_link_to_carla_map_tf.header.stamp, timeout);
   } catch (tf2::TransformException& ex) {
-    ROS_LOG_STREAM(WARN, "Tranformation from '"+carla_map_to_base_link_tf.header.frame_id+"' to 'map' is not available. No transformed ego-data could be published.");
+    ROS_LOG_STREAM(WARN, "Tranformation from 'map' to '"+base_link_to_carla_map_tf.header.frame_id+"' is not available. No transformed ego-data could be published.");
     return;
   }
-  tf2::doTransform(carla_map_to_base_link_tf, base_link_in_map_tf, base_link_to_map_link_transform);
-  ego_data_base_link.header.frame_id = base_link_in_map_tf.header.frame_id;
+
+  // combine transforms to get transform from map to base_link
+  tf2::doTransform(base_link_to_carla_map_tf, base_link_in_map_tf, carla_map_to_map_tf);
+  ego_data.header.frame_id = base_link_in_map_tf.header.frame_id;
   
-  oa::setX(ego_data_base_link, base_link_in_map_tf.transform.translation.x);
-  oa::setY(ego_data_base_link, base_link_in_map_tf.transform.translation.y);
-  oa::setZ(ego_data_base_link, base_link_in_map_tf.transform.translation.z);
-  oa::setOrientation(ego_data_base_link, base_link_in_map_tf.transform.rotation);
-  ego_data_base_link.state.reference_point.value = pi::ObjectReferencePoint::REAR_AXLE_GROUND;
-  ego_data_base_link.state.reference_point.translation_to_geometric_center.x = -center_to_baselink_;
-  ego_data_base_link.state.reference_point.translation_to_geometric_center.z = msg->height/2.0;
+  oa::setX(ego_data, base_link_in_map_tf.transform.translation.x);
+  oa::setY(ego_data, base_link_in_map_tf.transform.translation.y);
+  oa::setZ(ego_data, base_link_in_map_tf.transform.translation.z);
+  oa::setOrientation(ego_data, base_link_in_map_tf.transform.rotation);
+  ego_data.state.reference_point.value = pi::ObjectReferencePoint::REAR_AXLE_GROUND;
+  ego_data.state.reference_point.translation_to_geometric_center.x = -center_to_baselink_;
+  ego_data.state.reference_point.translation_to_geometric_center.z = msg->height/2.0;
 
   // publish object list in map frame
-  pub_ego_data_base_link_->publish(ego_data_base_link);
+  pub_ego_data_->publish(ego_data);
 }
 
 void ItsAdapter::itsConverterObjectsCallback(const pi::ObjectList::ConstPtr &msg){
@@ -184,6 +188,7 @@ void ItsAdapter::itsConverterObjectsCallback(const pi::ObjectList::ConstPtr &msg
   }
 
   pi::ObjectList msg_object_list_map;
+
   gm::TransformStamped carla_map_to_map_tf;
   try {
     carla_map_to_map_tf = tf2_buffer_->lookupTransform("map", msg->header.frame_id, msg->header.stamp, timeout);
@@ -215,7 +220,7 @@ void ItsAdapter::itsConverterObjectsCallback(const pi::ObjectList::ConstPtr &msg
   pi::ObjectList msg_object_list_base_link_filtered;
   msg_object_list_base_link_filtered.header = msg_object_list_base_link.header;
   if(fov_range_){
-    // Only consider objects that are within the fov_range
+    // only consider objects that are within the fov_range
     for (size_t i = 0; i < msg_object_list_base_link.objects.size(); i++) {
       double x = oa::getX(msg_object_list_base_link.objects[i]);
       double y = oa::getY(msg_object_list_base_link.objects[i]);
@@ -248,9 +253,14 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
 {
   // set up a transformation link between map and base_link
 
-  // carla_map -----static-----> map 
+  //       /     utm_<zone>  \
+  //      /                   \
+  //     / static              \ static (published by lanelet2_map_server)
+  //    /  (published by        \
+  //   /     ros-bridge)         \        
+  // carla_map                   map 
   //   |
-  //   dynamic
+  //   dynamic (published by ros-bridge)
   //   |
   //   v
   // ego_vehicle ---static---> base_link
@@ -259,7 +269,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
 
   try
   {
-    // check if final transformation is already defined
+    // check if desired transformation is already defined
     gm::TransformStamped transform;
     transform = tf2_buffer_->lookupTransform("base_link", "map", timezero);
   }
@@ -275,31 +285,12 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
     }
     catch(const tf2::TransformException& e)
     {
-      ROS_LOG_STREAM(WARN, "\tTranformation from 'map' to 'carla_map' is not available");
-    
-      // translation between map and carla_map is always 0
-      gm::TransformStamped map_carla_map_transform;
-      map_carla_map_transform.header.stamp = this->get_clock()->now();
-      map_carla_map_transform.header.frame_id = "carla_map";
-      map_carla_map_transform.child_frame_id = "map";
-
-      map_carla_map_transform.transform.translation.x = 0.0;
-      map_carla_map_transform.transform.translation.y = 0.0;
-      map_carla_map_transform.transform.translation.z = 0.0;
-
-      tf2::Quaternion q;
-      // add yaw offset due to grid-convergence
-      q.setRPY(0, 0, -grid_convergence_);
-      map_carla_map_transform.transform.rotation.x = q.x();
-      map_carla_map_transform.transform.rotation.y = q.y();
-      map_carla_map_transform.transform.rotation.z = q.z();
-      map_carla_map_transform.transform.rotation.w = q.w();
-
-      static_br_tf_.sendTransform(map_carla_map_transform);
-      ROS_LOG_STREAM(INFO, "\tTranformation from 'map' to 'carla_map' was published");
+      ROS_LOG_STREAM(WARN, "Tranformation from 'carla_map' to 'map' is not available. Should be provided using a shared parent utm frame.");
+      ROS_LOG_STREAM(WARN, "\tSkipped ...");
+      return;
     }
 
-    // step 2: ego_vehicle -> carla_map
+    // step 2: carla_map -> ego_vehicle
     try
     {
       tf2_buffer_->lookupTransform("ego_vehicle", "carla_map", timezero);
@@ -311,7 +302,7 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
       return;
     }
 
-    // step 3: base_link -> ego_vehicle
+    // step 3: ego_vehicle -> base_link
     try {
       tf2_buffer_->lookupTransform("base_link", "ego_vehicle", timezero);   
     } 
