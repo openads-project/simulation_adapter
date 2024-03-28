@@ -146,25 +146,26 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
   // transform ego_data (input header is carla_map, output header is map) 
   pi::EgoData ego_data = *msg;
 
-  // get transform from carla_map to base_link
+  // get transform from base_link to carla_map
   try {
     base_link_to_carla_map_tf = tf2_buffer_->lookupTransform(msg->header.frame_id, "base_link", msg->header.stamp, timeout);
   } catch (tf2::TransformException& ex) {
-    ROS_LOG_STREAM(WARN, "Tranformation from 'base_link' to '"+msg->header.frame_id+"' is not available. No transformed ego-data could be published.");
+    ROS_LOG_STREAM(WARN, "Transformation from 'base_link' to '" + msg->header.frame_id + "' is not available. No transformed ego-data could be published.");
     return;
   }
 
-  // get transform from map to carla_map
+  // get transform from carla_map to map
   try {
     carla_map_to_map_tf = tf2_buffer_->lookupTransform("map", base_link_to_carla_map_tf.header.frame_id, base_link_to_carla_map_tf.header.stamp, timeout);
   } catch (tf2::TransformException& ex) {
-    ROS_LOG_STREAM(WARN, "Tranformation from 'map' to '"+base_link_to_carla_map_tf.header.frame_id+"' is not available. No transformed ego-data could be published.");
+    ROS_LOG_STREAM(WARN, "Transformation from 'map' to '" + base_link_to_carla_map_tf.header.frame_id + "' is not available. No transformed ego-data could be published.");
     return;
   }
 
-  // combine transforms to get transform from map to base_link
+  // combine transforms to get transform from base_link to map
   tf2::doTransform(base_link_to_carla_map_tf, base_link_in_map_tf, carla_map_to_map_tf);
   ego_data.header.frame_id = base_link_in_map_tf.header.frame_id;
+  ego_data.state.header.frame_id = base_link_in_map_tf.header.frame_id;
   
   oa::setX(ego_data, base_link_in_map_tf.transform.translation.x);
   oa::setY(ego_data, base_link_in_map_tf.transform.translation.y);
