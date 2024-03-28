@@ -141,14 +141,14 @@ void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
 void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
 
   auto timeout = rclcpp::Duration::from_seconds(1.0);
-  gm::TransformStamped base_link_to_carla_map_tf, base_link_in_map_tf, carla_map_to_map_tf;
+  gm::TransformStamped rear_axle_ground_position_in_carla_map_tf, rear_axle_ground_position_in_map_tf, carla_map_to_map_tf;
 
   // transform ego_data (input header is carla_map, output header is map) 
   pi::EgoData ego_data = *msg;
 
-  // get transform from base_link to carla_map
+  // get rear_axle_ground position in carla_map
   try {
-    base_link_to_carla_map_tf = tf2_buffer_->lookupTransform(msg->header.frame_id, "base_link", msg->header.stamp, timeout);
+    rear_axle_ground_position_in_carla_map_tf = tf2_buffer_->lookupTransform(msg->header.frame_id, "base_link", msg->header.stamp, timeout);
   } catch (tf2::TransformException& ex) {
     ROS_LOG_STREAM(WARN, "Transformation from 'base_link' to '" + msg->header.frame_id + "' is not available. No transformed ego-data could be published.");
     return;
@@ -156,21 +156,23 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
 
   // get transform from carla_map to map
   try {
-    carla_map_to_map_tf = tf2_buffer_->lookupTransform("map", base_link_to_carla_map_tf.header.frame_id, base_link_to_carla_map_tf.header.stamp, timeout);
+    carla_map_to_map_tf = tf2_buffer_->lookupTransform("map", msg->header.frame_id, msg->header.stamp, timeout);
   } catch (tf2::TransformException& ex) {
-    ROS_LOG_STREAM(WARN, "Transformation from 'map' to '" + base_link_to_carla_map_tf.header.frame_id + "' is not available. No transformed ego-data could be published.");
+    ROS_LOG_STREAM(WARN, "Transformation from '" + msg->header.frame_id + "' to 'map' is not available. No transformed ego-data could be published.");
     return;
   }
 
-  // combine transforms to get transform from base_link to map
-  tf2::doTransform(base_link_to_carla_map_tf, base_link_in_map_tf, carla_map_to_map_tf);
-  ego_data.header.frame_id = base_link_in_map_tf.header.frame_id;
-  ego_data.state.header.frame_id = base_link_in_map_tf.header.frame_id;
+  // convert rear_axle_ground position from carla_map to map
+  tf2::doTransform(rear_axle_ground_position_in_carla_map_tf, rear_axle_ground_position_in_map_tf, carla_map_to_map_tf);
   
-  oa::setX(ego_data, base_link_in_map_tf.transform.translation.x);
-  oa::setY(ego_data, base_link_in_map_tf.transform.translation.y);
-  oa::setZ(ego_data, base_link_in_map_tf.transform.translation.z);
-  oa::setOrientation(ego_data, base_link_in_map_tf.transform.rotation);
+  // set transformed ego_data header frames
+  ego_data.header.frame_id = rear_axle_ground_position_in_map_tf.header.frame_id;
+  ego_data.state.header.frame_id = rear_axle_ground_position_in_map_tf.header.frame_id;
+  
+  oa::setX(ego_data, rear_axle_ground_position_in_map_tf.transform.translation.x);
+  oa::setY(ego_data, rear_axle_ground_position_in_map_tf.transform.translation.y);
+  oa::setZ(ego_data, rear_axle_ground_position_in_map_tf.transform.translation.z);
+  oa::setOrientation(ego_data, rear_axle_ground_position_in_map_tf.transform.rotation);
   ego_data.state.reference_point.value = pi::ObjectReferencePoint::REAR_AXLE_GROUND;
   ego_data.state.reference_point.translation_to_geometric_center.x = -center_to_baselink_;
   ego_data.state.reference_point.translation_to_geometric_center.z = msg->height/2.0;
