@@ -57,7 +57,6 @@
   <depend>derived_object_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_map_server</depend>
-  <depend>lanelet2_map_server_interfaces</depend>
   <depend>perception_msgs</depend>
   <depend>perception_msgs_utils</depend>
   <depend>std_msgs</depend>

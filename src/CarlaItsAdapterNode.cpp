@@ -3,12 +3,27 @@
 
 namespace carla {
 
-ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {  
+ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
+
+  // load Parameters and if not successful, return
+  if(!loadParameters()) return;
+
+  // parameters client to map server for setting map server's parameters
+  map_server_parameters_client_ = std::make_shared<rclcpp::AsyncParametersClient>(this, map_server_name_);
+  using namespace std::chrono_literals;
+  while (!map_server_parameters_client_->wait_for_service(1s)) {
+    if (!rclcpp::ok()) {
+      RCLCPP_FATAL(this->get_logger(),
+                   "Interrupted while waiting for the map server ('%s') parameter service, shutting down",
+                   map_server_name_.c_str());
+      rclcpp::shutdown();
+    }
+    RCLCPP_WARN(this->get_logger(), "Waiting for map server ('%s') parameter service ...", map_server_name_.c_str());
+  }
+  RCLCPP_INFO(this->get_logger(), "Connected to map server ('%s') parameter service", map_server_name_.c_str());
+
   tf2_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
-
-  // create client for lanelet2 map change
-  client_ = this->create_client<lanelet2_map_server_interfaces::srv::ChangeMapParams>("/ll2_map_server/change_map_parameters");
 
   rclcpp::QoS qosLatching = rclcpp::QoS(rclcpp::KeepLast(1));
   qosLatching.transient_local();
@@ -25,10 +40,7 @@ ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
   pub_objects_base_link_ = this->create_publisher<pi::ObjectList>("~/object_list/base_link", 1);
   pub_ego_data_ = this->create_publisher<pi::EgoData>("~/ego_data", 1);
 
-  // load Parameters and if not successful, return
-  if(!loadParameters()) return;
-
-  ROS_LOG_STREAM(INFO, "carla_its_adapter running...");  
+  ROS_LOG_STREAM(INFO, "carla_its_adapter running...");
 }
 
 bool ItsAdapter::loadParameters() {
@@ -69,6 +81,9 @@ bool ItsAdapter::loadParameters() {
     ROS_LOG_STREAM(WARN, "Parameter \'ego_veh_filter_thr_y\' is not set, using default value: "+std::to_string(ego_veh_filter_thr_y_));
   }
 
+  this->declare_parameter("map_server_name", map_server_name_);
+  map_server_name_ = this->get_parameter("map_server_name").as_string();
+
   return true;
 }
 
@@ -101,41 +116,33 @@ void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
   }
 
   // convert CARLA map name to lanelet map name
-  std::string map_filenpath = msg->map_name;
-  size_t pos = map_filenpath.find("Carla/Maps");
+  std::string map_filepath = msg->map_name;
+  size_t pos = map_filepath.find("Carla/Maps");
   if (pos != std::string::npos)
-    map_filenpath.replace(pos, 10, "/data/maps");
+    map_filepath.replace(pos, 10, "/data/maps");
   else {
     ROS_LOG_STREAM(ERROR, "Wrong format of CARLA map name");
     return;
   }
-  map_filenpath += ".osm";
-
+  map_filepath += ".osm";
   std::string map_frame_id = "map";
-  // TODO set rosparams instead of service call
-  // this->set_parameter(rclcpp::Parameter("map_filepath", map_filenpath));
-  // this->set_parameter(rclcpp::Parameter("map_frame_id", map_frame_id));
-  // this->set_parameter(rclcpp::Parameter("origin_lat", latValue));
-  // this->set_parameter(rclcpp::Parameter("origin_lon", lonValue));
 
-  // lanelet service call to change map of lanelet2 map server
-  auto request = std::make_shared<lanelet2_map_server_interfaces::srv::ChangeMapParams::Request>();
-  request->map_filename = map_filenpath;
-  request->map_frame_id = map_frame_id;
-  double origin_lat = std::stod(latValue);
-  double origin_lon = std::stod(lonValue);
-  request->origin_lat = origin_lat;
-  request->origin_lon = origin_lon;
-
-  int utm_zone = std::ceil((origin_lon + 180.0)/6);
-  double center_lon = 6.0 * (double)utm_zone - 183.0;
-
-  // check if service is available and send request
-  if (!client_->wait_for_service(std::chrono::seconds(1))) {
-    RCLCPP_WARN(rclcpp::get_logger("rclcpp"), "Failed to call service ChangeMapParams");
-  } else {
-    auto result = client_->async_send_request(request);
-  }
+  // change map by setting map server parameters
+  auto set_parameters_results = map_server_parameters_client_->set_parameters(
+    {
+      rclcpp::Parameter("map_filepath", map_filepath),
+      rclcpp::Parameter("map_frame_id", map_frame_id),
+      rclcpp::Parameter("origin_lat", std::stod(latValue)),
+      rclcpp::Parameter("origin_lon", std::stod(lonValue))
+    },
+    [this](std::shared_future<std::vector<rcl_interfaces::msg::SetParametersResult>> future) {
+      auto results = future.get();
+      for (const auto& result : results) {
+        if (!result.successful)
+          RCLCPP_ERROR(this->get_logger(), "Failed to set parameter: %s", result.reason.c_str());
+      }
+      RCLCPP_INFO(this->get_logger(), "Finished setting map server parameters");
+    });
 }
 
 void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
@@ -143,7 +150,7 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
   auto timeout = rclcpp::Duration::from_seconds(1.0);
   gm::TransformStamped rear_axle_ground_position_in_carla_map_tf, rear_axle_ground_position_in_map_tf, carla_map_to_map_tf;
 
-  // transform ego_data (input header is carla_map, output header is map) 
+  // transform ego_data (input header is carla_map, output header is map)
   pi::EgoData ego_data = *msg;
 
   // get rear_axle_ground position in carla_map
@@ -164,11 +171,11 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
 
   // convert rear_axle_ground position from carla_map to map
   tf2::doTransform(rear_axle_ground_position_in_carla_map_tf, rear_axle_ground_position_in_map_tf, carla_map_to_map_tf);
-  
+
   // set transformed ego_data header frames
   ego_data.header.frame_id = rear_axle_ground_position_in_map_tf.header.frame_id;
   ego_data.state.header.frame_id = rear_axle_ground_position_in_map_tf.header.frame_id;
-  
+
   oa::setX(ego_data, rear_axle_ground_position_in_map_tf.transform.translation.x);
   oa::setY(ego_data, rear_axle_ground_position_in_map_tf.transform.translation.y);
   oa::setZ(ego_data, rear_axle_ground_position_in_map_tf.transform.translation.z);
@@ -203,7 +210,7 @@ void ItsAdapter::itsConverterObjectsCallback(const pi::ObjectList::ConstPtr &msg
 
   // publish object list in map frame
   pub_objects_map_->publish(msg_object_list_map);
-  
+
   // transform the object list to base_link frame
   if(!tf2_buffer_->_frameExists("base_link")){
     ROS_LOG_STREAM(WARN, "Frame 'base_link' does not exist");
@@ -252,7 +259,7 @@ void ItsAdapter::itsConverterObjectsCallback(const pi::ObjectList::ConstPtr &msg
 
 }
 
-void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg) 
+void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
 {
   // set up a transformation link between map and base_link
 
@@ -260,8 +267,8 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
   //      /                   \
   //     / static              \ static (published by lanelet2_map_server)
   //    /  (published by        \
-  //   /     ros-bridge)         \        
-  // carla_map                   map 
+  //   /     ros-bridge)         \
+  // carla_map                   map
   //   |
   //   dynamic (published by ros-bridge)
   //   |
@@ -307,12 +314,12 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
 
     // step 3: ego_vehicle -> base_link
     try {
-      tf2_buffer_->lookupTransform("base_link", "ego_vehicle", timezero);   
-    } 
-    catch (const tf2::TransformException& e) 
+      tf2_buffer_->lookupTransform("base_link", "ego_vehicle", timezero);
+    }
+    catch (const tf2::TransformException& e)
     {
       ROS_LOG_STREAM(WARN, "\tTranformation from 'ego_vehicle' to 'base_link' is not available");
-      
+
       // transformation between map and carla_map is always 0
       gm::TransformStamped ego_vehicle_base_link;
       ego_vehicle_base_link.header.stamp = this->get_clock()->now();
