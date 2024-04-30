@@ -13,12 +13,11 @@ endif()
 find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
-# find_package(<dependency> REQUIRED)  
+# find_package(<dependency> REQUIRED)
 find_package(carla_msgs REQUIRED)
 find_package(derived_object_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(lanelet2_map_server REQUIRED)
-find_package(lanelet2_map_server_interfaces REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(perception_msgs REQUIRED)
 find_package(perception_msgs_utils REQUIRED)
@@ -41,7 +40,6 @@ ament_target_dependencies(${PROJECT_NAME}_node
   derived_object_msgs
   geometry_msgs
   lanelet2_map_server
-  lanelet2_map_server_interfaces
   nav_msgs
   perception_msgs
   perception_msgs_utils
@@ -56,7 +54,6 @@ ament_export_dependencies(
   derived_object_msgs
   geometry_msgs
   lanelet2_map_server
-  lanelet2_map_server_interfaces
   nav_msgs
   perception_msgs
   perception_msgs_utils

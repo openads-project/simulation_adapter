@@ -14,7 +14,6 @@
 #include <tf2_perception_msgs/tf2_perception_msgs.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <carla_msgs/msg/carla_world_info.hpp>
-#include <lanelet2_map_server_interfaces/srv/change_map_params.hpp>
 
 
 #define ROS_LOG_STREAM(level, ...) RCLCPP_##level##_STREAM(this->get_logger(), __VA_ARGS__)
@@ -44,8 +43,6 @@ class ItsAdapter : public rclcpp::Node {
     void odometryCallback(const nm::Odometry::ConstPtr &msg);
     void worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg);
 
-    rclcpp::Client<lanelet2_map_server_interfaces::srv::ChangeMapParams>::SharedPtr client_;
-
     std::unique_ptr<tf2_ros::Buffer> tf2_buffer_;
 
     Subscriber<pi::ObjectList> sub_its_converter_objects_;
@@ -58,6 +55,9 @@ class ItsAdapter : public rclcpp::Node {
     Publisher<pi::EgoData> pub_ego_data_;
 
     std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
+
+    std::shared_ptr<rclcpp::AsyncParametersClient> map_server_parameters_client_;
+    std::string map_server_name_ = "/ll2_map_server";
 
     double center_to_baselink_;
     double fov_range_;
