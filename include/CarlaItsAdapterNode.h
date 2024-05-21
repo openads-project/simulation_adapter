@@ -14,6 +14,10 @@
 #include <tf2_perception_msgs/tf2_perception_msgs.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <carla_msgs/msg/carla_world_info.hpp>
+#include <trajectory_planning_msgs/msg/drivable.hpp>
+#include <trajectory_planning_msgs/msg/reference.hpp>
+#include <trajectory_planning_msgs/msg/trajectory.hpp>
+#include <trajectory_planning_msgs_utils/trajectory_access.hpp>
 
 
 #define ROS_LOG_STREAM(level, ...) RCLCPP_##level##_STREAM(this->get_logger(), __VA_ARGS__)
@@ -23,6 +27,7 @@ namespace pi = perception_msgs::msg;
 namespace gm = geometry_msgs::msg;
 namespace cm = carla_msgs::msg;
 namespace oa = perception_msgs::object_access;
+namespace tp = trajectory_planning_msgs::msg;
 
 template<typename T>
 using Subscriber = typename rclcpp::Subscription<T>::SharedPtr;
@@ -37,11 +42,14 @@ class ItsAdapter : public rclcpp::Node {
     ItsAdapter();
 
   private:
+    static const std::string kInputTopicTrajectory;
+
     bool loadParameters();
     void itsConverterObjectsCallback(const pi::ObjectList::ConstPtr &msg);
     void itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg);
     void odometryCallback(const nm::Odometry::ConstPtr &msg);
     void worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg);
+    void trajectoryCallback(const tp::Trajectory &msg);
 
     std::unique_ptr<tf2_ros::Buffer> tf2_buffer_;
 
@@ -49,6 +57,7 @@ class ItsAdapter : public rclcpp::Node {
     Subscriber<pi::EgoData> sub_its_converter_egoData_;
     Subscriber<nm::Odometry> sub_odometry_;
     Subscriber<cm::CarlaWorldInfo> sub_world_info_;
+    Subscriber<tp::Trajectory> sub_trajectory_;
 
     Publisher<pi::ObjectList> pub_objects_base_link_;
     Publisher<pi::ObjectList> pub_objects_map_;
@@ -58,6 +67,8 @@ class ItsAdapter : public rclcpp::Node {
 
     std::shared_ptr<rclcpp::AsyncParametersClient> map_server_parameters_client_;
     std::string map_server_name_ = "/ll2_map_server";
+
+    tp::Trajectory planned_trajectory_;
 
     double center_to_baselink_;
     double fov_range_;

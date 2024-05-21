@@ -15,6 +15,10 @@ def generate_launch_description():
         name='fov_range',
         default_value='None'
     ),
+    launch.actions.DeclareLaunchAgument(
+        name='input_trajectory_topic',
+        default_value='~/trajectory_topic' 
+    ),
     launch_ros.actions.Node(
       package='carla_its_adapter',
       executable='carla_its_adapter_node',
@@ -31,7 +35,8 @@ def generate_launch_description():
         {
           'fov_range': launch.substitutions.LaunchConfiguration('fov_range')
         }
-      ]
+      ],
+      remappings=[('~/trajectory_topic', launch.substitution.LaunchConfiguration('input_trajectory_topic'))]
     )
   ])
 

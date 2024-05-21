@@ -3,10 +3,14 @@
 
 namespace carla {
 
+// Constants
+const std::string ItsAdapter::kInputTopicTrajectory{"~/trajectory_topic"};
+
 ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
 
   // load Parameters and if not successful, return
   if(!loadParameters()) return;
+  
 
   // parameters client to map server for setting map server's parameters
   map_server_parameters_client_ = std::make_shared<rclcpp::AsyncParametersClient>(this, map_server_name_);
@@ -34,6 +38,7 @@ ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
   sub_its_converter_objects_ = this->create_subscription<pi::ObjectList>("/carla_its_converter/ego_vehicle/objects", 1, std::bind(&ItsAdapter::itsConverterObjectsCallback, this, std::placeholders::_1));
   sub_its_converter_egoData_ = this->create_subscription<pi::EgoData>("/carla_its_converter/ego_vehicle/ego_data", 1, std::bind(&ItsAdapter::itsConverterEgoCallback, this, std::placeholders::_1));
   sub_odometry_ = this->create_subscription<nm::Odometry>("/carla/ego_vehicle/odometry", 1, std::bind(&ItsAdapter::odometryCallback, this, std::placeholders::_1));
+  sub_trajectory_ = this->create_subscription<tp::Trajectory>(kInputTopicTrajectory, 1, std::bind(&ItsAdapter::trajectoryCallback, this, std::placeholders::_1));
 
   // setup publisher
   pub_objects_map_ = this->create_publisher<pi::ObjectList>("~/object_list/map", 1);
@@ -183,6 +188,36 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
   ego_data.state.reference_point.value = pi::ObjectReferencePoint::REAR_AXLE_GROUND;
   ego_data.state.reference_point.translation_to_geometric_center.x = -center_to_baselink_;
   ego_data.state.reference_point.translation_to_geometric_center.z = msg->height/2.0;
+
+  // add planned trajectory to ego_data
+  if (planned_trajectory_.type_id == trajectory_planning_msgs::msg::DRIVABLE::TYPE_ID){
+    ego_data.trajectory_planned.clear();
+    int nSamplePoints = trajectory_planning_msgs::trajectory_access::getSamplePointSize(planned_trajectory_);
+    pi::ObjectState object_state;
+    object_state.model_id = 1;
+    object_state.reference_point = ego_data.state.reference_point;
+    float time;
+
+    for (int i=0; i<nSamplePoints; i++){
+      // update header stamp
+      object_state.header = planned_trajectory_.header;
+      time = trajectory_planning_msgs::trajectory_access::getT(planned_trajectory_, i);
+      if (time >= 1){
+        object_state.header.stamp.sec += (int) time;
+        object_state.header.stamp.nanosec += (time - (int) time) * 1e9;
+      } else {
+        object_state.header.stamp.nanosec += time * 1e9;
+      }
+
+      // update trajectory state
+      perception_msgs::object_access::setX(object_state, trajectory_planning_msgs::trajectory_access::getX(planned_trajectory_, i));
+      perception_msgs::object_access::setY(object_state, trajectory_planning_msgs::trajectory_access::getY(planned_trajectory_, i));
+      perception_msgs::object_access::setVelLon(object_state, trajectory_planning_msgs::trajectory_access::getV(planned_trajectory_, i));
+      perception_msgs::object_access::setAccLon(object_state, trajectory_planning_msgs::trajectory_access::getA(planned_trajectory_, i));
+      perception_msgs::object_access::setYaw(object_state, trajectory_planning_msgs::trajectory_access::getTheta(planned_trajectory_, i));
+      ego_data.trajectory_planned.push_back(object_state);
+    }
+  }
 
   // publish object list in map frame
   pub_ego_data_->publish(ego_data);
@@ -344,6 +379,11 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
     ROS_LOG_STREAM(INFO, "Static transformation from 'base_link' to 'map' is now available");
   }
 
+}
+
+void ItsAdapter::trajectoryCallback(const tp::Trajectory &msg)
+{
+  planned_trajectory_ = msg;
 }
 
 
