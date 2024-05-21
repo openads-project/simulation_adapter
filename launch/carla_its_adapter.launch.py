@@ -36,7 +36,7 @@ def generate_launch_description():
           'fov_range': launch.substitutions.LaunchConfiguration('fov_range')
         }
       ],
-      remappings=[('~/trajectory_topic', launch.substitution.LaunchConfiguration('input_trajectory_topic'))]
+      remappings=[('~/trajectory_topic', launch.substitutions.LaunchConfiguration('input_trajectory_topic'))]
     )
   ])
 
