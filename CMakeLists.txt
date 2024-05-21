@@ -21,6 +21,8 @@ find_package(lanelet2_map_server REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(perception_msgs REQUIRED)
 find_package(perception_msgs_utils REQUIRED)
+find_package(trajectory_planning_msgs REQUIRED)
+find_package(trajectory_planning_msgs_utils REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
@@ -43,6 +45,8 @@ ament_target_dependencies(${PROJECT_NAME}_node
   nav_msgs
   perception_msgs
   perception_msgs_utils
+  trajectory_planning_msgs
+  trajectory_planning_msgs_utils
   rclcpp
   tf2
   tf2_geometry_msgs
@@ -57,6 +61,8 @@ ament_export_dependencies(
   nav_msgs
   perception_msgs
   perception_msgs_utils
+  trajectory_planning_msgs
+  trajectory_planning_msgs_utils
   rclcpp
   tf2
   tf2_geometry_msgs
