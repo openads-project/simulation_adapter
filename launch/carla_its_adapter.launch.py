@@ -15,7 +15,7 @@ def generate_launch_description():
         name='fov_range',
         default_value='None'
     ),
-    launch.actions.DeclareLaunchAgument(
+    launch.actions.DeclareLaunchArgument(
         name='input_trajectory_topic',
         default_value='~/trajectory_topic' 
     ),
