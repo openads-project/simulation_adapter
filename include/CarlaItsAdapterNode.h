@@ -18,6 +18,7 @@
 #include <trajectory_planning_msgs/msg/reference.hpp>
 #include <trajectory_planning_msgs/msg/trajectory.hpp>
 #include <trajectory_planning_msgs_utils/trajectory_access.hpp>
+#include <tf2_trajectory_planning_msgs/tf2_trajectory_planning_msgs.hpp>
 
 
 #define ROS_LOG_STREAM(level, ...) RCLCPP_##level##_STREAM(this->get_logger(), __VA_ARGS__)

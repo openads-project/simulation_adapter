@@ -191,8 +191,19 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
   // add planned trajectory to ego_data
   int nSamplePoints = trajectory_planning_msgs::trajectory_access::getSamplePointSize(planned_trajectory_);
   if (planned_trajectory_.type_id == trajectory_planning_msgs::msg::DRIVABLE::TYPE_ID and nSamplePoints > 0){
+    // transform trajectory from base_link into ego_data.header.frame_id
+    tp::Trajectory trajectory_transformed;
+    try {
+      trajectory_transformed = tf2_buffer_->transform(planned_trajectory_, ego_data.header.frame_id, tf2::durationFromSec(0.01));
+      ROS_LOG_STREAM(WARN, "Hello World 1");
+    } catch (tf2::TransformException& ex) {
+      ROS_LOG_STREAM(WARN, "Hello World 2");
+    }
+    
+    
     ego_data.trajectory_planned.clear();
     pi::ObjectState object_state;
+    pi::ObjectState object_state_in_map;
 
     // initialize state
     object_state.model_id = 1;
@@ -208,13 +219,6 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
     for (int i=0; i<nSamplePoints; i++){
       // update header stamp
       object_state.header = planned_trajectory_.header;
-      time = trajectory_planning_msgs::trajectory_access::getT(planned_trajectory_, i);
-      if (time >= 1){
-        object_state.header.stamp.sec += (int) time;
-        object_state.header.stamp.nanosec += (time - (int) time) * 1e9;
-      } else {
-        object_state.header.stamp.nanosec += time * 1e9;
-      }
 
       // update trajectory state
       zeros[0] = trajectory_planning_msgs::trajectory_access::getX(planned_trajectory_, i);
@@ -223,7 +227,24 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
       zeros[5] = trajectory_planning_msgs::trajectory_access::getA(planned_trajectory_, i);
       zeros[9] = trajectory_planning_msgs::trajectory_access::getTheta(planned_trajectory_, i);
       perception_msgs::object_access::setContinuousState(object_state, zeros);
-      ego_data.trajectory_planned.push_back(object_state);    
+      ROS_LOG_STREAM(WARN, "Hello World 0");
+
+      try {
+        object_state_in_map = tf2_buffer_->transform(object_state, "base_link", tf2::durationFromSec(0.01));
+        ROS_LOG_STREAM(WARN, "Hello World 1");
+      } catch (tf2::TransformException& ex) {
+        ROS_LOG_STREAM(WARN, "Hello World 2");
+        // ego_data.trajectory_planned.push_back(object_state);
+      }
+      
+      time = trajectory_planning_msgs::trajectory_access::getT(planned_trajectory_, i);
+      if (time >= 1){
+        object_state_in_map.header.stamp.sec += (int) time;
+        object_state_in_map.header.stamp.nanosec += (time - (int) time) * 1e9;
+      } else {
+        object_state_in_map.header.stamp.nanosec += time * 1e9;
+      }
+      ego_data.trajectory_planned.push_back(object_state_in_map);    
     }
   }
 

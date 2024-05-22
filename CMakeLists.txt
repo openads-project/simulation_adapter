@@ -23,6 +23,7 @@ find_package(perception_msgs REQUIRED)
 find_package(perception_msgs_utils REQUIRED)
 find_package(trajectory_planning_msgs REQUIRED)
 find_package(trajectory_planning_msgs_utils REQUIRED)
+find_package(tf2_trajectory_planning_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
@@ -47,6 +48,7 @@ ament_target_dependencies(${PROJECT_NAME}_node
   perception_msgs_utils
   trajectory_planning_msgs
   trajectory_planning_msgs_utils
+  tf2_trajectory_planning_msgs
   rclcpp
   tf2
   tf2_geometry_msgs
@@ -63,6 +65,7 @@ ament_export_dependencies(
   perception_msgs_utils
   trajectory_planning_msgs
   trajectory_planning_msgs_utils
+  tf2_trajectory_planning_msgs
   rclcpp
   tf2
   tf2_geometry_msgs
