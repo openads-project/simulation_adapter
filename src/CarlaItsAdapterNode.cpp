@@ -151,7 +151,6 @@ void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
 }
 
 void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
-
   auto timeout = rclcpp::Duration::from_seconds(1.0);
   gm::TransformStamped rear_axle_ground_position_in_carla_map_tf, rear_axle_ground_position_in_map_tf, carla_map_to_map_tf;
 
@@ -190,12 +189,20 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
   ego_data.state.reference_point.translation_to_geometric_center.z = msg->height/2.0;
 
   // add planned trajectory to ego_data
-  if (planned_trajectory_.type_id == trajectory_planning_msgs::msg::DRIVABLE::TYPE_ID){
+  int nSamplePoints = trajectory_planning_msgs::trajectory_access::getSamplePointSize(planned_trajectory_);
+  if (planned_trajectory_.type_id == trajectory_planning_msgs::msg::DRIVABLE::TYPE_ID and nSamplePoints > 0){
     ego_data.trajectory_planned.clear();
-    int nSamplePoints = trajectory_planning_msgs::trajectory_access::getSamplePointSize(planned_trajectory_);
     pi::ObjectState object_state;
+
+    // initialize state
     object_state.model_id = 1;
+    std::vector<double> zeros(13, 0.0);
+    std::vector<long int> zero(1, 0);
+    perception_msgs::object_access::setContinuousState(object_state, zeros);
+    perception_msgs::object_access::setDiscreteState(object_state, zero);
+    perception_msgs::object_access::setStandstill(object_state, trajectory_planning_msgs::trajectory_access::getStandstill(planned_trajectory_));
     object_state.reference_point = ego_data.state.reference_point;
+
     float time;
 
     for (int i=0; i<nSamplePoints; i++){
@@ -210,12 +217,13 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
       }
 
       // update trajectory state
-      perception_msgs::object_access::setX(object_state, trajectory_planning_msgs::trajectory_access::getX(planned_trajectory_, i));
-      perception_msgs::object_access::setY(object_state, trajectory_planning_msgs::trajectory_access::getY(planned_trajectory_, i));
-      perception_msgs::object_access::setVelLon(object_state, trajectory_planning_msgs::trajectory_access::getV(planned_trajectory_, i));
-      perception_msgs::object_access::setAccLon(object_state, trajectory_planning_msgs::trajectory_access::getA(planned_trajectory_, i));
-      perception_msgs::object_access::setYaw(object_state, trajectory_planning_msgs::trajectory_access::getTheta(planned_trajectory_, i));
-      ego_data.trajectory_planned.push_back(object_state);
+      zeros[0] = trajectory_planning_msgs::trajectory_access::getX(planned_trajectory_, i);
+      zeros[1] = trajectory_planning_msgs::trajectory_access::getY(planned_trajectory_, i);
+      zeros[3] = trajectory_planning_msgs::trajectory_access::getV(planned_trajectory_, i);
+      zeros[5] = trajectory_planning_msgs::trajectory_access::getA(planned_trajectory_, i);
+      zeros[9] = trajectory_planning_msgs::trajectory_access::getTheta(planned_trajectory_, i);
+      perception_msgs::object_access::setContinuousState(object_state, zeros);
+      ego_data.trajectory_planned.push_back(object_state);    
     }
   }
 
