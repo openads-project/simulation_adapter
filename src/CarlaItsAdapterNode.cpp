@@ -10,7 +10,6 @@ ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
 
   // load Parameters and if not successful, return
   if(!loadParameters()) return;
-  
 
   // parameters client to map server for setting map server's parameters
   map_server_parameters_client_ = std::make_shared<rclcpp::AsyncParametersClient>(this, map_server_name_);
@@ -189,14 +188,13 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
   ego_data.state.reference_point.translation_to_geometric_center.z = msg->height/2.0;
 
   // add planned trajectory to ego_data
-  int nSamplePoints = trajectory_planning_msgs::trajectory_access::getSamplePointSize(planned_trajectory_);
-  if (planned_trajectory_.type_id == trajectory_planning_msgs::msg::DRIVABLE::TYPE_ID and nSamplePoints > 0){
+  if (planned_trajectory_.type_id == trajectory_planning_msgs::msg::DRIVABLE::TYPE_ID){
     // transform trajectory from base_link into map
     tp::Trajectory trajectory_transformed;
     try {
       trajectory_transformed = tf2_buffer_->transform(planned_trajectory_, "map", tf2::durationFromSec(0.01));
     } catch (tf2::TransformException& ex) {
-      ROS_LOG_STREAM(WARN, "Hello World");
+      ROS_LOG_STREAM(WARN, "Coordinate transformation of planned trajectory (base link) into ego_data frame id (map) has failed");
     }
     
     
@@ -204,15 +202,13 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
     pi::ObjectState object_state;
 
     // initialize state
-    object_state.model_id = 1;
-    std::vector<double> zeros(13, 0.0);
-    std::vector<long int> zero(1, 0);
-    perception_msgs::object_access::setContinuousState(object_state, zeros);
-    perception_msgs::object_access::setDiscreteState(object_state, zero);
-    perception_msgs::object_access::setStandstill(object_state, trajectory_planning_msgs::trajectory_access::getStandstill(planned_trajectory_));
+    oa::initializeState(object_state, 1);
     object_state.reference_point = ego_data.state.reference_point;
 
+    // update trajectory state
+    int nSamplePoints = trajectory_planning_msgs::trajectory_access::getSamplePointSize(planned_trajectory_);
     float time;
+    oa::setStandstill(object_state, trajectory_planning_msgs::trajectory_access::getStandstill(planned_trajectory_));
 
     for (int i=0; i<nSamplePoints; i++){
       // update header stamp
@@ -225,13 +221,11 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
         object_state.header.stamp.nanosec += time * 1e9;
       }
 
-      // update trajectory state
-      zeros[0] = trajectory_planning_msgs::trajectory_access::getX(trajectory_transformed, i);
-      zeros[1] = trajectory_planning_msgs::trajectory_access::getY(trajectory_transformed, i);
-      zeros[3] = trajectory_planning_msgs::trajectory_access::getV(trajectory_transformed, i);
-      zeros[5] = trajectory_planning_msgs::trajectory_access::getA(trajectory_transformed, i);
-      zeros[9] = trajectory_planning_msgs::trajectory_access::getTheta(trajectory_transformed, i);
-      perception_msgs::object_access::setContinuousState(object_state, zeros);
+      oa::setX(object_state, trajectory_planning_msgs::trajectory_access::getX(trajectory_transformed, i));
+      oa::setY(object_state, trajectory_planning_msgs::trajectory_access::getY(trajectory_transformed, i));
+      oa::setVelLon(object_state, trajectory_planning_msgs::trajectory_access::getV(trajectory_transformed, i));
+      oa::setAccLon(object_state, trajectory_planning_msgs::trajectory_access::getA(trajectory_transformed, i));
+      oa::setYaw(object_state, trajectory_planning_msgs::trajectory_access::getTheta(trajectory_transformed, i));
       ego_data.trajectory_planned.push_back(object_state);
     }
   }

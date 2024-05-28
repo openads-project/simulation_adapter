@@ -14,9 +14,6 @@
 #include <tf2_perception_msgs/tf2_perception_msgs.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <carla_msgs/msg/carla_world_info.hpp>
-#include <trajectory_planning_msgs/msg/drivable.hpp>
-#include <trajectory_planning_msgs/msg/reference.hpp>
-#include <trajectory_planning_msgs/msg/trajectory.hpp>
 #include <trajectory_planning_msgs_utils/trajectory_access.hpp>
 #include <tf2_trajectory_planning_msgs/tf2_trajectory_planning_msgs.hpp>
 
