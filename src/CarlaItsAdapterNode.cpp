@@ -3,6 +3,9 @@
 
 namespace carla {
 
+// Constants
+const std::string ItsAdapter::kInputTopicTrajectory{"~/trajectory_topic"};
+
 ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
 
   // load Parameters and if not successful, return
@@ -34,6 +37,7 @@ ItsAdapter::ItsAdapter() : Node("CarlaItsAdapter") {
   sub_its_converter_objects_ = this->create_subscription<pi::ObjectList>("/carla_its_converter/ego_vehicle/objects", 1, std::bind(&ItsAdapter::itsConverterObjectsCallback, this, std::placeholders::_1));
   sub_its_converter_egoData_ = this->create_subscription<pi::EgoData>("/carla_its_converter/ego_vehicle/ego_data", 1, std::bind(&ItsAdapter::itsConverterEgoCallback, this, std::placeholders::_1));
   sub_odometry_ = this->create_subscription<nm::Odometry>("/carla/ego_vehicle/odometry", 1, std::bind(&ItsAdapter::odometryCallback, this, std::placeholders::_1));
+  sub_trajectory_ = this->create_subscription<tp::Trajectory>(kInputTopicTrajectory, 1, std::bind(&ItsAdapter::trajectoryCallback, this, std::placeholders::_1));
 
   // setup publisher
   pub_objects_map_ = this->create_publisher<pi::ObjectList>("~/object_list/map", 1);
@@ -146,7 +150,6 @@ void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
 }
 
 void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
-
   auto timeout = rclcpp::Duration::from_seconds(1.0);
   gm::TransformStamped rear_axle_ground_position_in_carla_map_tf, rear_axle_ground_position_in_map_tf, carla_map_to_map_tf;
 
@@ -183,6 +186,51 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
   ego_data.state.reference_point.value = pi::ObjectReferencePoint::REAR_AXLE_GROUND;
   ego_data.state.reference_point.translation_to_geometric_center.x = -center_to_baselink_;
   ego_data.state.reference_point.translation_to_geometric_center.z = msg->height/2.0;
+
+  // add planned trajectory to ego_data
+  if (planned_trajectory_.type_id == trajectory_planning_msgs::msg::DRIVABLE::TYPE_ID){
+    // transform trajectory from base_link into map
+    tp::Trajectory trajectory_transformed;
+    try {
+      trajectory_transformed = tf2_buffer_->transform(planned_trajectory_, "map", tf2::durationFromSec(0.01));
+    } catch (tf2::TransformException& ex) {
+      ROS_LOG_STREAM(WARN, "Coordinate transformation of planned trajectory (base link) into ego_data frame id (map) has failed");
+    }
+    
+    
+    ego_data.trajectory_planned.clear();
+    pi::ObjectState object_state;
+
+    // initialize state
+    oa::initializeState(object_state, 1);
+    object_state.reference_point = ego_data.state.reference_point;
+
+    // update trajectory state
+    int nSamplePoints = trajectory_planning_msgs::trajectory_access::getSamplePointSize(planned_trajectory_);
+    float time;
+    oa::setStandstill(object_state, trajectory_planning_msgs::trajectory_access::getStandstill(planned_trajectory_));
+
+    for (int i=0; i<nSamplePoints; i++){
+      // update header stamp
+      object_state.header = trajectory_transformed.header;
+      time = trajectory_planning_msgs::trajectory_access::getT(trajectory_transformed, i);
+      if (time >= 1){
+        object_state.header.stamp.sec += (int) time;
+        object_state.header.stamp.nanosec += (time - (int) time) * 1e9;
+      } else {
+        object_state.header.stamp.nanosec += time * 1e9;
+      }
+
+      oa::setX(object_state, trajectory_planning_msgs::trajectory_access::getX(trajectory_transformed, i));
+      oa::setY(object_state, trajectory_planning_msgs::trajectory_access::getY(trajectory_transformed, i));
+      oa::setVelLon(object_state, trajectory_planning_msgs::trajectory_access::getV(trajectory_transformed, i));
+      oa::setAccLon(object_state, trajectory_planning_msgs::trajectory_access::getA(trajectory_transformed, i));
+      oa::setYaw(object_state, trajectory_planning_msgs::trajectory_access::getTheta(trajectory_transformed, i));
+      ego_data.trajectory_planned.push_back(object_state);
+    }
+  } else {
+    ROS_LOG_STREAM(WARN, "Invalid trajectory type, planned trajectory states are only filled for trajectories of type DRIVABLE");
+  }
 
   // publish object list in map frame
   pub_ego_data_->publish(ego_data);
@@ -344,6 +392,11 @@ void ItsAdapter::odometryCallback(const nm::Odometry::ConstPtr &msg)
     ROS_LOG_STREAM(INFO, "Static transformation from 'base_link' to 'map' is now available");
   }
 
+}
+
+void ItsAdapter::trajectoryCallback(const tp::Trajectory &msg)
+{
+  planned_trajectory_ = msg;
 }
 
 
