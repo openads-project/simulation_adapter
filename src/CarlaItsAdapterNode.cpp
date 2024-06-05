@@ -228,6 +228,8 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
       oa::setYaw(object_state, trajectory_planning_msgs::trajectory_access::getTheta(trajectory_transformed, i));
       ego_data.trajectory_planned.push_back(object_state);
     }
+  } else {
+    ROS_LOG_STREAM(WARN, "Invalid trajectory type, planned trajectory states are only filled for trajectories of type DRIVABLE");
   }
 
   // publish object list in map frame
