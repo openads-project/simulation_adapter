@@ -193,40 +193,40 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
     tp::Trajectory trajectory_transformed;
     try {
       trajectory_transformed = tf2_buffer_->transform(planned_trajectory_, "map", tf2::durationFromSec(0.01));
-    } catch (tf2::TransformException& ex) {
-      ROS_LOG_STREAM(WARN, "Coordinate transformation of planned trajectory (base link) into ego_data frame id (map) has failed");
-    }
-    
-    
-    ego_data.trajectory_planned.clear();
-    pi::ObjectState object_state;
+      ego_data.trajectory_planned.clear();
+      pi::ObjectState object_state;
 
-    // initialize state
-    oa::initializeState(object_state, 1);
-    object_state.reference_point = ego_data.state.reference_point;
+      // initialize state
+      oa::initializeState(object_state, 1);
+      object_state.reference_point = ego_data.state.reference_point;
 
-    // update trajectory state
-    int nSamplePoints = trajectory_planning_msgs::trajectory_access::getSamplePointSize(planned_trajectory_);
-    float time;
-    oa::setStandstill(object_state, trajectory_planning_msgs::trajectory_access::getStandstill(planned_trajectory_));
+      // update trajectory state
+      int nSamplePoints = trajectory_planning_msgs::trajectory_access::getSamplePointSize(planned_trajectory_);
+      float time;
+      oa::setStandstill(object_state, trajectory_planning_msgs::trajectory_access::getStandstill(planned_trajectory_));
 
-    for (int i=0; i<nSamplePoints; i++){
-      // update header stamp
-      object_state.header = trajectory_transformed.header;
-      time = trajectory_planning_msgs::trajectory_access::getT(trajectory_transformed, i);
-      if (time >= 1){
-        object_state.header.stamp.sec += (int) time;
-        object_state.header.stamp.nanosec += (time - (int) time) * 1e9;
-      } else {
-        object_state.header.stamp.nanosec += time * 1e9;
+      for (int i=0; i<nSamplePoints; i++){
+        // update header stamp
+        object_state.header = trajectory_transformed.header;
+        time = trajectory_planning_msgs::trajectory_access::getT(trajectory_transformed, i);
+        if (time >= 1){
+          object_state.header.stamp.sec += (int) time;
+          object_state.header.stamp.nanosec += (time - (int) time) * 1e9;
+        } else {
+          object_state.header.stamp.nanosec += time * 1e9;
+        }
+
+        oa::setX(object_state, trajectory_planning_msgs::trajectory_access::getX(trajectory_transformed, i));
+        oa::setY(object_state, trajectory_planning_msgs::trajectory_access::getY(trajectory_transformed, i));
+        oa::setVelLon(object_state, trajectory_planning_msgs::trajectory_access::getV(trajectory_transformed, i));
+        oa::setAccLon(object_state, trajectory_planning_msgs::trajectory_access::getA(trajectory_transformed, i));
+        oa::setYaw(object_state, trajectory_planning_msgs::trajectory_access::getTheta(trajectory_transformed, i));
+        ego_data.trajectory_planned.push_back(object_state);
       }
 
-      oa::setX(object_state, trajectory_planning_msgs::trajectory_access::getX(trajectory_transformed, i));
-      oa::setY(object_state, trajectory_planning_msgs::trajectory_access::getY(trajectory_transformed, i));
-      oa::setVelLon(object_state, trajectory_planning_msgs::trajectory_access::getV(trajectory_transformed, i));
-      oa::setAccLon(object_state, trajectory_planning_msgs::trajectory_access::getA(trajectory_transformed, i));
-      oa::setYaw(object_state, trajectory_planning_msgs::trajectory_access::getTheta(trajectory_transformed, i));
-      ego_data.trajectory_planned.push_back(object_state);
+    } catch (tf2::TransformException& ex) {
+      ROS_LOG_STREAM(WARN, "Coordinate transformation of planned trajectory (base link) into ego_data frame id (map) has failed. Unable to add planned trajectory to ego-data message!");
+      ego_data.trajectory_planned.clear();
     }
   } else {
     ROS_LOG_STREAM(WARN, "Invalid trajectory type, planned trajectory states are only filled for trajectories of type DRIVABLE");
