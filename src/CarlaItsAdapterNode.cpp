@@ -123,7 +123,7 @@ void ItsAdapter::worldInfoCallback(const cm::CarlaWorldInfo::ConstPtr &msg){
   std::string map_filepath = msg->map_name;
   size_t pos = map_filepath.find("Carla/Maps");
   if (pos != std::string::npos)
-    map_filepath.replace(pos, 10, "/data/maps/carla/");
+    map_filepath.replace(pos, 10, "/data/maps/carla");
   else {
     ROS_LOG_STREAM(ERROR, "Wrong format of CARLA map name");
     return;
