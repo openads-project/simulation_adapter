@@ -229,7 +229,7 @@ void ItsAdapter::itsConverterEgoCallback(const pi::EgoData::ConstPtr &msg){
       ego_data.trajectory_planned.clear();
     }
   } else {
-    ROS_LOG_STREAM(WARN, "Invalid trajectory type, planned trajectory states are only filled for trajectories of type DRIVABLE");
+    ROS_LOG_STREAM(DEBUG, "Invalid trajectory type, planned trajectory states are only filled for trajectories of type DRIVABLE");
   }
 
   // publish object list in map frame
