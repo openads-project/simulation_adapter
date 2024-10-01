@@ -10,7 +10,7 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 def generate_launch_description():
 
   params_arg = DeclareLaunchArgument('params', default_value=PathJoinSubstitution([
-      get_package_share_directory("trajectory_optimization"), "config", "params.yml"])
+      get_package_share_directory("carla_its_adapter"), "config", "params.yml"])
   )
 
   node_name_arg = DeclareLaunchArgument('node_name', default_value='carla_its_adapter')
