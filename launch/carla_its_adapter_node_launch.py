@@ -11,7 +11,7 @@ def generate_launch_description():
   node_name_arg = DeclareLaunchArgument('node_name', default_value='carla_its_adapter')
   namespace_arg = DeclareLaunchArgument('namespace', default_value='')
 
-  input_ego_data_topic_arg = DeclareLaunchArgument('input_ego_data_topic', default_value='/carla_its_converter/ego_vehicle/objects')
+  input_ego_data_topic_arg = DeclareLaunchArgument('input_ego_data_topic', default_value='/carla_its_converter/ego_vehicle/ego_data')
   input_object_list_topic_arg = DeclareLaunchArgument('input_object_list_topic', default_value='/carla_its_converter/ego_vehicle/object_list')
   input_odometry_topic_arg = DeclareLaunchArgument('input_odometry_topic', default_value='/carla_its_converter/ego_vehicle/odometry')
   input_trajectory_topic_arg = DeclareLaunchArgument('input_trajectory_topic', default_value='~/trajectory')
