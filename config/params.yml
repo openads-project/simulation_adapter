@@ -1,0 +1,6 @@
+/**:
+  ros__parameters:
+    ### ROS node parameters
+    vehicle_frame: base_link          # Frame ID of local vehicle frame
+    center_to_base_link: -1.2645      # Distance from center of vehicle to base_link
+    map_server_name: /ll2_map_server  # Name of map server

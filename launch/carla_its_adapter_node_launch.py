@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from ament_index_python import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node, SetParameter
 from launch.actions import DeclareLaunchArgument
@@ -7,6 +8,10 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 
 
 def generate_launch_description():
+
+  params_arg = DeclareLaunchArgument('params', default_value=PathJoinSubstitution([
+      get_package_share_directory("trajectory_optimization"), "config", "params.yml"])
+  )
 
   node_name_arg = DeclareLaunchArgument('node_name', default_value='carla_its_adapter')
   namespace_arg = DeclareLaunchArgument('namespace', default_value='')
@@ -20,9 +25,6 @@ def generate_launch_description():
   output_object_list_topic_arg = DeclareLaunchArgument('output_object_list_topic', default_value='~/object_list')
   output_object_list_map_topic_arg = DeclareLaunchArgument('output_object_list_topic_map', default_value='~/object_list_map')
 
-  vehicle_frame_arg = DeclareLaunchArgument('vehicle_frame', default_value='base_link')
-  center_to_base_link_arg = DeclareLaunchArgument('center_to_base_link', default_value='-1.2645')
-  map_server_name_arg = DeclareLaunchArgument('map_server_name', default_value='/ll2_map_server')
   use_sim_time_arg = DeclareLaunchArgument('use_sim_time', default_value='False')
 
   return LaunchDescription([
@@ -35,7 +37,6 @@ def generate_launch_description():
     output_ego_data_topic_arg,
     output_object_list_topic_arg,
     output_object_list_map_topic_arg,
-    vehicle_frame_arg,
     use_sim_time_arg,
     SetParameter(name='use_sim_time', value=LaunchConfiguration('use_sim_time')),
     Node(
