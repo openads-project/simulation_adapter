@@ -34,14 +34,14 @@ This package contains the CarlaItsAdapterNode - a simple ROS 2 Node that convert
 | Topic | Type | Description |
 | --- | --- | --- |
 | `/carla_its_adapter/object_list/map` | `perception_msgs::ObjectList` | Object list in map frame |
-| `/carla_its_adapter/object_list/base_link` | `perception_msgs::ObjectList` | Object list in base link frame |
+| `/carla_its_adapter/object_list/base_link` | `perception_msgs::ObjectList` | Object list in base_link frame |
 
 #### Parameters
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| fov_range | float | Maximum field of view range for objects in the base link frame. Only objects within the FOV will be published. |
-| center_to_baselink | float | Distance between center of the vehicle and its base link. |
+| fov_range | float | Maximum field of view range for objects in the base_link frame. Only objects within the FOV will be published. |
+| center_to_base_link | float | Distance between center of the vehicle and its base_link. |
 
 
 ## Usage of docker-ros Images
