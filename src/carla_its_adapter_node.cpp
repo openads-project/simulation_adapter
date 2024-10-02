@@ -224,7 +224,21 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
   }
 
   // convert carla map name to lanelet map name
-  std::string lanelet_map_name = this->extractMapName(msg->map_name);
+  std::string lanelet_map_name;
+  std::smatch match;
+
+  // check if the string matches the default pattern
+  std::regex pattern_default_map(R"(Carla/Maps/([^/]+))");
+  if (std::regex_match(msg->map_name, match, pattern_default_map)) {
+    lanelet_map_name = match[1];
+  }
+
+  // check if the string matches the custom pattern
+  std::regex pattern_custom_map(R"((.+)/Maps/([^/]+)/\2)");
+  if (std::regex_match(msg->map_name, match, pattern_custom_map)) {
+    lanelet_map_name = match[2];
+  }
+
   if (lanelet_map_name.empty()) {
     RCLCPP_ERROR(this->get_logger(),  "Wrong format of CARLA map name");
     return;
@@ -469,26 +483,6 @@ void CarlaItsAdapterNode::trajectoryCallback(const tp::Trajectory::ConstSharedPt
     RCLCPP_WARN(this->get_logger(),  "Trajectory could not be transformed to 'map'");
     return;
   }
-}
-
-std::string extractMapName(const std::string input) {
-  
-    // regex patterns
-    std::regex pattern_default_map(R"(Carla/Maps/([^/]+))");
-    std::regex pattern_custom_map(R"((.+)/Maps/([^/]+)/\2)");
-    std::smatch match;
-
-    // check if the string matches the default pattern
-    if (std::regex_match(input, match, pattern_default_map)) {
-        return match[1];
-    }
-
-    // check if the string matches the custom pattern
-    if (std::regex_match(input, match, pattern_custom_map)) {
-        return match[2];
-    }
-
-    return "";
 }
 
 }  // end of namespace

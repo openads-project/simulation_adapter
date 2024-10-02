@@ -28,6 +28,7 @@ def generate_launch_description():
   use_sim_time_arg = DeclareLaunchArgument('use_sim_time', default_value='False')
 
   return LaunchDescription([
+    params_arg,
     node_name_arg,
     namespace_arg,
     input_ego_data_topic_arg,

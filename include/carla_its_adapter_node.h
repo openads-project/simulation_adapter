@@ -76,7 +76,6 @@ class CarlaItsAdapterNode : public rclcpp::Node {
     rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter> &parameters);
 
     void setup();
-    std::string extractMapName(const std::string input);
 
     void worldInfoCallback(const cm::CarlaWorldInfo::ConstSharedPtr msg);
     void egoDataCallback(const pi::EgoData::ConstSharedPtr msg);
