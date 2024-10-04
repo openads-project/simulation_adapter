@@ -23,7 +23,7 @@ CarlaItsAdapterNode::CarlaItsAdapterNode(const rclcpp::NodeOptions& options)
   this->declareAndLoadParameter("vehicle_frame", vehicle_frame_,
                                 "Frame ID of local vehicle frame");
 
-  this->declareAndLoadParameter("center_to_base_link", center_to_base_link_,
+  this->declareAndLoadParameter("geo_center_to_vehicle_frame", geo_center_to_vehicle_frame_,
                                 "Shift from center to base_link");
 
   this->declareAndLoadParameter("map_server_name", map_server_name_,
@@ -245,7 +245,7 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
   }
 
   // concatenate map file path
-  lanelet_map_name = "/data/maps/carla" + lanelet_map_name + ".osm";
+  lanelet_map_name = "/data/maps/carla/" + lanelet_map_name + ".osm";
 
   // change map by setting map server parameters
   auto set_parameters_results = map_server_parameters_client_->set_parameters(
@@ -301,7 +301,7 @@ void CarlaItsAdapterNode::egoDataCallback(const pi::EgoData::ConstSharedPtr msg)
     perception_msgs::object_access::setZ(ego_data, vehicle_frame_position_in_map_tf.transform.translation.z);
     perception_msgs::object_access::setOrientation(ego_data, vehicle_frame_position_in_map_tf.transform.rotation);
     ego_data.state.reference_point.value = pi::ObjectReferencePoint::REAR_AXLE_GROUND;
-    ego_data.state.reference_point.translation_to_geometric_center.x = -center_to_base_link_;
+    ego_data.state.reference_point.translation_to_geometric_center.x = -geo_center_to_vehicle_frame_;
     ego_data.state.reference_point.translation_to_geometric_center.z = msg->height/2.0;
   }
 
@@ -439,28 +439,25 @@ void CarlaItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedPtr ms
     {
       RCLCPP_WARN(this->get_logger(),  "\tTranformation from 'ego_vehicle' to '%s' is not available", vehicle_frame_.c_str());
 
-      if (vehicle_frame_ == "base_link")
-      {
-        // publish static transformation from ego_vehicle to base_link
-        gm::TransformStamped ego_vehicle_base_link;
-        ego_vehicle_base_link.header.stamp = this->get_clock()->now();
-        ego_vehicle_base_link.header.frame_id = "ego_vehicle";
-        ego_vehicle_base_link.child_frame_id = "base_link";
+      // publish static transformation from ego_vehicle to vehicle_frame
+      gm::TransformStamped ego_vehicle_to_vehicle_frame;
+      ego_vehicle_to_vehicle_frame.header.stamp = this->get_clock()->now();
+      ego_vehicle_to_vehicle_frame.header.frame_id = "ego_vehicle";
+      ego_vehicle_to_vehicle_frame.child_frame_id = vehicle_frame_;
 
-        ego_vehicle_base_link.transform.translation.x = center_to_base_link_;
-        ego_vehicle_base_link.transform.translation.y = 0.0;
-        ego_vehicle_base_link.transform.translation.z = 0.0;
+      ego_vehicle_to_vehicle_frame.transform.translation.x = geo_center_to_vehicle_frame_;
+      ego_vehicle_to_vehicle_frame.transform.translation.y = 0.0;
+      ego_vehicle_to_vehicle_frame.transform.translation.z = 0.0;
 
-        tf2::Quaternion q;
-        q.setRPY(0, 0, 0);
-        ego_vehicle_base_link.transform.rotation.x = q.x();
-        ego_vehicle_base_link.transform.rotation.y = q.y();
-        ego_vehicle_base_link.transform.rotation.z = q.z();
-        ego_vehicle_base_link.transform.rotation.w = q.w();
+      tf2::Quaternion q;
+      q.setRPY(0, 0, 0);
+      ego_vehicle_to_vehicle_frame.transform.rotation.x = q.x();
+      ego_vehicle_to_vehicle_frame.transform.rotation.y = q.y();
+      ego_vehicle_to_vehicle_frame.transform.rotation.z = q.z();
+      ego_vehicle_to_vehicle_frame.transform.rotation.w = q.w();
 
-        static_br_tf_.sendTransform(ego_vehicle_base_link);
-        RCLCPP_INFO(this->get_logger(), "\tTranformation from 'ego_vehicle' to 'base_link' was published");
-      }
+      static_br_tf_.sendTransform(ego_vehicle_to_vehicle_frame);
+      RCLCPP_INFO(this->get_logger(), "\tTranformation from 'ego_vehicle' to '%s' was published", vehicle_frame_.c_str());
     }
 
     RCLCPP_INFO(this->get_logger(), "Static transformation from '%s' to 'map' is now available", vehicle_frame_.c_str());
@@ -480,7 +477,7 @@ void CarlaItsAdapterNode::trajectoryCallback(const tp::Trajectory::ConstSharedPt
   }
   catch (tf2::TransformException& ex) 
   {
-    RCLCPP_WARN(this->get_logger(),  "Trajectory could not be transformed to 'map'");
+    RCLCPP_WARN(this->get_logger(),  "Trajectory could not be transformed from %s to 'map'", msg->header.frame_id.c_str());
     return;
   }
 }

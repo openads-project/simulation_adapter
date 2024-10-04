@@ -102,7 +102,7 @@ class CarlaItsAdapterNode : public rclcpp::Node {
 
     // input variables
     std::string vehicle_frame_;
-    double center_to_base_link_;
+    double geo_center_to_vehicle_frame_;
     std::string map_server_name_;
 
     std::vector<std::tuple<std::string, std::function<void(const rclcpp::Parameter &)>>>

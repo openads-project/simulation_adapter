@@ -26,22 +26,25 @@ This package contains the CarlaItsAdapterNode - a simple ROS 2 Node that convert
 | Topic | Type | Description | 
 | --- | --- | --- |
 | `/carla/world_info` | `carla_msgs::msg::CarlaWorldInfo` | World info of the CARLA environment |
-| `/carla_its_converter/object_list/carla_map` | `perception_msgs::ObjectList` | Objects in the carla environment in ITS format|
-| `/carla/ego_vehicle/odometry` | `nav_msgs::msg::Odometry` | Odometry of the ego vehicle |
+| `~/input_ego_data` | `perception_msgs::EgoData` | EgoData in the carla map frame|
+| `~/input_object_list` | `perception_msgs::ObjectList` | ObjectList in the carla map frame.|
+| `~/input_odometry` | `nav_msgs::Odometry` | Odometry message from carla.|
+| `~/input_trajectory` | `planning_msgs::Trajectory` | ObjectList in the carla map frame.|
 
 #### Published Topics
 
 | Topic | Type | Description |
 | --- | --- | --- |
-| `/carla_its_adapter/object_list/map` | `perception_msgs::ObjectList` | Object list in map frame |
-| `/carla_its_adapter/object_list/base_link` | `perception_msgs::ObjectList` | Object list in base_link frame |
+| `~/object_list/map` | `perception_msgs::ObjectList` | Object list in map frame |
+| `~/object_list` | `perception_msgs::ObjectList` | Object list in vehicle_frame |
 
 #### Parameters
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| fov_range | float | Maximum field of view range for objects in the base_link frame. Only objects within the FOV will be published. |
-| center_to_base_link | float | Distance between center of the vehicle and its base_link. |
+| map_server_name | string | Name of the map server. |
+| vehicle_frame | string | Name of the vehicle frame. |
+| geo_center_to_vehicle_frame | float | Distance between center of the vehicle and its base_link. |
 
 
 ## Usage of docker-ros Images
@@ -62,7 +65,7 @@ ros2 launch carla_its_adapter carla_its_adapter.launch.py
 
 | Package | File | Path | Description |
 | --- | --- | --- | --- |
-| `carla_its_adapter` | `carla_its_adapter.launch.py` | `launch/` | Launches CarlaItsAdapterNode for ROS2. |
+| `carla_its_adapter` | `carla_its_adapter_node_launch.py` | `launch/` | Launches CarlaItsAdapterNode for ROS2. |
 
 
 ### Configuration Files
