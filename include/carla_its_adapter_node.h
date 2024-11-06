@@ -1,11 +1,11 @@
 #pragma once
 
 #include <rclcpp/rclcpp.hpp>
-#include <memory>
-#include <string>
-#include <map>
 #include <iostream>
+#include <map>
+#include <memory>
 #include <regex>
+#include <string>
 
 // definitions
 #include <carla_msgs/msg/carla_world_info.hpp>
@@ -29,9 +29,9 @@
 
 // namespaces
 namespace cm = carla_msgs::msg;
-namespace nm = nav_msgs::msg;
 namespace gm = geometry_msgs::msg;
-namespace pi = perception_msgs::msg;
+namespace nm = nav_msgs::msg;
+namespace pm = perception_msgs::msg;
 namespace tp = trajectory_planning_msgs::msg;
 
 namespace carla_its_adapter {
@@ -73,41 +73,44 @@ class CarlaItsAdapterNode : public rclcpp::Node {
                                 const std::optional<T> &to_value = std::nullopt,
                                 const std::optional<T> &step_value = std::nullopt,
                                 const std::string &additional_constraints = "");
+    
     rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter> &parameters);
 
     void setup();
 
     void worldInfoCallback(const cm::CarlaWorldInfo::ConstSharedPtr msg);
-    void egoDataCallback(const pi::EgoData::ConstSharedPtr msg);
-    void objectListCallback(const pi::ObjectList::ConstSharedPtr msg);
+    void egoDataCallback(const pm::EgoData::ConstSharedPtr msg);
+    void objectListCallback(const pm::ObjectList::ConstSharedPtr msg);
     void odometryCallback(const nm::Odometry::ConstSharedPtr msg);
     void trajectoryCallback(const tp::Trajectory::ConstSharedPtr msg);
 
     OnSetParametersCallbackHandle::SharedPtr parameters_callback_;
     std::shared_ptr<rclcpp::AsyncParametersClient> map_server_parameters_client_;
 
+    // subscriber and publisher
     Subscriber<cm::CarlaWorldInfo> sub_world_info_;
-    Subscriber<pi::EgoData> sub_ego_data_;
-    Subscriber<pi::ObjectList> sub_object_list_;
+    Subscriber<pm::EgoData> sub_ego_data_;
+    Subscriber<pm::ObjectList> sub_object_list_;
     Subscriber<nm::Odometry> sub_odometry_;
     Subscriber<tp::Trajectory> sub_trajectory_;
 
-    Publisher<pi::EgoData> pub_ego_data_;
-    Publisher<pi::ObjectList> pub_object_list_;
-    Publisher<pi::ObjectList> pub_object_list_map_;
+    Publisher<pm::EgoData> pub_ego_data_;
+    Publisher<pm::ObjectList> pub_object_list_;
+    Publisher<pm::ObjectList> pub_object_list_map_;
 
     // tf2 variables
     std::unique_ptr<tf2_ros::Buffer> tf2_buffer_;
     std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
 
-    // input variables
+    // input parameters
     std::string map_server_name_;
     std::string vehicle_frame_;
     double geo_center_to_vehicle_frame_;
 
+    tp::Trajectory trajectory_planned_;
+
     std::vector<std::tuple<std::string, std::function<void(const rclcpp::Parameter &)>>>
       auto_reconfigurable_params_;
-    tp::Trajectory trajectory_planned_;
 };
 
 }  // end of namespace carla_its_adapter

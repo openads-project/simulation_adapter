@@ -21,13 +21,13 @@ CarlaItsAdapterNode::CarlaItsAdapterNode(const rclcpp::NodeOptions& options)
     : Node("carla_its_adapter_node", options) {
 
   this->declareAndLoadParameter("map_server_name", map_server_name_,
-                                "Map server name");
+                                "Name of the map server.");
 
   this->declareAndLoadParameter("vehicle_frame", vehicle_frame_,
-                                "Frame ID of local vehicle frame");
+                                "Name of the vehicle frame.");
 
   this->declareAndLoadParameter("geo_center_to_vehicle_frame", geo_center_to_vehicle_frame_,
-                                "Shift from center to base_link");
+                                "Distance from center of vehicle to vehicle_frame.");
 
   this->setup();
 }
@@ -46,6 +46,7 @@ void CarlaItsAdapterNode::declareAndLoadParameter(
     const bool add_to_auto_reconfigurable_params, const bool is_required, const bool read_only,
     const std::optional<T>& from_value, const std::optional<T>& to_value, const std::optional<T>& step_value,
     const std::string& additional_constraints) {
+
   rcl_interfaces::msg::ParameterDescriptor param_desc;
   param_desc.description = description;
   param_desc.additional_constraints = additional_constraints;
@@ -145,12 +146,11 @@ void CarlaItsAdapterNode::setup() {
   }
   RCLCPP_INFO(this->get_logger(), "Connected to map server ('%s') parameter service", map_server_name_.c_str());
 
-
   // create a callback for dynamic parameter configuration
   parameters_callback_ = this->add_on_set_parameters_callback(
       std::bind(&CarlaItsAdapterNode::parametersCallback, this, std::placeholders::_1));
 
-  // define QoS for world info topic
+  // define custom QoS for world info topic
   rclcpp::QoS qosLatching = rclcpp::QoS(rclcpp::KeepLast(1));
   qosLatching.transient_local();
   qosLatching.reliable();
@@ -160,11 +160,11 @@ void CarlaItsAdapterNode::setup() {
       kInputWorldInfoTopic, qosLatching, std::bind(&CarlaItsAdapterNode::worldInfoCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_world_info_->get_topic_name());
 
-  sub_ego_data_ = this->create_subscription<pi::EgoData>(
+  sub_ego_data_ = this->create_subscription<pm::EgoData>(
       kInputEgoDataTopic, 1, std::bind(&CarlaItsAdapterNode::egoDataCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_ego_data_->get_topic_name());
 
-  sub_object_list_ = this->create_subscription<pi::ObjectList>(
+  sub_object_list_ = this->create_subscription<pm::ObjectList>(
     kInputObjectListTopic, 1, std::bind(&CarlaItsAdapterNode::objectListCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_object_list_->get_topic_name());
 
@@ -177,13 +177,13 @@ void CarlaItsAdapterNode::setup() {
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_trajectory_->get_topic_name());
 
   // set up publisher for output topics
-  pub_ego_data_ = this->create_publisher<pi::EgoData>(kEgoDataTopic, 1);
+  pub_ego_data_ = this->create_publisher<pm::EgoData>(kEgoDataTopic, 1);
   RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_ego_data_->get_topic_name());
 
-  pub_object_list_ = this->create_publisher<pi::ObjectList>(kObjectListTopic, 1);
+  pub_object_list_ = this->create_publisher<pm::ObjectList>(kObjectListTopic, 1);
   RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_object_list_->get_topic_name());
   
-  pub_object_list_map_ = this->create_publisher<pi::ObjectList>(kObjectListMapTopic, 1);
+  pub_object_list_map_ = this->create_publisher<pm::ObjectList>(kObjectListMapTopic, 1);
   RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_object_list_map_->get_topic_name());
 
   // logging info
@@ -265,12 +265,13 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
     });
 }
 
-void CarlaItsAdapterNode::egoDataCallback(const pi::EgoData::ConstSharedPtr msg){
+void CarlaItsAdapterNode::egoDataCallback(const pm::EgoData::ConstSharedPtr msg){
   auto timeout = rclcpp::Duration::from_seconds(1.0);
+
   gm::TransformStamped vehicle_frame_position_in_carla_map_tf, vehicle_frame_position_in_map_tf, carla_map_to_map_tf;
 
   // transform ego_data (input header is carla_map, output header is map)
-  pi::EgoData ego_data;
+  pm::EgoData ego_data;
 
   gm::TransformStamped to_map_tf;
   try {
@@ -300,7 +301,7 @@ void CarlaItsAdapterNode::egoDataCallback(const pi::EgoData::ConstSharedPtr msg)
     perception_msgs::object_access::setY(ego_data, vehicle_frame_position_in_map_tf.transform.translation.y);
     perception_msgs::object_access::setZ(ego_data, vehicle_frame_position_in_map_tf.transform.translation.z);
     perception_msgs::object_access::setOrientation(ego_data, vehicle_frame_position_in_map_tf.transform.rotation);
-    ego_data.state.reference_point.value = pi::ObjectReferencePoint::REAR_AXLE_GROUND;
+    ego_data.state.reference_point.value = pm::ObjectReferencePoint::REAR_AXLE_GROUND;
     ego_data.state.reference_point.translation_to_geometric_center.x = -geo_center_to_vehicle_frame_;
     ego_data.state.reference_point.translation_to_geometric_center.z = msg->height/2.0;
   }
@@ -313,7 +314,7 @@ void CarlaItsAdapterNode::egoDataCallback(const pi::EgoData::ConstSharedPtr msg)
     ego_data.trajectory_planned.clear();
 
     // initialize state
-    pi::ObjectState object_state;
+    pm::ObjectState object_state;
     perception_msgs::object_access::initializeState(object_state, 1);
     object_state.reference_point = ego_data.state.reference_point;
 
@@ -336,16 +337,16 @@ void CarlaItsAdapterNode::egoDataCallback(const pi::EgoData::ConstSharedPtr msg)
     }
   }
 
-  // publish object list in map frame
+  // publish ego data in map frame
   pub_ego_data_->publish(ego_data);
 }
 
-void CarlaItsAdapterNode::objectListCallback(const pi::ObjectList::ConstSharedPtr msg){
+void CarlaItsAdapterNode::objectListCallback(const pm::ObjectList::ConstSharedPtr msg){
   auto timeout = rclcpp::Duration::from_seconds(1.0);
 
 
   // Option A: transform object_list to map frame
-  pi::ObjectList msg_object_list_map;
+  pm::ObjectList msg_object_list_map;
 
   gm::TransformStamped to_map_tf;
   try {
@@ -361,13 +362,13 @@ void CarlaItsAdapterNode::objectListCallback(const pi::ObjectList::ConstSharedPt
 
 
   // Option B: transform object list to vehicle_frame_
-  pi::ObjectList msg_object_list;
+  pm::ObjectList msg_object_list;
 
   gm::TransformStamped to_vehicle_frame_tf;
   try {
     to_vehicle_frame_tf = tf2_buffer_->lookupTransform(vehicle_frame_, msg->header.frame_id, msg->header.stamp, timeout);
   } catch (tf2::TransformException& ex) {
-    RCLCPP_WARN(this->get_logger(),  "Tranformation from '%s' to '%s' is not available", msg->header.frame_id.c_str() , vehicle_frame_.c_str());
+    RCLCPP_WARN(this->get_logger(),  "Transformation from '%s' to '%s' is not available", msg->header.frame_id.c_str() , vehicle_frame_.c_str());
     return;
   }
   tf2::doTransform(*msg, msg_object_list, to_vehicle_frame_tf);
@@ -388,7 +389,7 @@ void CarlaItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedPtr ms
       /     ros-bridge)         \
     carla_map                   map
       |
-      dynamic (published by ros-bridge)
+      dynamic (published by carla-ros-bridge)
       |
       v
     ego_vehicle ---static---> vehicle_frame
@@ -404,7 +405,7 @@ void CarlaItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedPtr ms
   }
   catch(const tf2::TransformException& e)
   {
-    RCLCPP_WARN(this->get_logger(),  "Tranformation from 'map' to '%s' is not available", vehicle_frame_.c_str());
+    RCLCPP_WARN(this->get_logger(),  "Transformation from 'map' to '%s' is not available", vehicle_frame_.c_str());
     static tf2_ros::StaticTransformBroadcaster static_br_tf_(this);
 
     // step 1: carla_map -> map
@@ -414,7 +415,7 @@ void CarlaItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedPtr ms
     }
     catch(const tf2::TransformException& e)
     {
-      RCLCPP_WARN(this->get_logger(),  "Tranformation from 'carla_map' to 'map' is not available. Should be provided using a shared parent utm frame.");
+      RCLCPP_WARN(this->get_logger(),  "Transformation from 'carla_map' to 'map' is not available. Should be provided using a shared parent utm frame.");
       RCLCPP_WARN(this->get_logger(),  "\tSkipped ...");
       return;
     }

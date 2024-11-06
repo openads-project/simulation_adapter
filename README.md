@@ -1,6 +1,6 @@
 # carla_its_adapter
 
-This package contains the CarlaItsAdapterNode - a simple ROS 2 Node that converts incoming messages from the [carla_its_converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_its_converter) to `map` and `base_link` frame. Moreover, the node is capable to call a service to load a lanelet-map  by parsing the available OpenDRIVE map.
+This package contains the CarlaItsAdapterNode - a simple ROS 2 Node that converts incoming messages from the [carla_its_converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_its_converter) to `map` and `vehicle_id` frame. Moreover, the node is capable to call a service to load a lanelet-map  by parsing the available OpenDRIVE map.
 
 - [Nodes](#nodes)
   - [carla_its_adapter/CarlaItsAdapterNode](#carla_its_adaptercarlait_adapternode)
@@ -35,8 +35,9 @@ This package contains the CarlaItsAdapterNode - a simple ROS 2 Node that convert
 
 | Topic | Type | Description |
 | --- | --- | --- |
-| `~/object_list/map` | `perception_msgs::ObjectList` | Object list in map frame |
+| `~/ego_data` | `perception_msgs::EgoData` | Ego data for vehicle_frame in map frame|
 | `~/object_list` | `perception_msgs::ObjectList` | Object list in vehicle_frame |
+| `~/object_list/map` | `perception_msgs::ObjectList` | Object list in map frame |
 
 #### Parameters
 
@@ -65,7 +66,7 @@ ros2 launch carla_its_adapter carla_its_adapter.launch.py
 
 | Package | File | Path | Description |
 | --- | --- | --- | --- |
-| `carla_its_adapter` | `carla_its_adapter_node_launch.py` | `launch/` | Launches CarlaItsAdapterNode for ROS2. |
+| `carla_its_adapter` | `carla_its_adapter_node_launch.py` | `launch/` | Launches CarlaItsAdapterNode for ROS 2. |
 
 
 ### Configuration Files
