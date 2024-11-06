@@ -101,9 +101,9 @@ class CarlaItsAdapterNode : public rclcpp::Node {
     std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
 
     // input variables
+    std::string map_server_name_;
     std::string vehicle_frame_;
     double geo_center_to_vehicle_frame_;
-    std::string map_server_name_;
 
     std::vector<std::tuple<std::string, std::function<void(const rclcpp::Parameter &)>>>
       auto_reconfigurable_params_;

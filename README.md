@@ -44,7 +44,7 @@ This package contains the CarlaItsAdapterNode - a simple ROS 2 Node that convert
 | --- | --- | --- |
 | map_server_name | string | Name of the map server. |
 | vehicle_frame | string | Name of the vehicle frame. |
-| geo_center_to_vehicle_frame | float | Distance between center of the vehicle and its base_link. |
+| geo_center_to_vehicle_frame | float | Distance from center of vehicle to vehicle_frame. |
 
 
 ## Usage of docker-ros Images

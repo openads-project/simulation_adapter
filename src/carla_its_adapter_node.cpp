@@ -20,14 +20,14 @@ namespace carla_its_adapter {
 CarlaItsAdapterNode::CarlaItsAdapterNode(const rclcpp::NodeOptions& options)
     : Node("carla_its_adapter_node", options) {
 
+  this->declareAndLoadParameter("map_server_name", map_server_name_,
+                                "Map server name");
+
   this->declareAndLoadParameter("vehicle_frame", vehicle_frame_,
                                 "Frame ID of local vehicle frame");
 
   this->declareAndLoadParameter("geo_center_to_vehicle_frame", geo_center_to_vehicle_frame_,
                                 "Shift from center to base_link");
-
-  this->declareAndLoadParameter("map_server_name", map_server_name_,
-                                "Map server name");
 
   this->setup();
 }
@@ -426,7 +426,7 @@ void CarlaItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedPtr ms
     }
     catch(const tf2::TransformException& e)
     {
-      RCLCPP_WARN(this->get_logger(),  "\tTranformation from 'carla_map' to 'ego_vehicle' not available");
+      RCLCPP_WARN(this->get_logger(),  "\tTransformation from 'carla_map' to 'ego_vehicle' not available");
       RCLCPP_WARN(this->get_logger(),  "\tSkipped ...");
       return;
     }
@@ -437,7 +437,7 @@ void CarlaItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedPtr ms
     }
     catch (const tf2::TransformException& e)
     {
-      RCLCPP_WARN(this->get_logger(),  "\tTranformation from 'ego_vehicle' to '%s' is not available", vehicle_frame_.c_str());
+      RCLCPP_WARN(this->get_logger(),  "\tTransformation from 'ego_vehicle' to '%s' is not available", vehicle_frame_.c_str());
 
       // publish static transformation from ego_vehicle to vehicle_frame
       gm::TransformStamped ego_vehicle_to_vehicle_frame;
@@ -457,7 +457,7 @@ void CarlaItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedPtr ms
       ego_vehicle_to_vehicle_frame.transform.rotation.w = q.w();
 
       static_br_tf_.sendTransform(ego_vehicle_to_vehicle_frame);
-      RCLCPP_INFO(this->get_logger(), "\tTranformation from 'ego_vehicle' to '%s' was published", vehicle_frame_.c_str());
+      RCLCPP_INFO(this->get_logger(), "\tTransformation from 'ego_vehicle' to '%s' was published", vehicle_frame_.c_str());
     }
 
     RCLCPP_INFO(this->get_logger(), "Static transformation from '%s' to 'map' is now available", vehicle_frame_.c_str());

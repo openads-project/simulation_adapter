@@ -25,7 +25,7 @@ def generate_launch_description():
   output_object_list_topic_arg = DeclareLaunchArgument('output_object_list_topic', default_value='~/object_list')
   output_object_list_map_topic_arg = DeclareLaunchArgument('output_object_list_topic_map', default_value='~/object_list_map')
 
-  use_sim_time_arg = DeclareLaunchArgument('use_sim_time', default_value='False')
+  use_sim_time_arg = DeclareLaunchArgument('use_sim_time', default_value='True')
 
   return LaunchDescription([
     params_arg,
