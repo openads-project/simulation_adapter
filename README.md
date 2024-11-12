@@ -1,6 +1,6 @@
 # carla_its_adapter
 
-This package contains the CarlaItsAdapterNode - a simple ROS 2 Node that converts incoming messages from the [carla_its_converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_its_converter) to `map` and `vehicle_id` frame. Moreover, the node is capable to call a service to load a lanelet-map  by parsing the available OpenDRIVE map.
+This package contains the CarlaItsAdapterNode - a simple ROS 2 Node that converts incoming messages from the [carla_its_converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_its_converter) to `map` and `vehicle_id` frame. Moreover, the node is capable to call a service to load a lanelet-map by parsing the available OpenDRIVE map.
 
 - [Nodes](#nodes)
   - [carla_its_adapter/CarlaItsAdapterNode](#carla_its_adaptercarlait_adapternode)
