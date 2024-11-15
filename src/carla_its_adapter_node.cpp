@@ -24,8 +24,8 @@ CarlaItsAdapterNode::CarlaItsAdapterNode(const rclcpp::NodeOptions& options) : N
                                 "Name of the vehicle frame id in CARLA.");
   this->declareAndLoadParameter("vehicle_frame_id", vehicle_frame_id_, "Name of the vehicle frame id.");
 
-  this->declareAndLoadParameter("geo_center_to_vehicle_frame", geo_center_to_vehicle_frame_,
-                                "Distance from center of vehicle to vehicle_frame_id.");
+  this->declareAndLoadParameter("carla_vehicle_frame_id_to_vehicle_frame_id_", carla_vehicle_frame_id_to_vehicle_frame_id_,
+                                "Longitudinal offset from carla_vehicle_frame_id to vehicle_frame_id.");
 
   this->setup();
 }
@@ -295,7 +295,7 @@ void CarlaItsAdapterNode::egoDataCallback(const pm::EgoData::ConstSharedPtr msg)
     perception_msgs::object_access::setZ(ego_data, vehicle_frame_position_in_map_tf.transform.translation.z);
     perception_msgs::object_access::setOrientation(ego_data, vehicle_frame_position_in_map_tf.transform.rotation);
     ego_data.state.reference_point.value = pm::ObjectReferencePoint::REAR_AXLE_GROUND;
-    ego_data.state.reference_point.translation_to_geometric_center.x = -geo_center_to_vehicle_frame_;
+    ego_data.state.reference_point.translation_to_geometric_center.x = -carla_vehicle_frame_id_to_vehicle_frame_id_;
     ego_data.state.reference_point.translation_to_geometric_center.z = msg->height / 2.0;
   }
 
@@ -438,7 +438,7 @@ void CarlaItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedPtr ms
       ego_vehicle_to_vehicle_frame.header.frame_id = carla_vehicle_frame_id_;
       ego_vehicle_to_vehicle_frame.child_frame_id = vehicle_frame_id_;
 
-      ego_vehicle_to_vehicle_frame.transform.translation.x = geo_center_to_vehicle_frame_;
+      ego_vehicle_to_vehicle_frame.transform.translation.x = carla_vehicle_frame_id_to_vehicle_frame_id_;
       ego_vehicle_to_vehicle_frame.transform.translation.y = 0.0;
       ego_vehicle_to_vehicle_frame.transform.translation.z = 0.0;
 
