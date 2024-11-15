@@ -1,6 +1,6 @@
 # carla_its_adapter
 
-This package contains the CarlaItsAdapterNode - a simple ROS 2 Node that converts incoming messages from the [carla_its_converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_its_converter) to `map` and `base_link` frame. Moreover, the node is capable to call a service to load a lanelet-map  by parsing the available OpenDRIVE map.
+This package contains the CarlaItsAdapterNode - a simple ROS 2 Node that converts incoming messages from the [carla_its_converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_its_converter) to `fixed_frame_id` and `vehicle_frame_id` frame. Moreover, the node is capable to call a service to load a lanelet-map by parsing the available OpenDRIVE map.
 
 - [Nodes](#nodes)
   - [carla_its_adapter/CarlaItsAdapterNode](#carla_its_adaptercarlait_adapternode)
@@ -26,22 +26,26 @@ This package contains the CarlaItsAdapterNode - a simple ROS 2 Node that convert
 | Topic | Type | Description | 
 | --- | --- | --- |
 | `/carla/world_info` | `carla_msgs::msg::CarlaWorldInfo` | World info of the CARLA environment |
-| `/carla_its_converter/object_list/carla_map` | `perception_msgs::ObjectList` | Objects in the carla environment in ITS format|
-| `/carla/ego_vehicle/odometry` | `nav_msgs::msg::Odometry` | Odometry of the ego vehicle |
+| `~/input_ego_data` | `perception_msgs::EgoData` | EgoData in the carla_fixed_frame_id |
+| `~/input_object_list` | `perception_msgs::ObjectList` | ObjectList in the carla_fixed_frame_id |
+| `~/input_odometry` | `nav_msgs::Odometry` | Odometry message from carla |
+| `~/input_trajectory` | `planning_msgs::Trajectory` | ObjectList in the carla_fixed_frame_id |
 
 #### Published Topics
 
 | Topic | Type | Description |
 | --- | --- | --- |
-| `/carla_its_adapter/object_list/map` | `perception_msgs::ObjectList` | Object list in map frame |
-| `/carla_its_adapter/object_list/base_link` | `perception_msgs::ObjectList` | Object list in base link frame |
+| `~/ego_data` | `perception_msgs::EgoData` | Ego data for vehicle_frame_id in the fixed_frame_id|
+| `~/object_list` | `perception_msgs::ObjectList` | Object list in the vehicle_frame_id |
+| `~/object_list_fixed` | `perception_msgs::ObjectList` | Object list in the fixed_frame_id |
 
 #### Parameters
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| fov_range | float | Maximum field of view range for objects in the base link frame. Only objects within the FOV will be published. |
-| center_to_baselink | float | Distance between center of the vehicle and its base link. |
+| map_server_name | string | Name of the map server. |
+| vehicle_frame_id | string | Name of the vehicle frame. |
+| geo_center_to_vehicle_frame | float | Distance from center of vehicle to vehicle_frame_id. |
 
 
 ## Usage of docker-ros Images
@@ -62,7 +66,7 @@ ros2 launch carla_its_adapter carla_its_adapter.launch.py
 
 | Package | File | Path | Description |
 | --- | --- | --- | --- |
-| `carla_its_adapter` | `carla_its_adapter.launch.py` | `launch/` | Launches CarlaItsAdapterNode for ROS2. |
+| `carla_its_adapter` | `carla_its_adapter_node_launch.py` | `launch/` | Launches CarlaItsAdapterNode for ROS 2. |
 
 
 ### Configuration Files

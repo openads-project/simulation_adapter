@@ -1,19 +1,13 @@
 cmake_minimum_required(VERSION 3.12.0 FATAL_ERROR)
 project(carla_its_adapter)
 
-find_package(ros_environment REQUIRED QUIET)
-set(ROS_VERSION $ENV{ROS_VERSION})
-
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
    add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# === ROS2 (AMENT) =============================================================
-# find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(carla_msgs REQUIRED)
 find_package(derived_object_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -21,24 +15,34 @@ find_package(lanelet2_map_server REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(perception_msgs REQUIRED)
 find_package(perception_msgs_utils REQUIRED)
-find_package(trajectory_planning_msgs REQUIRED)
-find_package(trajectory_planning_msgs_utils REQUIRED)
-find_package(tf2_trajectory_planning_msgs REQUIRED)
-find_package(rclcpp REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_perception_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_trajectory_planning_msgs REQUIRED)
+find_package(trajectory_planning_msgs REQUIRED)
+find_package(trajectory_planning_msgs_utils REQUIRED)
 
+set(TARGET_NAME carla_its_adapter_node_component)
 
-add_executable(${PROJECT_NAME}_node src/CarlaItsAdapterNode.cpp)
+add_library(${TARGET_NAME} SHARED
+  src/carla_its_adapter_node.cpp
+)
 
-target_include_directories(${PROJECT_NAME}_node PUBLIC
-$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-$<INSTALL_INTERFACE:include>)
-target_compile_features(${PROJECT_NAME}_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+rclcpp_components_register_node(${TARGET_NAME}
+  PLUGIN "carla_its_adapter::CarlaItsAdapterNode"
+  EXECUTABLE carla_its_adapter_node
+)
 
-ament_target_dependencies(${PROJECT_NAME}_node
+target_include_directories(${TARGET_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+target_compile_features(${TARGET_NAME} PUBLIC c_std_99 cxx_std_17)
+
+ament_target_dependencies(${TARGET_NAME}
+  rclcpp
+  rclcpp_components
   carla_msgs
   derived_object_msgs
   geometry_msgs
@@ -46,54 +50,29 @@ ament_target_dependencies(${PROJECT_NAME}_node
   nav_msgs
   perception_msgs
   perception_msgs_utils
-  trajectory_planning_msgs
-  trajectory_planning_msgs_utils
-  tf2_trajectory_planning_msgs
-  rclcpp
   tf2
   tf2_geometry_msgs
   tf2_perception_msgs
   tf2_ros
-)
-ament_export_dependencies(
-  carla_msgs
-  derived_object_msgs
-  geometry_msgs
-  lanelet2_map_server
-  nav_msgs
-  perception_msgs
-  perception_msgs_utils
+  tf2_trajectory_planning_msgs
   trajectory_planning_msgs
   trajectory_planning_msgs_utils
-  tf2_trajectory_planning_msgs
-  rclcpp
-  tf2
-  tf2_geometry_msgs
-  tf2_perception_msgs
-  tf2_ros
 )
 
-install(TARGETS
-${PROJECT_NAME}_node
-DESTINATION lib/${PROJECT_NAME}
+install(TARGETS ${TARGET_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
-install(
-  DIRECTORY launch
+install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
 )
 
-if(BUILD_TESTING)
-  #find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
-  #set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
-  #set(ament_cmake_cpplint_FOUND TRUE)
-  #ament_lint_auto_find_test_dependencies()
-endif()
+install(DIRECTORY config
+  DESTINATION share/${PROJECT_NAME}
+  OPTIONAL
+)
 
 ament_package()
 
