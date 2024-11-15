@@ -1,5 +1,9 @@
 /**:
   ros__parameters:
-    map_server_name: /ll2_map_server  # Name of map server
-    vehicle_frame: geo_center         # Frame ID of local vehicle frame
-    geo_center_to_vehicle_frame: 0.0  # Distance from center of vehicle to vehicle_frame
+    map_server_name: /ll2_map_server      # Name of map server
+
+    carla_fixed_frame_id: carla_map         # Frame ID of CARLA map
+    fixed_frame_id: map                   # Frame ID of fixed frame
+    carla_vehicle_frame_id: ego_vehicle   # Frame ID of CARLA vehicle frame
+    vehicle_frame_id: geo_center          # Frame ID of local vehicle frame
+    geo_center_to_vehicle_frame_id: 0.0   # Distance from center of vehicle to vehicle_frame_id
