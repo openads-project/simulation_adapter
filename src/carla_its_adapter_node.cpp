@@ -24,7 +24,7 @@ CarlaItsAdapterNode::CarlaItsAdapterNode(const rclcpp::NodeOptions& options) : N
                                 "Name of the vehicle frame id in CARLA.");
   this->declareAndLoadParameter("vehicle_frame_id", vehicle_frame_id_, "Name of the vehicle frame id.");
 
-  this->declareAndLoadParameter("carla_vehicle_frame_id_to_vehicle_frame_id_", carla_vehicle_frame_id_to_vehicle_frame_id_,
+  this->declareAndLoadParameter("carla_vehicle_frame_id_to_vehicle_frame_id", carla_vehicle_frame_id_to_vehicle_frame_id_,
                                 "Longitudinal offset from carla_vehicle_frame_id to vehicle_frame_id.");
 
   this->setup();
