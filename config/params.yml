@@ -2,8 +2,8 @@
   ros__parameters:
     map_server_name: /ll2_map_server      # Name of map server
 
-    carla_fixed_frame_id: carla_map       # Frame ID of CARLA map
-    fixed_frame_id: map                   # Frame ID of fixed frame
-    carla_vehicle_frame_id: ego_vehicle   # Frame ID of CARLA vehicle frame
-    vehicle_frame_id: base_link           # Frame ID of local vehicle frame
-    geo_center_to_vehicle_frame_id: 0.0   # Distance from center of vehicle to vehicle_frame_id
+    carla_fixed_frame_id: carla_map       # Name of the fixed frame id in CARLA
+    fixed_frame_id: map                   # Name of the fixed frame id over time
+    carla_vehicle_frame_id: ego_vehicle   # Name of the vehicle frame id in CARLA
+    vehicle_frame_id: geo_center          # Name of the vehicle frame id.
+    carla_vehicle_frame_id_to_vehicle_frame_id: 0.0   # Longitudinal offset from carla_vehicle_frame_id to vehicle_frame_id
