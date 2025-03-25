@@ -118,6 +118,7 @@ class CarlaItsAdapterNode : public rclcpp::Node {
   double carla_vehicle_frame_id_to_vehicle_frame_id_;
 
   tp::Trajectory trajectory_planned_;
+  std::string current_map_name_;
 
   std::vector<std::tuple<std::string, std::function<void(const rclcpp::Parameter &)>>> auto_reconfigurable_params_;
 };

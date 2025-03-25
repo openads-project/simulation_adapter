@@ -161,6 +161,8 @@ void CarlaItsAdapterNode::setup() {
   tf2_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
 
+  current_map_name_ = "";
+
   // parameters client to map server for setting map server's parameters
   map_server_parameters_client_ = std::make_shared<rclcpp::AsyncParametersClient>(this, map_server_name_);
   using namespace std::chrono_literals;
@@ -233,6 +235,9 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
     {"aldenhoven", "/docker-ros/additional-files/germany-aldenhoven-atc/lanelet2/unicaragil-atlatec/ATC_demo_2024-05-24.osm"},
     {"ika-test-track", "/docker-ros/additional-files/germany-aachen-campusmelaten/lanelet2/ika-testtrack/ika-testtrack-autoshuttle.osm"},
 
+  if (msg->map_name == current_map_name_) return;
+  current_map_name_ = msg->map_name;
+
   double lat, lon;
   std::string lanelet_map_name;
   if (!custom_ll2_origin_.empty()) {
@@ -277,13 +282,13 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
 
     // check if the string matches the default pattern
     std::regex pattern_default_map(R"(Carla/Maps/([^/]+))");
-    if (std::regex_match(msg->map_name, match, pattern_default_map)) {
+    if (std::regex_match(current_map_name_, match, pattern_default_map)) {
       carla_map_name = match[1];
     }
 
     // check if the string matches the custom pattern
     std::regex pattern_custom_map(R"((.+)/Maps/([^/]+)/\2)");
-    if (std::regex_match(msg->map_name, match, pattern_custom_map)) {
+    if (std::regex_match(current_map_name_, match, pattern_custom_map)) {
       carla_map_name = match[2];
     }
 
