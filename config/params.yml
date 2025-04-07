@@ -1,6 +1,8 @@
 /**:
   ros__parameters:
     map_server_name: /ll2_map_server      # Name of map server
+    custom_ll2_file_path: ''              # Leave empty to use automatically generated path from OpenDRIVE map
+    custom_ll2_origin: []                 # Leave empty to use automatically generated origin from OpenDRIVE map [lat, lon]
 
     carla_fixed_frame_id: carla_map       # Name of the fixed frame id in CARLA
     fixed_frame_id: map                   # Name of the fixed frame id over time

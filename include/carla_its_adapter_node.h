@@ -105,6 +105,8 @@ class CarlaItsAdapterNode : public rclcpp::Node {
 
   // input parameters
   std::string map_server_name_;
+  std::string custom_ll2_file_path_ = "";
+  std::vector<double> custom_ll2_origin_ = {};
   std::string carla_fixed_frame_id_;
   std::string fixed_frame_id_;
   std::string carla_vehicle_frame_id_;

@@ -17,6 +17,10 @@ namespace carla_its_adapter {
  */
 CarlaItsAdapterNode::CarlaItsAdapterNode(const rclcpp::NodeOptions& options) : Node("carla_its_adapter_node", options) {
   this->declareAndLoadParameter("map_server_name", map_server_name_, "Name of the map server.");
+  this->declareAndLoadParameter("custom_ll2_file_path", custom_ll2_file_path_,
+                                "Custom path to the lanelet2 map file to be loaded (path in map_server). leave empty to use automatically generated path from OpenDRIVE map.");
+  this->declareAndLoadParameter("custom_ll2_origin", custom_ll2_origin_,
+                                "Custom origin for the lanelet2 map [latitude, longitude]. Leave empty to use automatically generated origin from OpenDRIVE map.");
 
   this->declareAndLoadParameter("carla_fixed_frame_id", carla_fixed_frame_id_, "Name of the fixed frame id in CARLA.");
   this->declareAndLoadParameter("fixed_frame_id", fixed_frame_id_, "Name of the fixed frame id over time.");
@@ -193,59 +197,72 @@ void CarlaItsAdapterNode::setup() {
  */
 
 void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstSharedPtr msg) {
-  // derive latitude and longitude from OpenDRIVE file
-  std::string opendrive_string = msg->opendrive;
-
-  std::string lat;
-  size_t latPos = opendrive_string.find("+lat_0=");
-  if (latPos != std::string::npos) {
-    size_t latValueStart = latPos + 7;  // length of "+lat_0="
-    size_t latValueEnd = opendrive_string.find(" ", latValueStart);
-    lat = opendrive_string.substr(latValueStart, latValueEnd - latValueStart);
-  } else {
-    RCLCPP_ERROR(this->get_logger(), "OpenDRIVE-Header is invalid. Latitude is required.");
-    return;
-  }
-
-  std::string lon;
-  size_t lonPos = opendrive_string.find("+lon_0=");
-  if (lonPos != std::string::npos) {
-    size_t lonValueStart = lonPos + 7;  // length of "+lon_0="
-    size_t lonValueEnd = opendrive_string.find(" ", lonValueStart);
-    lon = opendrive_string.substr(lonValueStart, lonValueEnd - lonValueStart);
-  } else {
-    RCLCPP_ERROR(this->get_logger(), "OpenDRIVE-Header is invalid. Longitude is required.");
-    return;
-  }
-
-  // convert carla map name to lanelet map name
+  double lat, lon;
   std::string lanelet_map_name;
-  std::smatch match;
+  if (!custom_ll2_origin_.empty()) {
+    lat = custom_ll2_origin_[0];
+    lon = custom_ll2_origin_[1];
+  } else {
+    // derive latitude and longitude from OpenDRIVE file
+    std::string opendrive_string = msg->opendrive;
 
-  // check if the string matches the default pattern
-  std::regex pattern_default_map(R"(Carla/Maps/([^/]+))");
-  if (std::regex_match(msg->map_name, match, pattern_default_map)) {
-    lanelet_map_name = match[1];
+    std::string lat_str;
+    size_t latPos = opendrive_string.find("+lat_0=");
+    if (latPos != std::string::npos) {
+      size_t latValueStart = latPos + 7;  // length of "+lat_0="
+      size_t latValueEnd = opendrive_string.find(" ", latValueStart);
+      lat_str = opendrive_string.substr(latValueStart, latValueEnd - latValueStart);
+      lat = std::stod(lat_str);
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "OpenDRIVE-Header is invalid. Latitude is required.");
+      return;
+    }
+
+    std::string lon_str;
+    size_t lonPos = opendrive_string.find("+lon_0=");
+    if (lonPos != std::string::npos) {
+      size_t lonValueStart = lonPos + 7;  // length of "+lon_0="
+      size_t lonValueEnd = opendrive_string.find(" ", lonValueStart);
+      lon_str = opendrive_string.substr(lonValueStart, lonValueEnd - lonValueStart);
+      lon = std::stod(lon_str);
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "OpenDRIVE-Header is invalid. Longitude is required.");
+      return;
+    }
   }
 
-  // check if the string matches the custom pattern
-  std::regex pattern_custom_map(R"((.+)/Maps/([^/]+)/\2)");
-  if (std::regex_match(msg->map_name, match, pattern_custom_map)) {
-    lanelet_map_name = match[2];
-  }
+  if (custom_ll2_file_path_ != "") {
+    // use custom lanelet2 map file
+    lanelet_map_name = custom_ll2_file_path_;
+  } else {
+    // convert carla map name to lanelet map name
+    std::smatch match;
 
-  if (lanelet_map_name.empty()) {
-    RCLCPP_ERROR(this->get_logger(), "Wrong format of CARLA map name");
-    return;
-  }
+    // check if the string matches the default pattern
+    std::regex pattern_default_map(R"(Carla/Maps/([^/]+))");
+    if (std::regex_match(msg->map_name, match, pattern_default_map)) {
+      lanelet_map_name = match[1];
+    }
 
-  // concatenate map file path
-  lanelet_map_name = "/data/maps/carla/" + lanelet_map_name + ".osm";
+    // check if the string matches the custom pattern
+    std::regex pattern_custom_map(R"((.+)/Maps/([^/]+)/\2)");
+    if (std::regex_match(msg->map_name, match, pattern_custom_map)) {
+      lanelet_map_name = match[2];
+    }
+
+    if (lanelet_map_name.empty()) {
+      RCLCPP_ERROR(this->get_logger(), "Wrong format of CARLA map name");
+      return;
+    }
+
+    // concatenate map file path
+    lanelet_map_name = "/data/maps/carla/" + lanelet_map_name + ".osm";
+  }
 
   // change map by setting map server parameters
   auto set_parameters_results = map_server_parameters_client_->set_parameters(
       {rclcpp::Parameter("map_filepath", lanelet_map_name), rclcpp::Parameter("map_frame_id", fixed_frame_id_),
-       rclcpp::Parameter("origin_lat", std::stod(lat)), rclcpp::Parameter("origin_lon", std::stod(lon))},
+       rclcpp::Parameter("origin_lat", lat), rclcpp::Parameter("origin_lon", lon)},
       [this](std::shared_future<std::vector<rcl_interfaces::msg::SetParametersResult>> future) {
         auto results = future.get();
         for (const auto& result : results) {
