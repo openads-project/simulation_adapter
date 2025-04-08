@@ -229,8 +229,8 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
 
   std::map<std::string, std::string> map_files = {
     {"Town10HD", "/data/maps/locations/synthetic-carla/lanelet2/town10hd/Town10HD.osm"},
-    {"aldenhoven", "/docker-ros/additional-files/germany-aldenhoven-atc/lanelet2/unicaragil-atlatec/ATC_demo_2024-05-24.osm"},
-    {"ika-test-track", "/docker-ros/additional-files/germany-aachen-campusmelaten/lanelet2/ika-testtrack/ika-testtrack-autoshuttle.osm"},
+    {"aldenhoven", "/data/maps/locations/germany-aldenhoven-atc/lanelet2/unicaragil-atlatec/ATC_demo_2024-05-24.osm"},
+    {"ika-test-track", "/data/maps/locations/germany-aachen-campusmelaten/lanelet2/ika-testtrack/ika-testtrack-autoshuttle.osm"},
   };
 
   if (msg->map_name == current_map_name_) return;
