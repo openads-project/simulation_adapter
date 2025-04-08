@@ -8,3 +8,15 @@
     carla_vehicle_frame_id: ego_vehicle   # Name of the vehicle frame id in CARLA
     vehicle_frame_id: geo_center          # Name of the vehicle frame id.
     carla_vehicle_frame_id_to_vehicle_frame_id: 0.0   # Longitudinal offset from carla_vehicle_frame_id to vehicle_frame_id
+
+    maps:
+      carla_maps:
+        - Town10HD
+        - aldenhoven
+        - ika-test-track   
+      lanelet_files:
+        - /data/maps/locations/synthetic-carla/lanelet2/town10hd/Town10HD.osm
+        - /data/maps/locations/germany-aldenhoven-atc/lanelet2/unicaragil-atlatec/ATC_demo_2024-05-24.osm
+        - /data/maps/locations/germany-aachen-campusmelaten/lanelet2/ika-testtrack/ika-testtrack-autoshuttle.osm
+  
+

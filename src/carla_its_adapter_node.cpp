@@ -28,6 +28,9 @@ CarlaItsAdapterNode::CarlaItsAdapterNode(const rclcpp::NodeOptions& options) : N
   this->declareAndLoadParameter("carla_vehicle_frame_id_to_vehicle_frame_id", carla_vehicle_frame_id_to_vehicle_frame_id_,
                                 "Longitudinal offset from carla_vehicle_frame_id to vehicle_frame_id.");
 
+  this->declareAndLoadParameter("maps.carla_maps", carla_maps_, "List of supported CARLA maps.");
+  this->declareAndLoadParameter("maps.lanelet_files", lanelet_files_, "Lanelet files for all supported CARLA maps");
+
   this->setup();
 }
 
@@ -227,12 +230,6 @@ void CarlaItsAdapterNode::setup() {
 
 void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstSharedPtr msg) {
 
-  std::map<std::string, std::string> map_files = {
-    {"Town10HD", "/data/maps/locations/synthetic-carla/lanelet2/town10hd/Town10HD.osm"},
-    {"aldenhoven", "/data/maps/locations/germany-aldenhoven-atc/lanelet2/unicaragil-atlatec/ATC_demo_2024-05-24.osm"},
-    {"ika-test-track", "/data/maps/locations/germany-aachen-campusmelaten/lanelet2/ika-testtrack/ika-testtrack-autoshuttle.osm"},
-  };
-
   if (msg->map_name == current_map_name_) return;
   current_map_name_ = msg->map_name;
 
@@ -284,8 +281,16 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
       return;
     }
 
-    // get lanelet2 map name from dict
-    lanelet_map_name = map_files[carla_map_name];
+    // find carla_map_name in carla_maps_
+    auto it = std::find(carla_maps_.begin(), carla_maps_.end(), carla_map_name);
+    if (it == carla_maps_.end()) {
+      RCLCPP_ERROR(this->get_logger(), "CARLA map name '%s' not found in the list of supported maps", carla_map_name.c_str());
+      return;
+    }
+
+    // Get lanelet map for carla map name
+    size_t index = std::distance(carla_maps_.begin(), it);
+    lanelet_map_name = lanelet_files_[index];
 
     // change map by setting map server parameters
     auto set_parameters_results = map_server_parameters_client_->set_parameters(

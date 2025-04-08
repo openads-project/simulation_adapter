@@ -116,6 +116,13 @@ class CarlaItsAdapterNode : public rclcpp::Node {
   std::string vehicle_frame_id_ = "geo_center";
   double carla_vehicle_frame_id_to_vehicle_frame_id_ = 0.0;
 
+  std::vector<std::string> carla_maps_ = {"Town10HD", "aldenhoven", "ika-test-track"};
+  std::vector<std::string> lanelet_files_ = {
+    "/data/maps/locations/synthetic-carla/lanelet2/town10hd/Town10HD.osm",
+    "/data/maps/locations/germany-aldenhoven-atc/lanelet2/unicaragil-atlatec/ATC_demo_2024-05-24.osm",
+    "/data/maps/locations/germany-aachen-campusmelaten/lanelet2/ika-testtrack/ika-testtrack-autoshuttle.osm"
+  };
+
   tp::Trajectory trajectory_planned_;
   std::string current_map_name_;
 
