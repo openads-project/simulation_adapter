@@ -17,11 +17,8 @@ namespace carla_its_adapter {
  */
 CarlaItsAdapterNode::CarlaItsAdapterNode(const rclcpp::NodeOptions& options) : Node("carla_its_adapter_node", options) {
   this->declareAndLoadParameter("map_server_name", map_server_name_, "Name of the map server.");
-  this->declareAndLoadParameter("custom_ll2_file_path", custom_ll2_file_path_,
-                                "Custom path to the lanelet2 map file to be loaded (path in map_server). leave empty to use automatically generated path from OpenDRIVE map.");
-  this->declareAndLoadParameter("custom_ll2_origin", custom_ll2_origin_,
-                                "Custom origin for the lanelet2 map [latitude, longitude]. Leave empty to use automatically generated origin from OpenDRIVE map.");
-
+  this->declareAndLoadParameter("set_ll2_map_from_carla", set_ll2_map_from_carla_,
+                                "Automatically set the ll2 map based on the CARLA map.");
   this->declareAndLoadParameter("carla_fixed_frame_id", carla_fixed_frame_id_, "Name of the fixed frame id in CARLA.");
   this->declareAndLoadParameter("fixed_frame_id", fixed_frame_id_, "Name of the fixed frame id over time.");
   this->declareAndLoadParameter("carla_vehicle_frame_id", carla_vehicle_frame_id_,
@@ -240,7 +237,7 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
   current_map_name_ = msg->map_name;
 
   std::string lanelet_map_name;
-  if (set_ll2_origin_from_carla_) {
+  if (set_ll2_map_from_carla_) {
     // derive latitude and longitude from OpenDRIVE file
     std::string opendrive_string = msg->opendrive;
 
@@ -266,21 +263,6 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
       return;
     }
 
-    // change ll2 origin by setting map server parameters
-    auto set_parameters_results = map_server_parameters_client_->set_parameters(
-        {rclcpp::Parameter("map_frame_id", fixed_frame_id_), rclcpp::Parameter("origin_lat", std::stod(lat)),
-         rclcpp::Parameter("origin_lon", std::stod(lon))},
-        [this](std::shared_future<std::vector<rcl_interfaces::msg::SetParametersResult>> future) {
-          auto results = future.get();
-          for (const auto& result : results) {
-            if (!result.successful)
-              RCLCPP_ERROR(this->get_logger(), "Failed to set parameter: %s", result.reason.c_str());
-          }
-          RCLCPP_INFO(this->get_logger(), "Finished setting map server parameters");
-        });
-  }
-
-  if (set_ll2_map_from_carla_) {
     // convert carla map name to lanelet map name
     std::smatch match;
     std::string carla_map_name;
@@ -304,9 +286,13 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
 
     // get lanelet2 map name from dict
     lanelet_map_name = map_files[carla_map_name];
+
     // change map by setting map server parameters
     auto set_parameters_results = map_server_parameters_client_->set_parameters(
-      {rclcpp::Parameter("map_filepath", lanelet_map_name)},
+      {rclcpp::Parameter("map_filepath", lanelet_map_name),
+       rclcpp::Parameter("map_frame_id", fixed_frame_id_), 
+       rclcpp::Parameter("origin_lat", std::stod(lat)),
+       rclcpp::Parameter("origin_lon", std::stod(lon))},
       [this](std::shared_future<std::vector<rcl_interfaces::msg::SetParametersResult>> future) {
         auto results = future.get();
         for (const auto& result : results) {
