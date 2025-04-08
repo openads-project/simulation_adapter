@@ -234,48 +234,53 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
     {"Town10HD", "/data/maps/locations/synthetic-carla/lanelet2/town10hd/Town10HD.osm"},
     {"aldenhoven", "/docker-ros/additional-files/germany-aldenhoven-atc/lanelet2/unicaragil-atlatec/ATC_demo_2024-05-24.osm"},
     {"ika-test-track", "/docker-ros/additional-files/germany-aachen-campusmelaten/lanelet2/ika-testtrack/ika-testtrack-autoshuttle.osm"},
+  };
 
   if (msg->map_name == current_map_name_) return;
   current_map_name_ = msg->map_name;
 
-  double lat, lon;
   std::string lanelet_map_name;
-  if (!custom_ll2_origin_.empty()) {
-    lat = custom_ll2_origin_[0];
-    lon = custom_ll2_origin_[1];
-  } else {
+  if (set_ll2_origin_from_carla_) {
     // derive latitude and longitude from OpenDRIVE file
     std::string opendrive_string = msg->opendrive;
 
-    std::string lat_str;
+    std::string lat;
     size_t latPos = opendrive_string.find("+lat_0=");
     if (latPos != std::string::npos) {
       size_t latValueStart = latPos + 7;  // length of "+lat_0="
       size_t latValueEnd = opendrive_string.find(" ", latValueStart);
-      lat_str = opendrive_string.substr(latValueStart, latValueEnd - latValueStart);
-      lat = std::stod(lat_str);
+      lat = opendrive_string.substr(latValueStart, latValueEnd - latValueStart);
     } else {
       RCLCPP_ERROR(this->get_logger(), "OpenDRIVE-Header is invalid. Latitude is required.");
       return;
     }
 
-    std::string lon_str;
+    std::string lon;
     size_t lonPos = opendrive_string.find("+lon_0=");
     if (lonPos != std::string::npos) {
       size_t lonValueStart = lonPos + 7;  // length of "+lon_0="
       size_t lonValueEnd = opendrive_string.find(" ", lonValueStart);
-      lon_str = opendrive_string.substr(lonValueStart, lonValueEnd - lonValueStart);
-      lon = std::stod(lon_str);
+      lon = opendrive_string.substr(lonValueStart, lonValueEnd - lonValueStart);
     } else {
       RCLCPP_ERROR(this->get_logger(), "OpenDRIVE-Header is invalid. Longitude is required.");
       return;
     }
+
+    // change ll2 origin by setting map server parameters
+    auto set_parameters_results = map_server_parameters_client_->set_parameters(
+        {rclcpp::Parameter("map_frame_id", fixed_frame_id_), rclcpp::Parameter("origin_lat", std::stod(lat)),
+         rclcpp::Parameter("origin_lon", std::stod(lon))},
+        [this](std::shared_future<std::vector<rcl_interfaces::msg::SetParametersResult>> future) {
+          auto results = future.get();
+          for (const auto& result : results) {
+            if (!result.successful)
+              RCLCPP_ERROR(this->get_logger(), "Failed to set parameter: %s", result.reason.c_str());
+          }
+          RCLCPP_INFO(this->get_logger(), "Finished setting map server parameters");
+        });
   }
 
-  if (custom_ll2_file_path_ != "") {
-    // use custom lanelet2 map file
-    lanelet_map_name = custom_ll2_file_path_;
-  } else {
+  if (set_ll2_map_from_carla_) {
     // convert carla map name to lanelet map name
     std::smatch match;
     std::string carla_map_name;
@@ -296,15 +301,12 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
       RCLCPP_ERROR(this->get_logger(), "Wrong format of CARLA map name");
       return;
     }
-    
+
     // get lanelet2 map name from dict
     lanelet_map_name = map_files[carla_map_name];
-  }
-
-  // change map by setting map server parameters
-  auto set_parameters_results = map_server_parameters_client_->set_parameters(
-      {rclcpp::Parameter("map_filepath", lanelet_map_name), rclcpp::Parameter("map_frame_id", fixed_frame_id_),
-       rclcpp::Parameter("origin_lat", lat), rclcpp::Parameter("origin_lon", lon)},
+    // change map by setting map server parameters
+    auto set_parameters_results = map_server_parameters_client_->set_parameters(
+      {rclcpp::Parameter("map_filepath", lanelet_map_name)},
       [this](std::shared_future<std::vector<rcl_interfaces::msg::SetParametersResult>> future) {
         auto results = future.get();
         for (const auto& result : results) {
@@ -313,6 +315,7 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
         }
         RCLCPP_INFO(this->get_logger(), "Finished setting map server parameters");
       });
+  }
 }
 
 void CarlaItsAdapterNode::egoDataCallback(const pm::EgoData::ConstSharedPtr msg) {
