@@ -108,14 +108,14 @@ class CarlaItsAdapterNode : public rclcpp::Node {
   std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
 
   // input parameters
-  std::string map_server_name_;
+  std::string map_server_name_ = "/ll2_map_server";
   bool set_ll2_map_from_carla_ = true;
-  bool set_ll2_origin_from_carla_ = true;
-  std::string carla_fixed_frame_id_;
-  std::string fixed_frame_id_;
-  std::string carla_vehicle_frame_id_;
-  std::string vehicle_frame_id_;
-  double carla_vehicle_frame_id_to_vehicle_frame_id_;
+  std::string carla_fixed_frame_id_ = "carla_map";
+  std::string fixed_frame_id_ = "map";
+  std::string carla_vehicle_frame_id_ = "ego_vehicle";
+  std::string vehicle_frame_id_ = "geo_center";
+  std::string vehicle_frame_id_ = "base_link";
+  double carla_vehicle_frame_id_to_vehicle_frame_id_ = 0.0;
 
   tp::Trajectory trajectory_planned_;
   std::string current_map_name_;
