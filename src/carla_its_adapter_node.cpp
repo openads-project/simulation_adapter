@@ -227,6 +227,12 @@ void CarlaItsAdapterNode::setup() {
  */
 
 void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstSharedPtr msg) {
+
+  std::map<std::string, std::string> map_files = {
+    {"Town10HD", "/data/maps/locations/synthetic-carla/lanelet2/town10hd/Town10HD.osm"},
+    {"aldenhoven", "/docker-ros/additional-files/germany-aldenhoven-atc/lanelet2/unicaragil-atlatec/ATC_demo_2024-05-24.osm"},
+    {"ika-test-track", "/docker-ros/additional-files/germany-aachen-campusmelaten/lanelet2/ika-testtrack/ika-testtrack-autoshuttle.osm"},
+
   double lat, lon;
   std::string lanelet_map_name;
   if (!custom_ll2_origin_.empty()) {
@@ -267,26 +273,27 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
   } else {
     // convert carla map name to lanelet map name
     std::smatch match;
+    std::string carla_map_name;
 
     // check if the string matches the default pattern
     std::regex pattern_default_map(R"(Carla/Maps/([^/]+))");
     if (std::regex_match(msg->map_name, match, pattern_default_map)) {
-      lanelet_map_name = match[1];
+      carla_map_name = match[1];
     }
 
     // check if the string matches the custom pattern
     std::regex pattern_custom_map(R"((.+)/Maps/([^/]+)/\2)");
     if (std::regex_match(msg->map_name, match, pattern_custom_map)) {
-      lanelet_map_name = match[2];
+      carla_map_name = match[2];
     }
 
-    if (lanelet_map_name.empty()) {
+    if (carla_map_name.empty()) {
       RCLCPP_ERROR(this->get_logger(), "Wrong format of CARLA map name");
       return;
     }
-
-    // concatenate map file path
-    lanelet_map_name = "/data/maps/carla/" + lanelet_map_name + ".osm";
+    
+    // get lanelet2 map name from dict
+    lanelet_map_name = map_files[carla_map_name];
   }
 
   // change map by setting map server parameters
