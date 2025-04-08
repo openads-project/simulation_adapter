@@ -114,7 +114,6 @@ class CarlaItsAdapterNode : public rclcpp::Node {
   std::string fixed_frame_id_ = "map";
   std::string carla_vehicle_frame_id_ = "ego_vehicle";
   std::string vehicle_frame_id_ = "geo_center";
-  std::string vehicle_frame_id_ = "base_link";
   double carla_vehicle_frame_id_to_vehicle_frame_id_ = 0.0;
 
   tp::Trajectory trajectory_planned_;
