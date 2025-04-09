@@ -9,7 +9,6 @@
 
 // definitions
 #include <carla_msgs/msg/carla_world_info.hpp>
-#include <derived_object_msgs/msg/object_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <perception_msgs/msg/ego_data.hpp>
 #include <perception_msgs/msg/object_list.hpp>

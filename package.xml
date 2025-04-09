@@ -19,9 +19,7 @@
   <depend>rclcpp_components</depend>
 
   <depend>carla_msgs</depend>
-  <depend>derived_object_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>lanelet2_map_server</depend>
   <depend>nav_msgs</depend>
   <depend>perception_msgs</depend>
   <depend>perception_msgs_utils</depend>

@@ -9,9 +9,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(carla_msgs REQUIRED)
-find_package(derived_object_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(lanelet2_map_server REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(perception_msgs REQUIRED)
 find_package(perception_msgs_utils REQUIRED)
@@ -44,9 +42,7 @@ ament_target_dependencies(${TARGET_NAME}
   rclcpp
   rclcpp_components
   carla_msgs
-  derived_object_msgs
   geometry_msgs
-  lanelet2_map_server
   nav_msgs
   perception_msgs
   perception_msgs_utils
