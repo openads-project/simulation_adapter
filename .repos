@@ -1,21 +1,13 @@
 repositories:
   planning_interfaces:
     type: git
-    url: https://gitlab.ika.rwth-aachen.de/fb-fi/definitions/planning_interfaces.git
+    url: https://github.com/ika-rwth-aachen/planning_interfaces.git
     version: main
   perception_interfaces:
     type: git
-    url: https://gitlab.ika.rwth-aachen.de/fb-fi/definitions/perception_interfaces.git
+    url: https://github.com/ika-rwth-aachen/perception_interfaces.git
     version: main
   ros-carla-msgs:
     type: git
     url: https://github.com/carla-simulator/ros-carla-msgs.git
     version: master
-  derived_object_msgs:
-    type: git
-    url: https://github.com/astuff/astuff_sensor_msgs.git
-    version: master
-  lanelet2_map_server:
-    type: git
-    url: https://gitlab.ika.rwth-aachen.de/fb-fi/its-modules/localization/lanelet2_map_server
-    version: main

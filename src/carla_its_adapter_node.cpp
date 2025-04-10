@@ -17,7 +17,8 @@ namespace carla_its_adapter {
  */
 CarlaItsAdapterNode::CarlaItsAdapterNode(const rclcpp::NodeOptions& options) : Node("carla_its_adapter_node", options) {
   this->declareAndLoadParameter("map_server_name", map_server_name_, "Name of the map server.");
-
+  this->declareAndLoadParameter("set_ll2_map_from_carla", set_ll2_map_from_carla_,
+                                "Automatically set the ll2 map based on the CARLA map.");
   this->declareAndLoadParameter("carla_fixed_frame_id", carla_fixed_frame_id_, "Name of the fixed frame id in CARLA.");
   this->declareAndLoadParameter("fixed_frame_id", fixed_frame_id_, "Name of the fixed frame id over time.");
   this->declareAndLoadParameter("carla_vehicle_frame_id", carla_vehicle_frame_id_,
@@ -26,6 +27,9 @@ CarlaItsAdapterNode::CarlaItsAdapterNode(const rclcpp::NodeOptions& options) : N
 
   this->declareAndLoadParameter("carla_vehicle_frame_id_to_vehicle_frame_id", carla_vehicle_frame_id_to_vehicle_frame_id_,
                                 "Longitudinal offset from carla_vehicle_frame_id to vehicle_frame_id.");
+
+  this->declareAndLoadParameter("maps.carla_maps", carla_maps_, "List of supported CARLA maps.");
+  this->declareAndLoadParameter("maps.lanelet_files", lanelet_files_, "Lanelet files for all supported CARLA maps");
 
   this->setup();
 }
@@ -36,60 +40,89 @@ CarlaItsAdapterNode::CarlaItsAdapterNode(const rclcpp::NodeOptions& options) : N
  */
 CarlaItsAdapterNode::~CarlaItsAdapterNode() {}
 
+/**
+ * @brief Declares and loads a ROS parameter
+ *
+ * @param name name
+ * @param param parameter variable to load into
+ * @param description description
+ * @param add_to_auto_reconfigurable_params enable reconfiguration of parameter
+ * @param is_required whether failure to load parameter will stop node
+ * @param read_only set parameter to read-only
+ * @param from_value parameter range minimum
+ * @param to_value parameter range maximum
+ * @param step_value parameter range step
+ * @param additional_constraints additional constraints description
+ */
 template <typename T>
-void CarlaItsAdapterNode::declareAndLoadParameter(const std::string& name, T& member_param,
+void CarlaItsAdapterNode::declareAndLoadParameter(const std::string& name,
+                                                  T& param,
                                                   const std::string& description,
-                                                  const bool add_to_auto_reconfigurable_params, const bool is_required,
-                                                  const bool read_only, const std::optional<T>& from_value,
-                                                  const std::optional<T>& to_value, const std::optional<T>& step_value,
+                                                  const bool add_to_auto_reconfigurable_params,
+                                                  const bool is_required,
+                                                  const bool read_only,
+                                                  const std::optional<double>& from_value,
+                                                  const std::optional<double>& to_value,
+                                                  const std::optional<double>& step_value,
                                                   const std::string& additional_constraints) {
+
   rcl_interfaces::msg::ParameterDescriptor param_desc;
   param_desc.description = description;
   param_desc.additional_constraints = additional_constraints;
   param_desc.read_only = read_only;
 
-  auto param_type = rclcpp::ParameterValue(member_param).get_type();
+  auto type = rclcpp::ParameterValue(param).get_type();
 
   if (from_value.has_value() && to_value.has_value()) {
-    if constexpr (std::is_integral_v<T>) {
+    if constexpr(std::is_integral_v<T>) {
       rcl_interfaces::msg::IntegerRange range;
-      T step = step_value.has_value() ? step_value.value() : 0;
-      range.set__from_value(from_value.value()).set__to_value(to_value.value()).set__step(step);
+      T step = static_cast<T>(step_value.has_value() ? step_value.value() : 1);
+      range.set__from_value(static_cast<T>(from_value.value())).set__to_value(static_cast<T>(to_value.value())).set__step(step);
       param_desc.integer_range = {range};
-    } else if constexpr (std::is_floating_point_v<T>) {
+    } else if constexpr(std::is_floating_point_v<T>) {
       rcl_interfaces::msg::FloatingPointRange range;
-      T step = step_value.has_value() ? step_value.value() : 0.0;
-      range.set__from_value(from_value.value()).set__to_value(to_value.value()).set__step(step);
+      T step = static_cast<T>(step_value.has_value() ? step_value.value() : 1.0);
+      range.set__from_value(static_cast<T>(from_value.value())).set__to_value(static_cast<T>(to_value.value())).set__step(step);
       param_desc.floating_point_range = {range};
     } else {
-      RCLCPP_WARN(this->get_logger(), "Parameter type does not support range.");
+      RCLCPP_WARN(this->get_logger(), "Parameter type of parameter '%s' does not support specifying a range", name.c_str());
     }
   }
 
-  this->declare_parameter(name, param_type, param_desc);
+  this->declare_parameter(name, type, param_desc);
 
   try {
-    member_param = this->get_parameter(name).get_value<T>();
+    param = this->get_parameter(name).get_value<T>();
+    std::stringstream ss;
+    ss << "Loaded parameter '" << name << "': ";
+    if constexpr(is_vector_v<T>) {
+      ss << "[";
+      for (const auto& element : param) ss << element << (&element != &param.back() ? ", " : "]");
+    } else {
+      ss << param;
+    }
+    RCLCPP_INFO_STREAM(this->get_logger(), ss.str());
   } catch (rclcpp::exceptions::ParameterUninitializedException&) {
     if (is_required) {
-      RCLCPP_FATAL_STREAM(this->get_logger(), "Parameter '" << name << "' not set but required. Exiting.");
+      RCLCPP_FATAL_STREAM(this->get_logger(), "Missing required parameter '" << name << "', exiting");
       exit(EXIT_FAILURE);
     } else {
       std::stringstream ss;
-      ss << "Parameter '" << name << "' not set. Using default value: ";
-      if constexpr (is_vector_v<T>) {
+      ss << "Missing parameter '" << name << "', using default value: ";
+      if constexpr(is_vector_v<T>) {
         ss << "[";
-        for (const auto& element : member_param) ss << element << (&element != &member_param.back() ? ", " : "]");
+        for (const auto& element : param) ss << element << (&element != &param.back() ? ", " : "]");
       } else {
-        ss << member_param;
+        ss << param;
       }
       RCLCPP_WARN_STREAM(this->get_logger(), ss.str());
+      this->set_parameters({rclcpp::Parameter(name, rclcpp::ParameterValue(param))});
     }
   }
 
   if (add_to_auto_reconfigurable_params) {
-    std::function<void(const rclcpp::Parameter&)> setter = [&member_param](const rclcpp::Parameter& param) {
-      member_param = param.get_value<T>();
+    std::function<void(const rclcpp::Parameter&)> setter = [&param](const rclcpp::Parameter& p) {
+      param = p.get_value<T>();
     };
     auto_reconfigurable_params_.push_back(std::make_tuple(name, setter));
   }
@@ -101,17 +134,18 @@ void CarlaItsAdapterNode::declareAndLoadParameter(const std::string& name, T& me
  * @param parameters parameters
  * @return parameter change result
  */
-rcl_interfaces::msg::SetParametersResult CarlaItsAdapterNode::parametersCallback(
-    const std::vector<rclcpp::Parameter>& parameters) {
+rcl_interfaces::msg::SetParametersResult CarlaItsAdapterNode::parametersCallback(const std::vector<rclcpp::Parameter>& parameters) {
+
   for (const auto& param : parameters) {
     for (auto& auto_reconfigurable_param : auto_reconfigurable_params_) {
       if (param.get_name() == std::get<0>(auto_reconfigurable_param)) {
         std::get<1>(auto_reconfigurable_param)(param);
+        RCLCPP_INFO(this->get_logger(), "Reconfigured parameter '%s'", param.get_name().c_str());
+        break;
       }
     }
   }
 
-  // mark parameter change successful
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
 
@@ -126,6 +160,8 @@ void CarlaItsAdapterNode::setup() {
   // initialize tf2 buffer and listener
   tf2_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
+
+  current_map_name_ = "";
 
   // parameters client to map server for setting map server's parameters
   map_server_parameters_client_ = std::make_shared<rclcpp::AsyncParametersClient>(this, map_server_name_);
@@ -193,59 +229,75 @@ void CarlaItsAdapterNode::setup() {
  */
 
 void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstSharedPtr msg) {
-  // derive latitude and longitude from OpenDRIVE file
-  std::string opendrive_string = msg->opendrive;
 
-  std::string lat;
-  size_t latPos = opendrive_string.find("+lat_0=");
-  if (latPos != std::string::npos) {
-    size_t latValueStart = latPos + 7;  // length of "+lat_0="
-    size_t latValueEnd = opendrive_string.find(" ", latValueStart);
-    lat = opendrive_string.substr(latValueStart, latValueEnd - latValueStart);
-  } else {
-    RCLCPP_ERROR(this->get_logger(), "OpenDRIVE-Header is invalid. Latitude is required.");
-    return;
-  }
+  if (msg->map_name == current_map_name_) return;
+  current_map_name_ = msg->map_name;
 
-  std::string lon;
-  size_t lonPos = opendrive_string.find("+lon_0=");
-  if (lonPos != std::string::npos) {
-    size_t lonValueStart = lonPos + 7;  // length of "+lon_0="
-    size_t lonValueEnd = opendrive_string.find(" ", lonValueStart);
-    lon = opendrive_string.substr(lonValueStart, lonValueEnd - lonValueStart);
-  } else {
-    RCLCPP_ERROR(this->get_logger(), "OpenDRIVE-Header is invalid. Longitude is required.");
-    return;
-  }
-
-  // convert carla map name to lanelet map name
   std::string lanelet_map_name;
-  std::smatch match;
+  if (set_ll2_map_from_carla_) {
+    // derive latitude and longitude from OpenDRIVE file
+    std::string opendrive_string = msg->opendrive;
 
-  // check if the string matches the default pattern
-  std::regex pattern_default_map(R"(Carla/Maps/([^/]+))");
-  if (std::regex_match(msg->map_name, match, pattern_default_map)) {
-    lanelet_map_name = match[1];
-  }
+    std::string lat;
+    size_t latPos = opendrive_string.find("+lat_0=");
+    if (latPos != std::string::npos) {
+      size_t latValueStart = latPos + 7;  // length of "+lat_0="
+      size_t latValueEnd = opendrive_string.find(" ", latValueStart);
+      lat = opendrive_string.substr(latValueStart, latValueEnd - latValueStart);
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "OpenDRIVE-Header is invalid. Latitude is required.");
+      return;
+    }
 
-  // check if the string matches the custom pattern
-  std::regex pattern_custom_map(R"((.+)/Maps/([^/]+)/\2)");
-  if (std::regex_match(msg->map_name, match, pattern_custom_map)) {
-    lanelet_map_name = match[2];
-  }
+    std::string lon;
+    size_t lonPos = opendrive_string.find("+lon_0=");
+    if (lonPos != std::string::npos) {
+      size_t lonValueStart = lonPos + 7;  // length of "+lon_0="
+      size_t lonValueEnd = opendrive_string.find(" ", lonValueStart);
+      lon = opendrive_string.substr(lonValueStart, lonValueEnd - lonValueStart);
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "OpenDRIVE-Header is invalid. Longitude is required.");
+      return;
+    }
 
-  if (lanelet_map_name.empty()) {
-    RCLCPP_ERROR(this->get_logger(), "Wrong format of CARLA map name");
-    return;
-  }
+    // convert carla map name to lanelet map name
+    std::smatch match;
+    std::string carla_map_name;
 
-  // concatenate map file path
-  lanelet_map_name = "/data/maps/carla/" + lanelet_map_name + ".osm";
+    // check if the string matches the default pattern
+    std::regex pattern_default_map(R"(Carla/Maps/([^/]+))");
+    if (std::regex_match(current_map_name_, match, pattern_default_map)) {
+      carla_map_name = match[1];
+    }
 
-  // change map by setting map server parameters
-  auto set_parameters_results = map_server_parameters_client_->set_parameters(
-      {rclcpp::Parameter("map_filepath", lanelet_map_name), rclcpp::Parameter("map_frame_id", fixed_frame_id_),
-       rclcpp::Parameter("origin_lat", std::stod(lat)), rclcpp::Parameter("origin_lon", std::stod(lon))},
+    // check if the string matches the custom pattern
+    std::regex pattern_custom_map(R"((.+)/Maps/([^/]+)/\2)");
+    if (std::regex_match(current_map_name_, match, pattern_custom_map)) {
+      carla_map_name = match[2];
+    }
+
+    if (carla_map_name.empty()) {
+      RCLCPP_ERROR(this->get_logger(), "Wrong format of CARLA map name");
+      return;
+    }
+
+    // find carla_map_name in carla_maps_
+    auto it = std::find(carla_maps_.begin(), carla_maps_.end(), carla_map_name);
+    if (it == carla_maps_.end()) {
+      RCLCPP_ERROR(this->get_logger(), "CARLA map name '%s' not found in the list of supported maps", carla_map_name.c_str());
+      return;
+    }
+
+    // Get lanelet map for carla map name
+    size_t index = std::distance(carla_maps_.begin(), it);
+    lanelet_map_name = lanelet_files_[index];
+
+    // change map by setting map server parameters
+    auto set_parameters_results = map_server_parameters_client_->set_parameters(
+      {rclcpp::Parameter("map_filepath", lanelet_map_name),
+       rclcpp::Parameter("map_frame_id", fixed_frame_id_), 
+       rclcpp::Parameter("origin_lat", std::stod(lat)),
+       rclcpp::Parameter("origin_lon", std::stod(lon))},
       [this](std::shared_future<std::vector<rcl_interfaces::msg::SetParametersResult>> future) {
         auto results = future.get();
         for (const auto& result : results) {
@@ -254,6 +306,7 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
         }
         RCLCPP_INFO(this->get_logger(), "Finished setting map server parameters");
       });
+  }
 }
 
 void CarlaItsAdapterNode::egoDataCallback(const pm::EgoData::ConstSharedPtr msg) {

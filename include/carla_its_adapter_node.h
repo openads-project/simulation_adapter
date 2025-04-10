@@ -9,7 +9,6 @@
 
 // definitions
 #include <carla_msgs/msg/carla_world_info.hpp>
-#include <derived_object_msgs/msg/object_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <perception_msgs/msg/ego_data.hpp>
 #include <perception_msgs/msg/object_list.hpp>
@@ -68,14 +67,18 @@ class CarlaItsAdapterNode : public rclcpp::Node {
   const std::string kObjectListFixedTopic = "~/object_list_fixed";
 
   template <typename T>
-  void declareAndLoadParameter(const std::string &name, T &member_param, const std::string &description,
-                               const bool add_to_auto_reconfigurable_params = true, const bool is_required = false,
-                               const bool read_only = false, const std::optional<T> &from_value = std::nullopt,
-                               const std::optional<T> &to_value = std::nullopt,
-                               const std::optional<T> &step_value = std::nullopt,
+  void declareAndLoadParameter(const std::string &name,
+                               T &param,
+                               const std::string &description,
+                               const bool add_to_auto_reconfigurable_params = true,
+                               const bool is_required = false,
+                               const bool read_only = false,
+                               const std::optional<double> &from_value = std::nullopt,
+                               const std::optional<double> &to_value = std::nullopt,
+                               const std::optional<double> &step_value = std::nullopt,
                                const std::string &additional_constraints = "");
 
-  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter> &parameters);
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters);
 
   void setup();
 
@@ -104,14 +107,23 @@ class CarlaItsAdapterNode : public rclcpp::Node {
   std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
 
   // input parameters
-  std::string map_server_name_;
-  std::string carla_fixed_frame_id_;
-  std::string fixed_frame_id_;
-  std::string carla_vehicle_frame_id_;
-  std::string vehicle_frame_id_;
-  double carla_vehicle_frame_id_to_vehicle_frame_id_;
+  std::string map_server_name_ = "/ll2_map_server";
+  bool set_ll2_map_from_carla_ = true;
+  std::string carla_fixed_frame_id_ = "carla_map";
+  std::string fixed_frame_id_ = "map";
+  std::string carla_vehicle_frame_id_ = "ego_vehicle";
+  std::string vehicle_frame_id_ = "geo_center";
+  double carla_vehicle_frame_id_to_vehicle_frame_id_ = 0.0;
+
+  std::vector<std::string> carla_maps_ = {"Town10HD", "aldenhoven", "ika-test-track"};
+  std::vector<std::string> lanelet_files_ = {
+    "/data/maps/locations/synthetic-carla/lanelet2/town10hd/Town10HD.osm",
+    "/data/maps/locations/germany-aldenhoven-atc/lanelet2/unicaragil-atlatec/ATC_demo_2024-05-24.osm",
+    "/data/maps/locations/germany-aachen-campusmelaten/lanelet2/ika-testtrack/ika-testtrack-autoshuttle.osm"
+  };
 
   tp::Trajectory trajectory_planned_;
+  std::string current_map_name_;
 
   std::vector<std::tuple<std::string, std::function<void(const rclcpp::Parameter &)>>> auto_reconfigurable_params_;
 };
