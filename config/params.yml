@@ -1,6 +1,6 @@
 /**:
   ros__parameters:
-    map_server_name: /ll2_map_server      # Name of map server
+    map_server_name: /localization/ll2_map_server      # Name of map server
     set_ll2_map_from_carla: true          # Automatically set the ll2 map based on the CARLA map
 
     carla_fixed_frame_id: carla_map       # Name of the fixed frame id in CARLA
