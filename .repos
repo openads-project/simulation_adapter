@@ -2,12 +2,12 @@ repositories:
   planning_interfaces:
     type: git
     url: https://github.com/ika-rwth-aachen/planning_interfaces.git
-    version: main
+    version: v1.0.0
   perception_interfaces:
     type: git
     url: https://github.com/ika-rwth-aachen/perception_interfaces.git
-    version: main
+    version: v1.0.0
   ros-carla-msgs:
     type: git
     url: https://github.com/carla-simulator/ros-carla-msgs.git
-    version: master
+    version: 1.3.0

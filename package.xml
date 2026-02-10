@@ -3,7 +3,7 @@
 <package format="3">
 
   <name>carla_its_adapter</name>
-  <version>0.0.0</version>
+  <version>1.0.0</version>
   <description>This package contains the CarlaItsAdapterNode that acts as an Converter to the FB-FI definitions and publishes necessary transforms.</description>
 
   <maintainer email="guido.kueppers@ika.rwth-aachen.de">Guido Küppers</maintainer>
