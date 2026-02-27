@@ -20,12 +20,13 @@ def generate_launch_description():
   input_object_list_topic_arg = DeclareLaunchArgument('input_object_list_topic', default_value='/carla_its_converter/ego_vehicle/object_list')
   input_odometry_topic_arg = DeclareLaunchArgument('input_odometry_topic', default_value='/carla/ego_vehicle/odometry')
   input_trajectory_topic_arg = DeclareLaunchArgument('input_trajectory_topic', default_value='~/trajectory')
-  
+
   output_ego_data_topic_arg = DeclareLaunchArgument('output_ego_data_topic', default_value='~/ego_data')
   output_object_list_topic_arg = DeclareLaunchArgument('output_object_list_topic', default_value='~/object_list')
   output_object_list_map_topic_arg = DeclareLaunchArgument('output_object_list_topic_map', default_value='~/object_list_map')
 
-  use_sim_time_arg = DeclareLaunchArgument('use_sim_time', default_value='True')
+  use_sim_time_arg = DeclareLaunchArgument('use_sim_time', default_value='true')
+  set_ll2_map_from_carla_arg = DeclareLaunchArgument('set_ll2_map_from_carla', default_value='true')
 
   return LaunchDescription([
     params_arg,
@@ -39,7 +40,9 @@ def generate_launch_description():
     output_object_list_topic_arg,
     output_object_list_map_topic_arg,
     use_sim_time_arg,
+    set_ll2_map_from_carla_arg,
     SetParameter(name='use_sim_time', value=LaunchConfiguration('use_sim_time')),
+    SetParameter(name='set_ll2_map_from_carla', value=LaunchConfiguration('set_ll2_map_from_carla')),
     Node(
       package="carla_its_adapter",
       executable="carla_its_adapter_node",
