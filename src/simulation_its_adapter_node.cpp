@@ -1,44 +1,44 @@
-#include <carla_its_adapter_node.h>
+#include <simulation_its_adapter_node.h>
 
 #include <rclcpp_components/register_node_macro.hpp>
 
-RCLCPP_COMPONENTS_REGISTER_NODE(carla_its_adapter::CarlaItsAdapterNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(simulation_its_adapter::SimulationItsAdapterNode)
 
 /**
- * @brief Namespace for carla_its_adapter package
+ * @brief Namespace for simulation_its_adapter package
  *
  */
 
-namespace carla_its_adapter {
+namespace simulation_its_adapter {
 
 /**
- * @brief Creates a CarlaItsAdapterNode node
+ * @brief Creates a SimulationItsAdapterNode node
  *
  */
-CarlaItsAdapterNode::CarlaItsAdapterNode(const rclcpp::NodeOptions& options) : Node("carla_its_adapter_node", options) {
+SimulationItsAdapterNode::SimulationItsAdapterNode(const rclcpp::NodeOptions& options) : Node("simulation_its_adapter_node", options) {
   this->declareAndLoadParameter("map_server_name", map_server_name_, "Name of the map server.");
-  this->declareAndLoadParameter("set_ll2_map_from_carla", set_ll2_map_from_carla_,
-                                "Automatically set the ll2 map based on the CARLA map.");
-  this->declareAndLoadParameter("carla_fixed_frame_id", carla_fixed_frame_id_, "Name of the fixed frame id in CARLA.");
+  this->declareAndLoadParameter("set_ll2_map_from_simulation", set_ll2_map_from_simulation_,
+                                "Automatically set the ll2 map based on the simulation map.");
+  this->declareAndLoadParameter("simulation_fixed_frame_id", simulation_fixed_frame_id_, "Name of the fixed frame id in simulation.");
   this->declareAndLoadParameter("fixed_frame_id", fixed_frame_id_, "Name of the fixed frame id over time.");
-  this->declareAndLoadParameter("carla_vehicle_frame_id", carla_vehicle_frame_id_,
-                                "Name of the vehicle frame id in CARLA.");
+  this->declareAndLoadParameter("simulation_vehicle_frame_id", simulation_vehicle_frame_id_,
+                                "Name of the vehicle frame id in simulation.");
   this->declareAndLoadParameter("vehicle_frame_id", vehicle_frame_id_, "Name of the vehicle frame id.");
 
-  this->declareAndLoadParameter("carla_vehicle_frame_id_to_vehicle_frame_id", carla_vehicle_frame_id_to_vehicle_frame_id_,
-                                "Longitudinal offset from carla_vehicle_frame_id to vehicle_frame_id.");
+  this->declareAndLoadParameter("simulation_vehicle_frame_id_to_vehicle_frame_id", simulation_vehicle_frame_id_to_vehicle_frame_id_,
+                                "Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id.");
 
-  this->declareAndLoadParameter("maps.carla_maps", carla_maps_, "List of supported CARLA maps.");
-  this->declareAndLoadParameter("maps.lanelet_files", lanelet_files_, "Lanelet files for all supported CARLA maps");
+  this->declareAndLoadParameter("maps.simulation_maps", simulation_maps_, "List of supported simulation maps.");
+  this->declareAndLoadParameter("maps.lanelet_files", lanelet_files_, "Lanelet files for all supported simulation maps");
 
   this->setup();
 }
 
 /**
- * @brief Destroys a CarlaItsAdapterNode node
+ * @brief Destroys a SimulationItsAdapterNode node
  *
  */
-CarlaItsAdapterNode::~CarlaItsAdapterNode() {}
+SimulationItsAdapterNode::~SimulationItsAdapterNode() {}
 
 /**
  * @brief Declares and loads a ROS parameter
@@ -55,7 +55,7 @@ CarlaItsAdapterNode::~CarlaItsAdapterNode() {}
  * @param additional_constraints additional constraints description
  */
 template <typename T>
-void CarlaItsAdapterNode::declareAndLoadParameter(const std::string& name,
+void SimulationItsAdapterNode::declareAndLoadParameter(const std::string& name,
                                                   T& param,
                                                   const std::string& description,
                                                   const bool add_to_auto_reconfigurable_params,
@@ -134,7 +134,7 @@ void CarlaItsAdapterNode::declareAndLoadParameter(const std::string& name,
  * @param parameters parameters
  * @return parameter change result
  */
-rcl_interfaces::msg::SetParametersResult CarlaItsAdapterNode::parametersCallback(const std::vector<rclcpp::Parameter>& parameters) {
+rcl_interfaces::msg::SetParametersResult SimulationItsAdapterNode::parametersCallback(const std::vector<rclcpp::Parameter>& parameters) {
 
   for (const auto& param : parameters) {
     for (auto& auto_reconfigurable_param : auto_reconfigurable_params_) {
@@ -156,12 +156,12 @@ rcl_interfaces::msg::SetParametersResult CarlaItsAdapterNode::parametersCallback
  * @brief Sets up subscribers, publishers, and more.
  *
  */
-void CarlaItsAdapterNode::setup() {
+void SimulationItsAdapterNode::setup() {
   // initialize tf2 buffer and listener
   tf2_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
 
-  current_map_name_ = "";
+  map_info_ = "";
 
   // parameters client to map server for setting map server's parameters
   map_server_parameters_client_ = std::make_shared<rclcpp::AsyncParametersClient>(this, map_server_name_);
@@ -179,33 +179,28 @@ void CarlaItsAdapterNode::setup() {
 
   // create a callback for dynamic parameter configuration
   parameters_callback_ = this->add_on_set_parameters_callback(
-      std::bind(&CarlaItsAdapterNode::parametersCallback, this, std::placeholders::_1));
-
-  // define custom QoS for world info topic
-  rclcpp::QoS qosLatching = rclcpp::QoS(rclcpp::KeepLast(1));
-  qosLatching.transient_local();
-  qosLatching.reliable();
+      std::bind(&SimulationItsAdapterNode::parametersCallback, this, std::placeholders::_1));
 
   // setup subscriber for input topics
-  sub_world_info_ = this->create_subscription<cm::CarlaWorldInfo>(
-      kInputWorldInfoTopic, qosLatching,
-      std::bind(&CarlaItsAdapterNode::worldInfoCallback, this, std::placeholders::_1));
-  RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_world_info_->get_topic_name());
+  sub_map_info_ = this->create_subscription<sm::String>(
+      kInputMapInfoTopic, 1,
+      std::bind(&SimulationItsAdapterNode::mapInfoCallback, this, std::placeholders::_1));
+  RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_map_info_->get_topic_name());
 
   sub_ego_data_ = this->create_subscription<pm::EgoData>(
-      kInputEgoDataTopic, 1, std::bind(&CarlaItsAdapterNode::egoDataCallback, this, std::placeholders::_1));
+      kInputEgoDataTopic, 1, std::bind(&SimulationItsAdapterNode::egoDataCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_ego_data_->get_topic_name());
 
   sub_object_list_ = this->create_subscription<pm::ObjectList>(
-      kInputObjectListTopic, 1, std::bind(&CarlaItsAdapterNode::objectListCallback, this, std::placeholders::_1));
+      kInputObjectListTopic, 1, std::bind(&SimulationItsAdapterNode::objectListCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_object_list_->get_topic_name());
 
   sub_odometry_ = this->create_subscription<nm::Odometry>(
-      kInputOdometryTopic, 1, std::bind(&CarlaItsAdapterNode::odometryCallback, this, std::placeholders::_1));
+      kInputOdometryTopic, 1, std::bind(&SimulationItsAdapterNode::odometryCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_odometry_->get_topic_name());
 
   sub_trajectory_ = this->create_subscription<tp::Trajectory>(
-      kInputTrajectoryTopic, 1, std::bind(&CarlaItsAdapterNode::trajectoryCallback, this, std::placeholders::_1));
+      kInputTrajectoryTopic, 1, std::bind(&SimulationItsAdapterNode::trajectoryCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_trajectory_->get_topic_name());
 
   // set up publisher for output topics
@@ -219,85 +214,38 @@ void CarlaItsAdapterNode::setup() {
   RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_object_list_fixed_->get_topic_name());
 
   // logging info
-  RCLCPP_INFO(this->get_logger(), "carla_its_adapter_node is running...");
+  RCLCPP_INFO(this->get_logger(), "simulation_its_adapter_node is running...");
 }
 
 /**
- * @brief Set map for the lanelet2 map server based on the CarlaWorldInfo message.
+ * @brief Set map for the lanelet2 map server based on the current simulation map name.
  *
- * @param msg CarlaWorldInfo message.
+ * @param msg Map name message.
  */
-
-void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstSharedPtr msg) {
-
-  if (msg->map_name == current_map_name_) return;
-  current_map_name_ = msg->map_name;
+void SimulationItsAdapterNode::mapInfoCallback(const sm::String::ConstSharedPtr msg) {
+  if (msg->data == map_info_) return;
+  map_info_ = msg->data;
 
   std::string lanelet_map_name;
-  if (set_ll2_map_from_carla_) {
-    // derive latitude and longitude from OpenDRIVE file
-    std::string opendrive_string = msg->opendrive;
+  if (set_ll2_map_from_simulation_) {
+    // convert simulation name to lanelet map name
+    std::string simulation_map_name = map_info_;
 
-    std::string lat;
-    size_t latPos = opendrive_string.find("+lat_0=");
-    if (latPos != std::string::npos) {
-      size_t latValueStart = latPos + 7;  // length of "+lat_0="
-      size_t latValueEnd = opendrive_string.find(" ", latValueStart);
-      lat = opendrive_string.substr(latValueStart, latValueEnd - latValueStart);
-    } else {
-      RCLCPP_ERROR(this->get_logger(), "OpenDRIVE-Header is invalid. Latitude is required.");
+    // find simulation_map_name in simulation_maps_
+    auto it = std::find(simulation_maps_.begin(), simulation_maps_.end(), simulation_map_name);
+    if (it == simulation_maps_.end()) {
+      RCLCPP_ERROR(this->get_logger(), "Simulation map name '%s' not found in the list of supported maps", simulation_map_name.c_str());
       return;
     }
 
-    std::string lon;
-    size_t lonPos = opendrive_string.find("+lon_0=");
-    if (lonPos != std::string::npos) {
-      size_t lonValueStart = lonPos + 7;  // length of "+lon_0="
-      size_t lonValueEnd = opendrive_string.find(" ", lonValueStart);
-      lon = opendrive_string.substr(lonValueStart, lonValueEnd - lonValueStart);
-    } else {
-      RCLCPP_ERROR(this->get_logger(), "OpenDRIVE-Header is invalid. Longitude is required.");
-      return;
-    }
-
-    // convert carla map name to lanelet map name
-    std::smatch match;
-    std::string carla_map_name;
-
-    // check if the string matches the default pattern
-    std::regex pattern_default_map(R"(Carla/Maps/([^/]+))");
-    if (std::regex_match(current_map_name_, match, pattern_default_map)) {
-      carla_map_name = match[1];
-    }
-
-    // check if the string matches the custom pattern
-    std::regex pattern_custom_map(R"((.+)/Maps/([^/]+)/\2)");
-    if (std::regex_match(current_map_name_, match, pattern_custom_map)) {
-      carla_map_name = match[2];
-    }
-
-    if (carla_map_name.empty()) {
-      RCLCPP_ERROR(this->get_logger(), "Wrong format of CARLA map name");
-      return;
-    }
-
-    // find carla_map_name in carla_maps_
-    auto it = std::find(carla_maps_.begin(), carla_maps_.end(), carla_map_name);
-    if (it == carla_maps_.end()) {
-      RCLCPP_ERROR(this->get_logger(), "CARLA map name '%s' not found in the list of supported maps", carla_map_name.c_str());
-      return;
-    }
-
-    // Get lanelet map for carla map name
-    size_t index = std::distance(carla_maps_.begin(), it);
+    // Get lanelet map for simulation map name
+    size_t index = std::distance(simulation_maps_.begin(), it);
     lanelet_map_name = lanelet_files_[index];
 
     // change map by setting map server parameters
-    auto set_parameters_results = map_server_parameters_client_->set_parameters(
+    map_server_parameters_client_->set_parameters(
       {rclcpp::Parameter("map_filepath", lanelet_map_name),
-       rclcpp::Parameter("map_frame_id", fixed_frame_id_), 
-       rclcpp::Parameter("origin_lat", std::stod(lat)),
-       rclcpp::Parameter("origin_lon", std::stod(lon))},
+       rclcpp::Parameter("map_frame_id", fixed_frame_id_)},
       [this](std::shared_future<std::vector<rcl_interfaces::msg::SetParametersResult>> future) {
         auto results = future.get();
         for (const auto& result : results) {
@@ -309,12 +257,12 @@ void CarlaItsAdapterNode::worldInfoCallback(const cm::CarlaWorldInfo::ConstShare
   }
 }
 
-void CarlaItsAdapterNode::egoDataCallback(const pm::EgoData::ConstSharedPtr msg) {
+void SimulationItsAdapterNode::egoDataCallback(const pm::EgoData::ConstSharedPtr msg) {
   auto timeout = rclcpp::Duration::from_seconds(1.0);
 
-  gm::TransformStamped vehicle_frame_position_in_carla_map_tf, vehicle_frame_position_in_map_tf, carla_map_to_map_tf;
+  gm::TransformStamped vehicle_frame_position_in_simulation_map_tf, vehicle_frame_position_in_map_tf, simulation_map_to_map_tf;
 
-  // transform ego_data (input header is carla_fixed_frame_id, output header is fixed_frame_id)
+  // transform ego_data (input header is simulation_fixed_frame_id, output header is fixed_frame_id)
   pm::EgoData ego_data;
 
   gm::TransformStamped to_map_tf;
@@ -348,7 +296,7 @@ void CarlaItsAdapterNode::egoDataCallback(const pm::EgoData::ConstSharedPtr msg)
     perception_msgs::object_access::setZ(ego_data, vehicle_frame_position_in_map_tf.transform.translation.z);
     perception_msgs::object_access::setOrientation(ego_data, vehicle_frame_position_in_map_tf.transform.rotation);
     ego_data.state.reference_point.value = pm::ObjectReferencePoint::REAR_AXLE_GROUND;
-    ego_data.state.reference_point.translation_to_geometric_center.x = -carla_vehicle_frame_id_to_vehicle_frame_id_;
+    ego_data.state.reference_point.translation_to_geometric_center.x = -simulation_vehicle_frame_id_to_vehicle_frame_id_;
     ego_data.state.reference_point.translation_to_geometric_center.z = msg->height / 2.0;
   }
 
@@ -392,11 +340,11 @@ void CarlaItsAdapterNode::egoDataCallback(const pm::EgoData::ConstSharedPtr msg)
   pub_ego_data_->publish(ego_data);
 }
 
-void CarlaItsAdapterNode::objectListCallback(const pm::ObjectList::ConstSharedPtr msg) {
+void SimulationItsAdapterNode::objectListCallback(const pm::ObjectList::ConstSharedPtr msg) {
   auto timeout = rclcpp::Duration::from_seconds(1.0);
 
   // Option A: transform object_list to fixed_frame_id
-  pm::ObjectList msg_object_list_map;
+  pm::ObjectList msg_object_list_fixed;
 
   gm::TransformStamped to_map_tf;
   try {
@@ -406,10 +354,10 @@ void CarlaItsAdapterNode::objectListCallback(const pm::ObjectList::ConstSharedPt
                 fixed_frame_id_.c_str());
     return;
   }
-  tf2::doTransform(*msg, msg_object_list_map, to_map_tf);
+  tf2::doTransform(*msg, msg_object_list_fixed, to_map_tf);
 
   // publish object list in fixed_frame_id
-  pub_object_list_fixed_->publish(msg_object_list_map);
+  pub_object_list_fixed_->publish(msg_object_list_fixed);
 
   // Option B: transform object list to vehicle_frame_id_
   pm::ObjectList msg_object_list;
@@ -429,20 +377,20 @@ void CarlaItsAdapterNode::objectListCallback(const pm::ObjectList::ConstSharedPt
   pub_object_list_->publish(msg_object_list);
 }
 
-void CarlaItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedPtr msg) {
+void SimulationItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedPtr msg) {
   /* set up a transformation link between fixed_frame_id and vehicle_frame_id
 
            /        utm_<zone>     \
           /                         \
          / static                    \ static (published by lanelet2_map_server)
         /  (published by              \
-       /     ros-bridge)               \
-    carla_fixed_frame_id               fixed_frame_id
+       /     rspecific simulation      \
+    simulation_fixed_frame_id         fixed_frame_id
       |
-      dynamic (published by carla-ros-bridge)
+      dynamic (published by specific simulation)
       |
       v
-    carla_vehicle_frame_id ---static---> vehicle_frame_id
+    simulation_vehicle_frame_id ---static---> vehicle_frame_id
   */
 
   auto timezero = tf2::TimePointZero;
@@ -456,42 +404,42 @@ void CarlaItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedPtr ms
                 vehicle_frame_id_.c_str());
     static tf2_ros::StaticTransformBroadcaster static_br_tf_(this);
 
-    // step 1: carla_fixed_frame_id -> fixed_frame_id
+    // step 1: simulation_fixed_frame_id -> fixed_frame_id
     try {
-      tf2_buffer_->lookupTransform(fixed_frame_id_, carla_fixed_frame_id_, timezero);
+      tf2_buffer_->lookupTransform(fixed_frame_id_, simulation_fixed_frame_id_, timezero);
     } catch (const tf2::TransformException& e) {
       RCLCPP_WARN(this->get_logger(),
                   "Transformation from '%s' to '%s' is not available. Should be provided using a shared parent "
                   "utm frame.",
-                  carla_fixed_frame_id_.c_str(), fixed_frame_id_.c_str());
+                  simulation_fixed_frame_id_.c_str(), fixed_frame_id_.c_str());
       RCLCPP_WARN(this->get_logger(), "\tSkipped ...");
       return;
     }
 
-    // step 2: carla_fixed_frame_id -> carla_vehicle_frame_id
+    // step 2: simulation_fixed_frame_id -> simulation_vehicle_frame_id
     try {
-      tf2_buffer_->lookupTransform(carla_vehicle_frame_id_, carla_fixed_frame_id_, timezero);
+      tf2_buffer_->lookupTransform(simulation_vehicle_frame_id_, simulation_fixed_frame_id_, timezero);
     } catch (const tf2::TransformException& e) {
-      RCLCPP_WARN(this->get_logger(), "\tTransformation from '%s' to '%s' not available", carla_fixed_frame_id_.c_str(),
-                  carla_vehicle_frame_id_.c_str());
+      RCLCPP_WARN(this->get_logger(), "\tTransformation from '%s' to '%s' not available", simulation_fixed_frame_id_.c_str(),
+                  simulation_vehicle_frame_id_.c_str());
       RCLCPP_WARN(this->get_logger(), "\tSkipped ...");
       return;
     }
 
-    // step 3: carla_vehicle_frame_id -> vehicle_frame_id
+    // step 3: simulation_vehicle_frame_id -> vehicle_frame_id
     try {
-      tf2_buffer_->lookupTransform(vehicle_frame_id_, carla_vehicle_frame_id_, timezero);
+      tf2_buffer_->lookupTransform(vehicle_frame_id_, simulation_vehicle_frame_id_, timezero);
     } catch (const tf2::TransformException& e) {
       RCLCPP_WARN(this->get_logger(), "\tTransformation from '%s' to '%s' is not available",
-                  carla_vehicle_frame_id_.c_str(), vehicle_frame_id_.c_str());
+                  simulation_vehicle_frame_id_.c_str(), vehicle_frame_id_.c_str());
 
-      // publish static transformation from carla_vehicle_frame_id to vehicle_frame_id
+      // publish static transformation from simulation_vehicle_frame_id to vehicle_frame_id
       gm::TransformStamped ego_vehicle_to_vehicle_frame;
       ego_vehicle_to_vehicle_frame.header.stamp = this->get_clock()->now();
-      ego_vehicle_to_vehicle_frame.header.frame_id = carla_vehicle_frame_id_;
+      ego_vehicle_to_vehicle_frame.header.frame_id = simulation_vehicle_frame_id_;
       ego_vehicle_to_vehicle_frame.child_frame_id = vehicle_frame_id_;
 
-      ego_vehicle_to_vehicle_frame.transform.translation.x = carla_vehicle_frame_id_to_vehicle_frame_id_;
+      ego_vehicle_to_vehicle_frame.transform.translation.x = simulation_vehicle_frame_id_to_vehicle_frame_id_;
       ego_vehicle_to_vehicle_frame.transform.translation.y = 0.0;
       ego_vehicle_to_vehicle_frame.transform.translation.z = 0.0;
 
@@ -504,7 +452,7 @@ void CarlaItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedPtr ms
 
       static_br_tf_.sendTransform(ego_vehicle_to_vehicle_frame);
       RCLCPP_INFO(this->get_logger(), "\tTransformation from '%s' to '%s' was published",
-                  carla_vehicle_frame_id_.c_str(), vehicle_frame_id_.c_str());
+                  simulation_vehicle_frame_id_.c_str(), vehicle_frame_id_.c_str());
     }
 
     RCLCPP_INFO(this->get_logger(), "Static transformation from '%s' to '%s' is now available",
@@ -512,7 +460,7 @@ void CarlaItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedPtr ms
   }
 }
 
-void CarlaItsAdapterNode::trajectoryCallback(const tp::Trajectory::ConstSharedPtr msg) {
+void SimulationItsAdapterNode::trajectoryCallback(const tp::Trajectory::ConstSharedPtr msg) {
   if (msg->type_id != trajectory_planning_msgs::msg::DRIVABLE::TYPE_ID) {
     RCLCPP_WARN(this->get_logger(),
                 "Invalid trajectory type, planned trajectory states are only filled for trajectories of type DRIVABLE");
@@ -529,4 +477,4 @@ void CarlaItsAdapterNode::trajectoryCallback(const tp::Trajectory::ConstSharedPt
   }
 }
 
-}  // namespace carla_its_adapter
+}  // namespace simulation_its_adapter

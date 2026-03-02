@@ -8,10 +8,10 @@
 #include <string>
 
 // definitions
-#include <carla_msgs/msg/carla_world_info.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <perception_msgs/msg/ego_data.hpp>
 #include <perception_msgs/msg/object_list.hpp>
+#include <std_msgs/msg/string.hpp>
 #include <trajectory_planning_msgs/msg/trajectory.hpp>
 
 // access functions
@@ -27,13 +27,13 @@
 #include <tf2_trajectory_planning_msgs/tf2_trajectory_planning_msgs.hpp>
 
 // namespaces
-namespace cm = carla_msgs::msg;
 namespace gm = geometry_msgs::msg;
 namespace nm = nav_msgs::msg;
 namespace pm = perception_msgs::msg;
+namespace sm = std_msgs::msg;
 namespace tp = trajectory_planning_msgs::msg;
 
-namespace carla_its_adapter {
+namespace simulation_its_adapter {
 
 template <typename T>
 using Subscriber = typename rclcpp::Subscription<T>::SharedPtr;
@@ -47,15 +47,15 @@ struct is_vector<std::vector<T, A>> : std::true_type {};
 template <typename C>
 inline constexpr bool is_vector_v = is_vector<C>::value;
 
-class CarlaItsAdapterNode : public rclcpp::Node {
+class SimulationItsAdapterNode : public rclcpp::Node {
  public:
-  explicit CarlaItsAdapterNode(const rclcpp::NodeOptions &options);
+  explicit SimulationItsAdapterNode(const rclcpp::NodeOptions &options);
 
-  ~CarlaItsAdapterNode();
+  ~SimulationItsAdapterNode();
 
  private:
   // input topics
-  const std::string kInputWorldInfoTopic = "/carla/world_info";
+  const std::string kInputMapInfoTopic = "~/input_map_info";
   const std::string kInputEgoDataTopic = "~/input_ego_data";
   const std::string kInputObjectListTopic = "~/input_object_list";
   const std::string kInputOdometryTopic = "~/input_odometry";
@@ -82,7 +82,7 @@ class CarlaItsAdapterNode : public rclcpp::Node {
 
   void setup();
 
-  void worldInfoCallback(const cm::CarlaWorldInfo::ConstSharedPtr msg);
+  void mapInfoCallback(const sm::String::ConstSharedPtr msg);
   void egoDataCallback(const pm::EgoData::ConstSharedPtr msg);
   void objectListCallback(const pm::ObjectList::ConstSharedPtr msg);
   void odometryCallback(const nm::Odometry::ConstSharedPtr msg);
@@ -92,7 +92,7 @@ class CarlaItsAdapterNode : public rclcpp::Node {
   std::shared_ptr<rclcpp::AsyncParametersClient> map_server_parameters_client_;
 
   // subscriber and publisher
-  Subscriber<cm::CarlaWorldInfo> sub_world_info_;
+  Subscriber<sm::String> sub_map_info_;
   Subscriber<pm::EgoData> sub_ego_data_;
   Subscriber<pm::ObjectList> sub_object_list_;
   Subscriber<nm::Odometry> sub_odometry_;
@@ -108,24 +108,20 @@ class CarlaItsAdapterNode : public rclcpp::Node {
 
   // input parameters
   std::string map_server_name_ = "/ll2_map_server";
-  bool set_ll2_map_from_carla_ = true;
-  std::string carla_fixed_frame_id_ = "carla_map";
+  bool set_ll2_map_from_simulation_ = true;
+  std::string simulation_fixed_frame_id_ = "simulation_map";
   std::string fixed_frame_id_ = "map";
-  std::string carla_vehicle_frame_id_ = "ego_vehicle";
+  std::string simulation_vehicle_frame_id_ = "ego_vehicle";
   std::string vehicle_frame_id_ = "geo_center";
-  double carla_vehicle_frame_id_to_vehicle_frame_id_ = 0.0;
+  double simulation_vehicle_frame_id_to_vehicle_frame_id_ = 0.0;
 
-  std::vector<std::string> carla_maps_ = {"Town10HD", "aldenhoven", "ika-test-track"};
-  std::vector<std::string> lanelet_files_ = {
-    "/data/maps/locations/synthetic-carla/lanelet2/town10hd/Town10HD.osm",
-    "/data/maps/locations/germany-aldenhoven-atc/lanelet2/unicaragil-atlatec/ATC_demo_2024-05-24.osm",
-    "/data/maps/locations/germany-aachen-campusmelaten/lanelet2/ika-testtrack/ika-testtrack-autoshuttle.osm"
-  };
+  std::vector<std::string> simulation_maps_;
+  std::vector<std::string> lanelet_files_ ;
 
   tp::Trajectory trajectory_planned_;
-  std::string current_map_name_;
+  std::string map_info_;
 
   std::vector<std::tuple<std::string, std::function<void(const rclcpp::Parameter &)>>> auto_reconfigurable_params_;
 };
 
-}  // end of namespace carla_its_adapter
+}  // end of namespace simulation_its_adapter
