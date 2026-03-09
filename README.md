@@ -28,7 +28,6 @@ This package contains the SimulationItsAdapterNode - a simple ROS 2 Node that co
 | `~/input_map_info` | `std_msgs::msg::String` | Current simulation map infos |
 | `~/input_ego_data` | `perception_msgs::EgoData` | EgoData in the simulation_fixed_frame_id |
 | `~/input_object_list` | `perception_msgs::ObjectList` | ObjectList in the simulation_fixed_frame_id |
-| `~/input_odometry` | `nav_msgs::Odometry` | Odometry message from simulation |
 | `~/input_trajectory` | `trajectory_planning_msgs::msg::Trajectory` | ObjectList in the simulation_fixed_frame_id |
 
 #### Published Topics

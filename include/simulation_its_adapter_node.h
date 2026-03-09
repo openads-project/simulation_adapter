@@ -8,7 +8,6 @@
 #include <string>
 
 // definitions
-#include <nav_msgs/msg/odometry.hpp>
 #include <perception_msgs/msg/ego_data.hpp>
 #include <perception_msgs/msg/object_list.hpp>
 #include <std_msgs/msg/string.hpp>
@@ -28,7 +27,6 @@
 
 // namespaces
 namespace gm = geometry_msgs::msg;
-namespace nm = nav_msgs::msg;
 namespace pm = perception_msgs::msg;
 namespace sm = std_msgs::msg;
 namespace tp = trajectory_planning_msgs::msg;
@@ -58,7 +56,6 @@ class SimulationItsAdapterNode : public rclcpp::Node {
   const std::string kInputMapInfoTopic = "~/input_map_info";
   const std::string kInputEgoDataTopic = "~/input_ego_data";
   const std::string kInputObjectListTopic = "~/input_object_list";
-  const std::string kInputOdometryTopic = "~/input_odometry";
   const std::string kInputTrajectoryTopic = "~/input_trajectory";
 
   // output topics
@@ -85,7 +82,7 @@ class SimulationItsAdapterNode : public rclcpp::Node {
   void mapInfoCallback(const sm::String::ConstSharedPtr msg);
   void egoDataCallback(const pm::EgoData::ConstSharedPtr msg);
   void objectListCallback(const pm::ObjectList::ConstSharedPtr msg);
-  void odometryCallback(const nm::Odometry::ConstSharedPtr msg);
+  void initializeVehicleFrameTransform();
   void trajectoryCallback(const tp::Trajectory::ConstSharedPtr msg);
 
   OnSetParametersCallbackHandle::SharedPtr parameters_callback_;
@@ -95,7 +92,6 @@ class SimulationItsAdapterNode : public rclcpp::Node {
   Subscriber<sm::String> sub_map_info_;
   Subscriber<pm::EgoData> sub_ego_data_;
   Subscriber<pm::ObjectList> sub_object_list_;
-  Subscriber<nm::Odometry> sub_odometry_;
   Subscriber<tp::Trajectory> sub_trajectory_;
 
   Publisher<pm::EgoData> pub_ego_data_;
@@ -105,10 +101,11 @@ class SimulationItsAdapterNode : public rclcpp::Node {
   // tf2 variables
   std::unique_ptr<tf2_ros::Buffer> tf2_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
+  rclcpp::TimerBase::SharedPtr tf_init_timer_;
 
   // input parameters
   std::string map_server_name_ = "/ll2_map_server";
-  bool set_ll2_map_from_simulation_ = true;
+  bool set_ll2_map_ = true;
   std::string simulation_fixed_frame_id_ = "simulation_map";
   std::string fixed_frame_id_ = "map";
   std::string simulation_vehicle_frame_id_ = "ego_vehicle";

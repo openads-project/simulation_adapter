@@ -16,18 +16,17 @@ def generate_launch_description():
   node_name_arg = DeclareLaunchArgument('node_name', default_value='simulation_its_adapter')
   namespace_arg = DeclareLaunchArgument('namespace', default_value='')
 
-  input_map_info_arg = DeclareLaunchArgument('input_map_info_topic', default_value='/carla_its_converter/map_info')
-  input_ego_data_topic_arg = DeclareLaunchArgument('input_ego_data_topic', default_value='/carla_its_converter/ego_vehicle/ego_data')
-  input_object_list_topic_arg = DeclareLaunchArgument('input_object_list_topic', default_value='/carla_its_converter/ego_vehicle/object_list')
-  input_odometry_topic_arg = DeclareLaunchArgument('input_odometry_topic', default_value='/carla/ego_vehicle/odometry')
-  input_trajectory_topic_arg = DeclareLaunchArgument('input_trajectory_topic', default_value='~/trajectory')
+  input_map_info_arg = DeclareLaunchArgument('input_map_info_topic', default_value='~/map_info')
+  input_ego_data_topic_arg = DeclareLaunchArgument('input_ego_data_topic', default_value='~/input_ego_data')
+  input_object_list_topic_arg = DeclareLaunchArgument('input_object_list_topic', default_value='~/input_object_list')
+  input_trajectory_topic_arg = DeclareLaunchArgument('input_trajectory_topic', default_value='~/input_trajectory')
 
   output_ego_data_topic_arg = DeclareLaunchArgument('output_ego_data_topic', default_value='~/ego_data')
   output_object_list_topic_arg = DeclareLaunchArgument('output_object_list_topic', default_value='~/object_list')
   output_object_list_fixed_topic_arg = DeclareLaunchArgument('output_object_list_fixed_topic', default_value='~/object_list_fixed')
 
   use_sim_time_arg = DeclareLaunchArgument('use_sim_time', default_value='true')
-  set_ll2_map_from_simulation_arg = DeclareLaunchArgument('set_ll2_map_from_simulation', default_value='true')
+  set_ll2_map_arg = DeclareLaunchArgument('set_ll2_map', default_value='true')
 
   return LaunchDescription([
     params_arg,
@@ -36,15 +35,14 @@ def generate_launch_description():
     input_map_info_arg,
     input_ego_data_topic_arg,
     input_object_list_topic_arg,
-    input_odometry_topic_arg,
     input_trajectory_topic_arg,
     output_ego_data_topic_arg,
     output_object_list_topic_arg,
     output_object_list_fixed_topic_arg,
     use_sim_time_arg,
-    set_ll2_map_from_simulation_arg,
+    set_ll2_map_arg,
     SetParameter(name='use_sim_time', value=LaunchConfiguration('use_sim_time')),
-    SetParameter(name='set_ll2_map_from_simulation', value=LaunchConfiguration('set_ll2_map_from_simulation')),
+    SetParameter(name='set_ll2_map', value=LaunchConfiguration('set_ll2_map')),
     Node(
       package="simulation_its_adapter",
       executable="simulation_its_adapter_node",
@@ -57,7 +55,6 @@ def generate_launch_description():
           ("~/input_map_info", LaunchConfiguration('input_map_info_topic')),
           ("~/input_ego_data", LaunchConfiguration('input_ego_data_topic')),
           ("~/input_object_list", LaunchConfiguration('input_object_list_topic')),
-          ("~/input_odometry", LaunchConfiguration('input_odometry_topic')),
           ("~/input_trajectory", LaunchConfiguration('input_trajectory_topic')),
           ("~/ego_data", LaunchConfiguration('output_ego_data_topic')),
           ("~/object_list", LaunchConfiguration('output_object_list_topic')),

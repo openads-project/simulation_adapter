@@ -17,7 +17,7 @@ namespace simulation_its_adapter {
  */
 SimulationItsAdapterNode::SimulationItsAdapterNode(const rclcpp::NodeOptions& options) : Node("simulation_its_adapter_node", options) {
   this->declareAndLoadParameter("map_server_name", map_server_name_, "Name of the map server.");
-  this->declareAndLoadParameter("set_ll2_map_from_simulation", set_ll2_map_from_simulation_,
+  this->declareAndLoadParameter("set_ll2_map", set_ll2_map_,
                                 "Automatically set the ll2 map based on the simulation map.");
   this->declareAndLoadParameter("simulation_fixed_frame_id", simulation_fixed_frame_id_, "Name of the fixed frame id in simulation.");
   this->declareAndLoadParameter("fixed_frame_id", fixed_frame_id_, "Name of the fixed frame id over time.");
@@ -195,13 +195,14 @@ void SimulationItsAdapterNode::setup() {
       kInputObjectListTopic, 1, std::bind(&SimulationItsAdapterNode::objectListCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_object_list_->get_topic_name());
 
-  sub_odometry_ = this->create_subscription<nm::Odometry>(
-      kInputOdometryTopic, 1, std::bind(&SimulationItsAdapterNode::odometryCallback, this, std::placeholders::_1));
-  RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_odometry_->get_topic_name());
-
   sub_trajectory_ = this->create_subscription<tp::Trajectory>(
       kInputTrajectoryTopic, 1, std::bind(&SimulationItsAdapterNode::trajectoryCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_trajectory_->get_topic_name());
+
+  tf_init_timer_ = this->create_wall_timer(
+      500ms, std::bind(&SimulationItsAdapterNode::initializeVehicleFrameTransform, this));
+  RCLCPP_INFO(this->get_logger(), "Started timer to initialize transformation from '%s' to '%s'",
+              fixed_frame_id_.c_str(), vehicle_frame_id_.c_str());
 
   // set up publisher for output topics
   pub_ego_data_ = this->create_publisher<pm::EgoData>(kEgoDataTopic, 1);
@@ -227,7 +228,7 @@ void SimulationItsAdapterNode::mapInfoCallback(const sm::String::ConstSharedPtr 
   map_info_ = msg->data;
 
   std::string lanelet_map_name;
-  if (set_ll2_map_from_simulation_) {
+  if (set_ll2_map_) {
     // convert simulation name to lanelet map name
     std::string simulation_map_name = map_info_;
 
@@ -377,7 +378,7 @@ void SimulationItsAdapterNode::objectListCallback(const pm::ObjectList::ConstSha
   pub_object_list_->publish(msg_object_list);
 }
 
-void SimulationItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedPtr msg) {
+void SimulationItsAdapterNode::initializeVehicleFrameTransform() {
   /* set up a transformation link between fixed_frame_id and vehicle_frame_id
 
            /        utm_<zone>     \
@@ -397,8 +398,13 @@ void SimulationItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedP
 
   try {
     // check if desired transformation is already defined
-    gm::TransformStamped transform;
-    transform = tf2_buffer_->lookupTransform(vehicle_frame_id_, fixed_frame_id_, timezero);
+    tf2_buffer_->lookupTransform(vehicle_frame_id_, fixed_frame_id_, timezero);
+    if (tf_init_timer_ && !tf_init_timer_->is_canceled()) {
+      tf_init_timer_->cancel();
+      RCLCPP_INFO(this->get_logger(), "Static transformation from '%s' to '%s' is now available",
+                  vehicle_frame_id_.c_str(), fixed_frame_id_.c_str());
+    }
+    return;
   } catch (const tf2::TransformException& e) {
     RCLCPP_WARN(this->get_logger(), "Transformation from '%s' to '%s' is not available", fixed_frame_id_.c_str(),
                 vehicle_frame_id_.c_str());
@@ -454,9 +460,6 @@ void SimulationItsAdapterNode::odometryCallback(const nm::Odometry::ConstSharedP
       RCLCPP_INFO(this->get_logger(), "\tTransformation from '%s' to '%s' was published",
                   simulation_vehicle_frame_id_.c_str(), vehicle_frame_id_.c_str());
     }
-
-    RCLCPP_INFO(this->get_logger(), "Static transformation from '%s' to '%s' is now available",
-                vehicle_frame_id_.c_str(), fixed_frame_id_.c_str());
   }
 }
 
