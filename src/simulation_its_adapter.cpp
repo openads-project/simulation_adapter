@@ -1,21 +1,12 @@
-#include <simulation_its_adapter_node.h>
+#include <simulation_its_adapter/simulation_its_adapter.hpp>
 
 #include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(simulation_its_adapter::SimulationItsAdapter)
 
-RCLCPP_COMPONENTS_REGISTER_NODE(simulation_its_adapter::SimulationItsAdapterNode)
-
-/**
- * @brief Namespace for simulation_its_adapter package
- *
- */
 
 namespace simulation_its_adapter {
 
-/**
- * @brief Creates a SimulationItsAdapterNode node
- *
- */
-SimulationItsAdapterNode::SimulationItsAdapterNode(const rclcpp::NodeOptions& options) : Node("simulation_its_adapter_node", options) {
+SimulationItsAdapter::SimulationItsAdapter(const rclcpp::NodeOptions& options) : Node("simulation_its_adapter", options) {
   this->declareAndLoadParameter("map_server_name", map_server_name_, "Name of the map server.");
   this->declareAndLoadParameter("set_ll2_map", set_ll2_map_,
                                 "Automatically set the ll2 map based on the simulation map.");
@@ -35,12 +26,6 @@ SimulationItsAdapterNode::SimulationItsAdapterNode(const rclcpp::NodeOptions& op
 }
 
 /**
- * @brief Destroys a SimulationItsAdapterNode node
- *
- */
-SimulationItsAdapterNode::~SimulationItsAdapterNode() {}
-
-/**
  * @brief Declares and loads a ROS parameter
  *
  * @param name name
@@ -55,7 +40,7 @@ SimulationItsAdapterNode::~SimulationItsAdapterNode() {}
  * @param additional_constraints additional constraints description
  */
 template <typename T>
-void SimulationItsAdapterNode::declareAndLoadParameter(const std::string& name,
+void SimulationItsAdapter::declareAndLoadParameter(const std::string& name,
                                                   T& param,
                                                   const std::string& description,
                                                   const bool add_to_auto_reconfigurable_params,
@@ -134,13 +119,13 @@ void SimulationItsAdapterNode::declareAndLoadParameter(const std::string& name,
  * @param parameters parameters
  * @return parameter change result
  */
-rcl_interfaces::msg::SetParametersResult SimulationItsAdapterNode::parametersCallback(const std::vector<rclcpp::Parameter>& parameters) {
+rcl_interfaces::msg::SetParametersResult SimulationItsAdapter::parametersCallback(const std::vector<rclcpp::Parameter>& parameters) {
 
   for (const auto& param : parameters) {
     for (auto& auto_reconfigurable_param : auto_reconfigurable_params_) {
       if (param.get_name() == std::get<0>(auto_reconfigurable_param)) {
         std::get<1>(auto_reconfigurable_param)(param);
-        RCLCPP_INFO(this->get_logger(), "Reconfigured parameter '%s'", param.get_name().c_str());
+        RCLCPP_INFO(this->get_logger(), "Reconfigured parameter '%s' to: %s", param.get_name().c_str(), param.value_to_string().c_str());
         break;
       }
     }
@@ -156,7 +141,7 @@ rcl_interfaces::msg::SetParametersResult SimulationItsAdapterNode::parametersCal
  * @brief Sets up subscribers, publishers, and more.
  *
  */
-void SimulationItsAdapterNode::setup() {
+void SimulationItsAdapter::setup() {
   // initialize tf2 buffer, listener and static broadcaster
   tf2_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
@@ -180,7 +165,7 @@ void SimulationItsAdapterNode::setup() {
 
   // create a callback for dynamic parameter configuration
   parameters_callback_ = this->add_on_set_parameters_callback(
-      std::bind(&SimulationItsAdapterNode::parametersCallback, this, std::placeholders::_1));
+      std::bind(&SimulationItsAdapter::parametersCallback, this, std::placeholders::_1));
 
   // setup subscriber for input topics
   // Use transient_local (latching) QoS so the node receives the map info even
@@ -190,23 +175,23 @@ void SimulationItsAdapterNode::setup() {
   qosLatching.reliable();
   sub_map_info_ = this->create_subscription<sm::String>(
       kInputMapInfoTopic, qosLatching,
-      std::bind(&SimulationItsAdapterNode::mapInfoCallback, this, std::placeholders::_1));
+      std::bind(&SimulationItsAdapter::mapInfoCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_map_info_->get_topic_name());
 
   sub_ego_data_ = this->create_subscription<pm::EgoData>(
-      kInputEgoDataTopic, 1, std::bind(&SimulationItsAdapterNode::egoDataCallback, this, std::placeholders::_1));
+      kInputEgoDataTopic, 1, std::bind(&SimulationItsAdapter::egoDataCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_ego_data_->get_topic_name());
 
   sub_object_list_ = this->create_subscription<pm::ObjectList>(
-      kInputObjectListTopic, 1, std::bind(&SimulationItsAdapterNode::objectListCallback, this, std::placeholders::_1));
+      kInputObjectListTopic, 1, std::bind(&SimulationItsAdapter::objectListCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_object_list_->get_topic_name());
 
   sub_trajectory_ = this->create_subscription<tp::Trajectory>(
-      kInputTrajectoryTopic, 1, std::bind(&SimulationItsAdapterNode::trajectoryCallback, this, std::placeholders::_1));
+      kInputTrajectoryTopic, 1, std::bind(&SimulationItsAdapter::trajectoryCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_trajectory_->get_topic_name());
 
   tf_init_timer_ = this->create_wall_timer(
-      500ms, std::bind(&SimulationItsAdapterNode::initializeVehicleFrameTransform, this));
+      500ms, std::bind(&SimulationItsAdapter::initializeVehicleFrameTransform, this));
   RCLCPP_INFO(this->get_logger(), "Started timer to initialize transformation from '%s' to '%s'",
               fixed_frame_id_.c_str(), vehicle_frame_id_.c_str());
 
@@ -221,7 +206,7 @@ void SimulationItsAdapterNode::setup() {
   RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_object_list_fixed_->get_topic_name());
 
   // logging info
-  RCLCPP_INFO(this->get_logger(), "simulation_its_adapter_node is running...");
+  RCLCPP_INFO(this->get_logger(), "simulation_its_adapter is running...");
 }
 
 /**
@@ -229,7 +214,7 @@ void SimulationItsAdapterNode::setup() {
  *
  * @param msg Map name message.
  */
-void SimulationItsAdapterNode::mapInfoCallback(const sm::String::ConstSharedPtr msg) {
+void SimulationItsAdapter::mapInfoCallback(const sm::String::ConstSharedPtr& msg) {
   if (msg->data == map_info_) return;
   map_info_ = msg->data;
 
@@ -271,7 +256,7 @@ void SimulationItsAdapterNode::mapInfoCallback(const sm::String::ConstSharedPtr 
   }
 }
 
-void SimulationItsAdapterNode::egoDataCallback(const pm::EgoData::ConstSharedPtr msg) {
+void SimulationItsAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) {
   auto timeout = rclcpp::Duration::from_seconds(1.0);
 
   gm::TransformStamped vehicle_frame_position_in_simulation_map_tf, vehicle_frame_position_in_map_tf, simulation_map_to_map_tf;
@@ -354,7 +339,7 @@ void SimulationItsAdapterNode::egoDataCallback(const pm::EgoData::ConstSharedPtr
   pub_ego_data_->publish(ego_data);
 }
 
-void SimulationItsAdapterNode::objectListCallback(const pm::ObjectList::ConstSharedPtr msg) {
+void SimulationItsAdapter::objectListCallback(const pm::ObjectList::ConstSharedPtr& msg) {
   auto timeout = rclcpp::Duration::from_seconds(1.0);
 
   // Option A: transform object_list to fixed_frame_id
@@ -391,7 +376,7 @@ void SimulationItsAdapterNode::objectListCallback(const pm::ObjectList::ConstSha
   pub_object_list_->publish(msg_object_list);
 }
 
-void SimulationItsAdapterNode::initializeVehicleFrameTransform() {
+void SimulationItsAdapter::initializeVehicleFrameTransform() {
   /* set up a transformation link between fixed_frame_id and vehicle_frame_id
 
            /        utm_<zone>     \
@@ -475,7 +460,7 @@ void SimulationItsAdapterNode::initializeVehicleFrameTransform() {
   }
 }
 
-void SimulationItsAdapterNode::trajectoryCallback(const tp::Trajectory::ConstSharedPtr msg) {
+void SimulationItsAdapter::trajectoryCallback(const tp::Trajectory::ConstSharedPtr& msg) {
   if (msg->type_id != trajectory_planning_msgs::msg::DRIVABLE::TYPE_ID) {
     RCLCPP_WARN(this->get_logger(),
                 "Invalid trajectory type, planned trajectory states are only filled for trajectories of type DRIVABLE");
@@ -491,5 +476,6 @@ void SimulationItsAdapterNode::trajectoryCallback(const tp::Trajectory::ConstSha
     return;
   }
 }
+
 
 }  // namespace simulation_its_adapter

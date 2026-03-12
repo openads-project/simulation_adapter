@@ -4,12 +4,13 @@
 
   <name>simulation_its_adapter</name>
   <version>2.0.0</version>
-  <description>This package connects simulation to the automated driving stack.</description>
+  <description>This package connects simulation cores to the automated driving stack.</description>
 
   <maintainer email="christian.geller@ika.rwth-aachen.de">Christian Geller</maintainer>
   <author email="christian.geller@ika.rwth-aachen.de">Christian Geller</author>
   <author email="guido.linden@ika.rwth-aachen.de">Guido Linden</author>
   <author email="jean-pierre.busch@ika.rwth-aachen.de">Jean-Pierre Busch</author>
+  <author email="silas.damaschke@ika.rwth-aachen.de">Silas Damaschke</author>
 
   <license>TODO</license>
 

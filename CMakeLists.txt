@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.8)
 project(simulation_its_adapter)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -20,15 +20,16 @@ find_package(tf2_trajectory_planning_msgs REQUIRED)
 find_package(trajectory_planning_msgs REQUIRED)
 find_package(trajectory_planning_msgs_utils REQUIRED)
 
-set(TARGET_NAME simulation_its_adapter_node_component)
+set(TARGET_NAME simulation_its_adapter_component)
 
 add_library(${TARGET_NAME} SHARED
-  src/simulation_its_adapter_node.cpp
+  src/simulation_its_adapter.cpp
 )
 
 rclcpp_components_register_node(${TARGET_NAME}
-  PLUGIN "simulation_its_adapter::SimulationItsAdapterNode"
-  EXECUTABLE simulation_its_adapter_node
+  PLUGIN "simulation_its_adapter::SimulationItsAdapter"
+  EXECUTABLE simulation_its_adapter
+  EXECUTOR SingleThreadedExecutor
 )
 
 target_include_directories(${TARGET_NAME} PUBLIC
@@ -37,20 +38,20 @@ target_include_directories(${TARGET_NAME} PUBLIC
 )
 target_compile_features(${TARGET_NAME} PUBLIC c_std_99 cxx_std_17)
 
-ament_target_dependencies(${TARGET_NAME}
-  rclcpp
-  rclcpp_components
-  geometry_msgs
-  perception_msgs
-  perception_msgs_utils
-  std_msgs
-  tf2
-  tf2_geometry_msgs
-  tf2_perception_msgs
-  tf2_ros
-  tf2_trajectory_planning_msgs
-  trajectory_planning_msgs
-  trajectory_planning_msgs_utils
+target_link_libraries(${TARGET_NAME} PUBLIC
+  rclcpp::rclcpp
+  ${rclcpp_components_TARGETS}
+  ${geometry_msgs_TARGETS}
+  ${perception_msgs_TARGETS}
+  ${perception_msgs_utils_TARGETS}
+  ${std_msgs_TARGETS}
+  ${tf2_TARGETS}
+  ${tf2_geometry_msgs_TARGETS}
+  ${tf2_perception_msgs_TARGETS}
+  ${tf2_ros_TARGETS}
+  ${tf2_trajectory_planning_msgs_TARGETS}
+  ${trajectory_planning_msgs_TARGETS}
+  ${trajectory_planning_msgs_utils_TARGETS}
 )
 
 install(TARGETS ${TARGET_NAME}
@@ -61,6 +62,7 @@ install(TARGETS ${TARGET_NAME}
 
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
+  OPTIONAL
 )
 
 install(DIRECTORY config

@@ -1,64 +1,54 @@
 #!/usr/bin/env python3
 
+import os
+
 from ament_index_python import get_package_share_directory
 from launch import LaunchDescription
-from launch_ros.actions import Node, SetParameter
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node, SetParameter
 
 
 def generate_launch_description():
 
-  params_arg = DeclareLaunchArgument('params', default_value=PathJoinSubstitution([
-      get_package_share_directory("simulation_its_adapter"), "config", "params.yml"])
-  )
+    remappable_topics = [
+        DeclareLaunchArgument("input_map_info_topic", default_value="~/map_info"),
+        DeclareLaunchArgument("input_ego_data_topic", default_value="~/input_ego_data"),
+        DeclareLaunchArgument("input_object_list_topic", default_value="~/input_object_list"),
+        DeclareLaunchArgument("input_trajectory_topic", default_value="~/input_trajectory"),
+        DeclareLaunchArgument("output_ego_data_topic", default_value="~/ego_data"),
+        DeclareLaunchArgument("output_object_list_topic", default_value="~/object_list"),
+        DeclareLaunchArgument("output_object_list_fixed_topic", default_value="~/object_list_fixed"),
+    ]
 
-  node_name_arg = DeclareLaunchArgument('node_name', default_value='simulation_its_adapter')
-  namespace_arg = DeclareLaunchArgument('namespace', default_value='')
+    args = [
+        DeclareLaunchArgument("name", default_value="simulation_its_adapter", description="node name"),
+        DeclareLaunchArgument("namespace", default_value="", description="node namespace"),
+        DeclareLaunchArgument("params", default_value=os.path.join(get_package_share_directory("simulation_its_adapter"), "config", "params.yml"), description="path to parameter file"),
+        DeclareLaunchArgument("log_level", default_value="info", description="ROS logging level (debug, info, warn, error, fatal)"),
+        DeclareLaunchArgument("use_sim_time", default_value="true", description="use simulation clock"),
+        DeclareLaunchArgument("set_ll2_map", default_value="true", description="automatically set lanelet2 map from simulation map info"),
+        *remappable_topics,
+    ]
 
-  input_map_info_arg = DeclareLaunchArgument('input_map_info_topic', default_value='~/map_info')
-  input_ego_data_topic_arg = DeclareLaunchArgument('input_ego_data_topic', default_value='~/input_ego_data')
-  input_object_list_topic_arg = DeclareLaunchArgument('input_object_list_topic', default_value='~/input_object_list')
-  input_trajectory_topic_arg = DeclareLaunchArgument('input_trajectory_topic', default_value='~/input_trajectory')
+    nodes = [
+        Node(
+            package="simulation_its_adapter",
+            executable="simulation_its_adapter",
+            namespace=LaunchConfiguration("namespace"),
+            name=LaunchConfiguration("name"),
+            parameters=[LaunchConfiguration("params")],
+            arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
+            remappings=[(la.default_value[0].text, LaunchConfiguration(la.name)) for la in remappable_topics],
+            output="screen",
+            emulate_tty=True,
+        )
+    ]
 
-  output_ego_data_topic_arg = DeclareLaunchArgument('output_ego_data_topic', default_value='~/ego_data')
-  output_object_list_topic_arg = DeclareLaunchArgument('output_object_list_topic', default_value='~/object_list')
-  output_object_list_fixed_topic_arg = DeclareLaunchArgument('output_object_list_fixed_topic', default_value='~/object_list_fixed')
-
-  use_sim_time_arg = DeclareLaunchArgument('use_sim_time', default_value='true')
-  set_ll2_map_arg = DeclareLaunchArgument('set_ll2_map', default_value='true')
-
-  return LaunchDescription([
-    params_arg,
-    node_name_arg,
-    namespace_arg,
-    input_map_info_arg,
-    input_ego_data_topic_arg,
-    input_object_list_topic_arg,
-    input_trajectory_topic_arg,
-    output_ego_data_topic_arg,
-    output_object_list_topic_arg,
-    output_object_list_fixed_topic_arg,
-    use_sim_time_arg,
-    set_ll2_map_arg,
-    SetParameter(name='use_sim_time', value=LaunchConfiguration('use_sim_time')),
-    SetParameter(name='set_ll2_map', value=LaunchConfiguration('set_ll2_map')),
-    Node(
-      package="simulation_its_adapter",
-      executable="simulation_its_adapter_node",
-      name=LaunchConfiguration('node_name'),
-      namespace=LaunchConfiguration('namespace'),
-      output="screen",
-      emulate_tty=True,
-      parameters=[LaunchConfiguration('params')],
-      remappings=[
-          ("~/input_map_info", LaunchConfiguration('input_map_info_topic')),
-          ("~/input_ego_data", LaunchConfiguration('input_ego_data_topic')),
-          ("~/input_object_list", LaunchConfiguration('input_object_list_topic')),
-          ("~/input_trajectory", LaunchConfiguration('input_trajectory_topic')),
-          ("~/ego_data", LaunchConfiguration('output_ego_data_topic')),
-          ("~/object_list", LaunchConfiguration('output_object_list_topic')),
-          ("~/object_list_fixed", LaunchConfiguration('output_object_list_fixed_topic'))
-      ]
-    )
-  ])
+    return LaunchDescription([
+        *remappable_topics,
+        *args,
+        SetParameter("use_sim_time", LaunchConfiguration("use_sim_time")),
+        SetParameter("set_ll2_map", LaunchConfiguration("set_ll2_map")),
+        *nodes,
+    ])
