@@ -1,6 +1,6 @@
 # simulation_its_adapter
 
-This package contains the SimulationItsAdapterNode - a simple ROS 2 Node that converts incoming messages from the simulation_its_converter, e.g. [simulation_its_converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/simulation_its_converter), to `fixed_frame_id` and `vehicle_frame_id` frame. Moreover, the node can load a lanelet map based on the currently reported simulation map info.
+This package contains the SimulationItsAdapterNode - a simple ROS 2 Node that converts incoming messages from different simulation cores, e.g. [carla_its_converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_its_converter) and [sumo_its_interface](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/sumo/sumo_its_interface), to `fixed_frame_id` and `vehicle_frame_id` frame. Moreover, the node can load a lanelet map based on the currently reported simulation map info.
 
 - [simulation\_its\_adapter](#simulation_its_adapter)
   - [Nodes](#nodes)
