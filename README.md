@@ -1,90 +1,65 @@
 # simulation_its_adapter
 
-This package contains the SimulationItsAdapter - a simple ROS 2 Node that converts incoming messages from different simulation cores, e.g. [carla_its_converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_its_converter) and [sumo_its_interface](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/sumo/sumo_its_interface), to `fixed_frame_id` and `vehicle_frame_id` frame. Moreover, the node can load a lanelet map based on the currently reported simulation map info.
+This package contains the SimulationItsAdapter - a ROS 2 Node that connects the simulation to the automated driving stack by converting incoming messages from simulation cores, e.g. [carla_its_converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_its_converter) and [sumo_its_interface](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/sumo/sumo_its_interface), to `fixed_frame_id` and `vehicle_frame_id` frame. Moreover, the node can load a lanelet map based on the currently reported simulation map info.
 
 - [simulation\_its\_adapter](#simulation_its_adapter)
-  - [Nodes](#nodes)
-    - [simulation\_its\_adapter/SimulationItsAdapter](#simulation_its_adaptersimulationitsadapter)
-      - [Subscribed Topics](#subscribed-topics)
-      - [Published Topics](#published-topics)
-      - [Parameters](#parameters)
-  - [Usage of docker-ros Images](#usage-of-docker-ros-images)
-    - [Available Images](#available-images)
-    - [Default Command](#default-command)
-    - [Launch Files](#launch-files)
-    - [Configuration Files](#configuration-files)
-    - [Additional Remarks](#additional-remarks)
-  - [Official Documentation](#official-documentation)
+    - [Container Images](#container-images)
+  - [`simulation_its_adapter`](#simulation_its_adapter-1)
+    - [Subscribed Topics](#subscribed-topics)
+    - [Published Topics](#published-topics)
+    - [Services](#services)
+    - [Actions](#actions)
+    - [Parameters](#parameters)
 
 
-## Nodes
+### Container Images
 
-| Package | Node | Description |
+| Description | Image:Tag | Default Command |
 | --- | --- | --- |
-| `simulation_its_adapter` | `SimulationItsAdapter` | Connects a simulation core to an automated driving stack by converting simulation messages to internal frame conventions and requests a corresponding lanelet map |
+| ROS 2 Node that connects the simulation to the automated driving stack | `gitlab.ika.rwth-aachen.de:5050/fb-fi/simulation/simulation_its_adapter:latest` | `ros2 launch simulation_its_adapter simulation_its_adapter.launch.py` |
 
-### simulation_its_adapter/SimulationItsAdapter
 
-#### Subscribed Topics
+## `simulation_its_adapter`
 
-| Topic | Type | Description | 
-| --- | --- | --- |
-| `~/input_map_info` | `std_msgs::msg::String` | Current simulation map infos |
-| `~/input_ego_data` | `perception_msgs::EgoData` | EgoData in the simulation_fixed_frame_id |
-| `~/input_object_list` | `perception_msgs::ObjectList` | ObjectList in the simulation_fixed_frame_id |
-| `~/input_trajectory` | `trajectory_planning_msgs::msg::Trajectory` | ObjectList in the simulation_fixed_frame_id |
-
-#### Published Topics
+### Subscribed Topics
 
 | Topic | Type | Description |
 | --- | --- | --- |
-| `~/ego_data` | `perception_msgs::EgoData` | Ego data for vehicle_frame_id in the fixed_frame_id|
-| `~/object_list` | `perception_msgs::ObjectList` | Object list in the vehicle_frame_id |
-| `~/object_list_fixed` | `perception_msgs::ObjectList` | Object list in the fixed_frame_id |
+| `~/input_map_info` | `std_msgs::msg::String` | Current simulation map info (latching QoS) |
+| `~/input_ego_data` | `perception_msgs::msg::EgoData` | Ego data in `simulation_fixed_frame_id` |
+| `~/input_object_list` | `perception_msgs::msg::ObjectList` | Object list in `simulation_fixed_frame_id` |
+| `~/input_trajectory` | `trajectory_planning_msgs::msg::Trajectory` | Planned trajectory in any TF-reachable frame |
 
-#### Parameters
+### Published Topics
 
-| Parameter | Type | Description |
+| Topic | Type | Description |
 | --- | --- | --- |
-| map_server_name | string | Name of the map server. |
-| simulation_fixed_frame_id | string | Name of the fixed frame id in the simulation. |
-| fixed_frame_id | string | Name of the fixed frame id over time. |
-| simulation_vehicle_frame_id | string | Name of the vehicle frame id in the simulation. |
-| vehicle_frame_id | string | Name of the vehicle frame id. |
-| simulation_vehicle_frame_id_to_vehicle_frame_id | float | Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id. |
+| `~/ego_data` | `perception_msgs::msg::EgoData` | Ego data transformed to `fixed_frame_id` / `vehicle_frame_id` |
+| `~/object_list` | `perception_msgs::msg::ObjectList` | Object list in `vehicle_frame_id` |
+| `~/object_list_fixed` | `perception_msgs::msg::ObjectList` | Object list in `fixed_frame_id` |
 
-## Usage of docker-ros Images
+### Services
 
-### Available Images
+| Service | Type | Description |
+| --- | --- | --- |
+| | | |
 
-| Tag | Description |
-| --- | --- |
-| ` ` | latest version |
+### Actions
 
-### Default Command
+| Action | Type | Description |
+| --- | --- | --- |
+| | | |
 
-```bash
-ros2 launch simulation_its_adapter simulation_its_adapter.launch.py
-```
+### Parameters
 
-### Launch Files
-
-| Package | File | Path | Description |
+| Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
-| `simulation_its_adapter` | `simulation_its_adapter.launch.py` | `launch/` | Launches SimulationItsAdapterNode for ROS 2. |
-
-
-### Configuration Files
-
-| Package | File | Path | Description |
-| --- | --- | --- | --- |
-| ` `  |  |  |
-
-### Additional Remarks
-
-\-
-
-
-## Official Documentation
-
-\-
+| `map_server_name` | `string` | `/localization/ll2_map_server` | Name of the lanelet2 map server node |
+| `set_ll2_map` | `bool` | `true` | Automatically load the lanelet2 map based on the simulation map info |
+| `simulation_fixed_frame_id` | `string` | `simulation_map` | Fixed frame id used by the simulation |
+| `fixed_frame_id` | `string` | `map` | Fixed frame id used by the driving stack |
+| `simulation_vehicle_frame_id` | `string` | `ego_vehicle` | Vehicle frame id used by the simulation |
+| `vehicle_frame_id` | `string` | `base_link` | Vehicle frame id used by the driving stack |
+| `simulation_vehicle_frame_id_to_vehicle_frame_id` | `double` | `0.0` | Longitudinal offset (m) from `simulation_vehicle_frame_id` to `vehicle_frame_id` |
+| `maps.simulation_maps` | `string[]` | `[campus]` | List of supported simulation map names (parallel to `maps.lanelet_files`) |
+| `maps.lanelet_files` | `string[]` | `[/data/maps/aachen.osm]` | Lanelet2 map file paths (parallel to `maps.simulation_maps`) |

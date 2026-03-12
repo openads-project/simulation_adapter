@@ -12,7 +12,7 @@ from launch_ros.actions import Node, SetParameter
 def generate_launch_description():
 
     remappable_topics = [
-        DeclareLaunchArgument("input_map_info_topic", default_value="~/map_info"),
+        DeclareLaunchArgument("input_map_info_topic", default_value="~/input_map_info"),
         DeclareLaunchArgument("input_ego_data_topic", default_value="~/input_ego_data"),
         DeclareLaunchArgument("input_object_list_topic", default_value="~/input_object_list"),
         DeclareLaunchArgument("input_trajectory_topic", default_value="~/input_trajectory"),
