@@ -2,22 +2,26 @@
 
 This package contains the SimulationItsAdapterNode - a simple ROS 2 Node that converts incoming messages from the simulation_its_converter, e.g. [simulation_its_converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/simulation_its_converter), to `fixed_frame_id` and `vehicle_frame_id` frame. Moreover, the node can load a lanelet map based on the currently reported simulation map info.
 
-- [Nodes](#nodes)
-  - [simulation_its_adapter/SimulationItsAdapterNode]
-- [Usage of docker-ros Images](#usage-of-docker-ros-images)
-  - [Available Images](#available-images)
-  - [Default Command](#default-command)
-  - [Launch Files](#launch-files)
-  - [Configuration Files](#configuration-files)
-  - [Additional Remarks](#additional-remarks)
-- [Official Documentation](#official-documentation)
+- [simulation\_its\_adapter](#simulation_its_adapter)
+  - [Nodes](#nodes)
+    - [simulation\_its\_adapter/SimulationItsAdapterNode](#simulation_its_adaptersimulationitsadapternode)
+      - [Subscribed Topics](#subscribed-topics)
+      - [Published Topics](#published-topics)
+      - [Parameters](#parameters)
+  - [Usage of docker-ros Images](#usage-of-docker-ros-images)
+    - [Available Images](#available-images)
+    - [Default Command](#default-command)
+    - [Launch Files](#launch-files)
+    - [Configuration Files](#configuration-files)
+    - [Additional Remarks](#additional-remarks)
+  - [Official Documentation](#official-documentation)
 
 
 ## Nodes
 
 | Package | Node | Description |
 | --- | --- | --- |
-| `simulation_its_adapter` | `SimulationItsAdapterNode` | TODO |
+| `simulation_its_adapter` | `SimulationItsAdapterNode` | Connects a simulation core to an automated driving stack by converting simulation messages to internal frame conventions and requests a corresponding lanelet map |
 
 ### simulation_its_adapter/SimulationItsAdapterNode
 
@@ -43,9 +47,9 @@ This package contains the SimulationItsAdapterNode - a simple ROS 2 Node that co
 | Parameter | Type | Description |
 | --- | --- | --- |
 | map_server_name | string | Name of the map server. |
-| simulation_fixed_frame_id | string | Name of the fixed frame id in CARLA. |
+| simulation_fixed_frame_id | string | Name of the fixed frame id in the simulation. |
 | fixed_frame_id | string | Name of the fixed frame id over time. |
-| simulation_vehicle_frame_id | string | Name of the vehicle frame id in CARLA. |
+| simulation_vehicle_frame_id | string | Name of the vehicle frame id in the simulation. |
 | vehicle_frame_id | string | Name of the vehicle frame id. |
 | simulation_vehicle_frame_id_to_vehicle_frame_id | float | Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id. |
 
