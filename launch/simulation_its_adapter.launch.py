@@ -10,55 +10,55 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 def generate_launch_description():
 
   params_arg = DeclareLaunchArgument('params', default_value=PathJoinSubstitution([
-      get_package_share_directory("carla_its_adapter"), "config", "params.yml"])
+      get_package_share_directory("simulation_its_adapter"), "config", "params.yml"])
   )
 
-  node_name_arg = DeclareLaunchArgument('node_name', default_value='carla_its_adapter')
+  node_name_arg = DeclareLaunchArgument('node_name', default_value='simulation_its_adapter')
   namespace_arg = DeclareLaunchArgument('namespace', default_value='')
 
-  input_ego_data_topic_arg = DeclareLaunchArgument('input_ego_data_topic', default_value='/carla_its_converter/ego_vehicle/ego_data')
-  input_object_list_topic_arg = DeclareLaunchArgument('input_object_list_topic', default_value='/carla_its_converter/ego_vehicle/object_list')
-  input_odometry_topic_arg = DeclareLaunchArgument('input_odometry_topic', default_value='/carla/ego_vehicle/odometry')
-  input_trajectory_topic_arg = DeclareLaunchArgument('input_trajectory_topic', default_value='~/trajectory')
+  input_map_info_arg = DeclareLaunchArgument('input_map_info_topic', default_value='~/map_info')
+  input_ego_data_topic_arg = DeclareLaunchArgument('input_ego_data_topic', default_value='~/input_ego_data')
+  input_object_list_topic_arg = DeclareLaunchArgument('input_object_list_topic', default_value='~/input_object_list')
+  input_trajectory_topic_arg = DeclareLaunchArgument('input_trajectory_topic', default_value='~/input_trajectory')
 
   output_ego_data_topic_arg = DeclareLaunchArgument('output_ego_data_topic', default_value='~/ego_data')
   output_object_list_topic_arg = DeclareLaunchArgument('output_object_list_topic', default_value='~/object_list')
-  output_object_list_map_topic_arg = DeclareLaunchArgument('output_object_list_topic_map', default_value='~/object_list_map')
+  output_object_list_fixed_topic_arg = DeclareLaunchArgument('output_object_list_fixed_topic', default_value='~/object_list_fixed')
 
   use_sim_time_arg = DeclareLaunchArgument('use_sim_time', default_value='true')
-  set_ll2_map_from_carla_arg = DeclareLaunchArgument('set_ll2_map_from_carla', default_value='true')
+  set_ll2_map_arg = DeclareLaunchArgument('set_ll2_map', default_value='true')
 
   return LaunchDescription([
     params_arg,
     node_name_arg,
     namespace_arg,
+    input_map_info_arg,
     input_ego_data_topic_arg,
     input_object_list_topic_arg,
-    input_odometry_topic_arg,
     input_trajectory_topic_arg,
     output_ego_data_topic_arg,
     output_object_list_topic_arg,
-    output_object_list_map_topic_arg,
+    output_object_list_fixed_topic_arg,
     use_sim_time_arg,
-    set_ll2_map_from_carla_arg,
+    set_ll2_map_arg,
     SetParameter(name='use_sim_time', value=LaunchConfiguration('use_sim_time')),
-    SetParameter(name='set_ll2_map_from_carla', value=LaunchConfiguration('set_ll2_map_from_carla')),
+    SetParameter(name='set_ll2_map', value=LaunchConfiguration('set_ll2_map')),
     Node(
-      package="carla_its_adapter",
-      executable="carla_its_adapter_node",
+      package="simulation_its_adapter",
+      executable="simulation_its_adapter_node",
       name=LaunchConfiguration('node_name'),
       namespace=LaunchConfiguration('namespace'),
       output="screen",
       emulate_tty=True,
       parameters=[LaunchConfiguration('params')],
       remappings=[
+          ("~/input_map_info", LaunchConfiguration('input_map_info_topic')),
           ("~/input_ego_data", LaunchConfiguration('input_ego_data_topic')),
           ("~/input_object_list", LaunchConfiguration('input_object_list_topic')),
-          ("~/input_odometry", LaunchConfiguration('input_odometry_topic')),
           ("~/input_trajectory", LaunchConfiguration('input_trajectory_topic')),
           ("~/ego_data", LaunchConfiguration('output_ego_data_topic')),
           ("~/object_list", LaunchConfiguration('output_object_list_topic')),
-          ("~/object_list_map", LaunchConfiguration('output_object_list_topic_map'))
+          ("~/object_list_fixed", LaunchConfiguration('output_object_list_fixed_topic'))
       ]
     )
   ])

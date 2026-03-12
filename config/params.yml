@@ -2,16 +2,16 @@
   ros__parameters:
     map_server_name: /localization/ll2_map_server      # Name of map server
 
-    carla_fixed_frame_id: carla_map       # Name of the fixed frame id in CARLA
-    fixed_frame_id: map                   # Name of the fixed frame id over time
-    carla_vehicle_frame_id: ego_vehicle   # Name of the vehicle frame id in CARLA
-    vehicle_frame_id: base_link           # Name of the vehicle frame id.
-    carla_vehicle_frame_id_to_vehicle_frame_id: 0.0   # Longitudinal offset from carla_vehicle_frame_id to vehicle_frame_id
+    simulation_fixed_frame_id: simulation_map # Name of the fixed frame id in simulation
+    fixed_frame_id: map                       # Name of the fixed frame id over time
+    simulation_vehicle_frame_id: ego_vehicle  # Name of the vehicle frame id in simulation
+    vehicle_frame_id: base_link               # Name of the vehicle frame id.
+    simulation_vehicle_frame_id_to_vehicle_frame_id: 0.0   # Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id
 
     maps:
-      carla_maps:
-        - Town10HD
+      simulation_maps:
+        - campus
       lanelet_files:
-        - /data/maps/Town10HD.osm
+        - /data/maps/aachen.osm
   
 

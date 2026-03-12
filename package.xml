@@ -2,13 +2,13 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
 
-  <name>carla_its_adapter</name>
-  <version>1.0.0</version>
-  <description>This package contains the CarlaItsAdapterNode that acts as an Converter to the FB-FI definitions and publishes necessary transforms.</description>
+  <name>simulation_its_adapter</name>
+  <version>2.0.0</version>
+  <description>This package connects simulation to the automated driving stack.</description>
 
-  <maintainer email="guido.kueppers@ika.rwth-aachen.de">Guido Küppers</maintainer>
+  <maintainer email="christian.geller@ika.rwth-aachen.de">Christian Geller</maintainer>
   <author email="christian.geller@ika.rwth-aachen.de">Christian Geller</author>
-  <author email="guido.kueppers@ika.rwth-aachen.de">Guido Küppers</author>
+  <author email="guido.linden@ika.rwth-aachen.de">Guido Linden</author>
   <author email="jean-pierre.busch@ika.rwth-aachen.de">Jean-Pierre Busch</author>
 
   <license>TODO</license>
@@ -18,9 +18,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
 
-  <depend>carla_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>nav_msgs</depend>
   <depend>perception_msgs</depend>
   <depend>perception_msgs_utils</depend>
   <depend>std_msgs</depend>
