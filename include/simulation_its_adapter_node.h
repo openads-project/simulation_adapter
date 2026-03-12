@@ -4,7 +4,6 @@
 #include <map>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
-#include <regex>
 #include <string>
 
 // definitions
@@ -101,6 +100,7 @@ class SimulationItsAdapterNode : public rclcpp::Node {
   // tf2 variables
   std::unique_ptr<tf2_ros::Buffer> tf2_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
+  std::unique_ptr<tf2_ros::StaticTransformBroadcaster> static_br_tf_;
   rclcpp::TimerBase::SharedPtr tf_init_timer_;
 
   // input parameters
@@ -113,7 +113,7 @@ class SimulationItsAdapterNode : public rclcpp::Node {
   double simulation_vehicle_frame_id_to_vehicle_frame_id_ = 0.0;
 
   std::vector<std::string> simulation_maps_;
-  std::vector<std::string> lanelet_files_ ;
+  std::vector<std::string> lanelet_files_;
 
   tp::Trajectory trajectory_planned_;
   std::string map_info_;

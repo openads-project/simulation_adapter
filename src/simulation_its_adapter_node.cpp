@@ -157,9 +157,10 @@ rcl_interfaces::msg::SetParametersResult SimulationItsAdapterNode::parametersCal
  *
  */
 void SimulationItsAdapterNode::setup() {
-  // initialize tf2 buffer and listener
+  // initialize tf2 buffer, listener and static broadcaster
   tf2_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
+  static_br_tf_ = std::make_unique<tf2_ros::StaticTransformBroadcaster>(this);
 
   map_info_ = "";
 
@@ -182,8 +183,13 @@ void SimulationItsAdapterNode::setup() {
       std::bind(&SimulationItsAdapterNode::parametersCallback, this, std::placeholders::_1));
 
   // setup subscriber for input topics
+  // Use transient_local (latching) QoS so the node receives the map info even
+  // when it starts after the publisher has already sent the single startup message.
+  rclcpp::QoS qosLatching = rclcpp::QoS(rclcpp::KeepLast(1));
+  qosLatching.transient_local();
+  qosLatching.reliable();
   sub_map_info_ = this->create_subscription<sm::String>(
-      kInputMapInfoTopic, 1,
+      kInputMapInfoTopic, qosLatching,
       std::bind(&SimulationItsAdapterNode::mapInfoCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_map_info_->get_topic_name());
 
@@ -241,6 +247,13 @@ void SimulationItsAdapterNode::mapInfoCallback(const sm::String::ConstSharedPtr 
 
     // Get lanelet map for simulation map name
     size_t index = std::distance(simulation_maps_.begin(), it);
+    if (index >= lanelet_files_.size()) {
+      RCLCPP_ERROR(this->get_logger(),
+                   "No lanelet file at index %zu for map '%s'. Check that 'maps.simulation_maps' and "
+                   "'maps.lanelet_files' have the same length in params.yml.",
+                   index, simulation_map_name.c_str());
+      return;
+    }
     lanelet_map_name = lanelet_files_[index];
 
     // change map by setting map server parameters
@@ -405,10 +418,9 @@ void SimulationItsAdapterNode::initializeVehicleFrameTransform() {
                   vehicle_frame_id_.c_str(), fixed_frame_id_.c_str());
     }
     return;
-  } catch (const tf2::TransformException& e) {
-    RCLCPP_WARN(this->get_logger(), "Transformation from '%s' to '%s' is not available", fixed_frame_id_.c_str(),
-                vehicle_frame_id_.c_str());
-    static tf2_ros::StaticTransformBroadcaster static_br_tf_(this);
+  } catch (const tf2::TransformException&) {
+    RCLCPP_DEBUG(this->get_logger(), "Transformation from '%s' to '%s' not yet available, retrying ...",
+                 fixed_frame_id_.c_str(), vehicle_frame_id_.c_str());
 
     // step 1: simulation_fixed_frame_id -> fixed_frame_id
     try {
@@ -456,7 +468,7 @@ void SimulationItsAdapterNode::initializeVehicleFrameTransform() {
       ego_vehicle_to_vehicle_frame.transform.rotation.z = q.z();
       ego_vehicle_to_vehicle_frame.transform.rotation.w = q.w();
 
-      static_br_tf_.sendTransform(ego_vehicle_to_vehicle_frame);
+      static_br_tf_->sendTransform(ego_vehicle_to_vehicle_frame);
       RCLCPP_INFO(this->get_logger(), "\tTransformation from '%s' to '%s' was published",
                   simulation_vehicle_frame_id_.c_str(), vehicle_frame_id_.c_str());
     }
