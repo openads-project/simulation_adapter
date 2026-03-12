@@ -7,8 +7,6 @@ This package contains the SimulationItsAdapter - a ROS 2 Node that connects the 
   - [`simulation_its_adapter`](#simulation_its_adapter-1)
     - [Subscribed Topics](#subscribed-topics)
     - [Published Topics](#published-topics)
-    - [Services](#services)
-    - [Actions](#actions)
     - [Parameters](#parameters)
 
 
@@ -37,18 +35,6 @@ This package contains the SimulationItsAdapter - a ROS 2 Node that connects the 
 | `~/ego_data` | `perception_msgs::msg::EgoData` | Ego data transformed to `fixed_frame_id` / `vehicle_frame_id` |
 | `~/object_list` | `perception_msgs::msg::ObjectList` | Object list in `vehicle_frame_id` |
 | `~/object_list_fixed` | `perception_msgs::msg::ObjectList` | Object list in `fixed_frame_id` |
-
-### Services
-
-| Service | Type | Description |
-| --- | --- | --- |
-| | | |
-
-### Actions
-
-| Action | Type | Description |
-| --- | --- | --- |
-| | | |
 
 ### Parameters
 
