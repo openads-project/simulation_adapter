@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(simulation_its_adapter)
+project(simulation_adapter)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
    add_compile_options(-Wall -Wextra -Wpedantic)
@@ -20,15 +20,15 @@ find_package(tf2_trajectory_planning_msgs REQUIRED)
 find_package(trajectory_planning_msgs REQUIRED)
 find_package(trajectory_planning_msgs_utils REQUIRED)
 
-set(TARGET_NAME simulation_its_adapter_component)
+set(TARGET_NAME simulation_adapter_component)
 
 add_library(${TARGET_NAME} SHARED
-  src/simulation_its_adapter.cpp
+  src/simulation_adapter.cpp
 )
 
 rclcpp_components_register_node(${TARGET_NAME}
-  PLUGIN "simulation_its_adapter::SimulationItsAdapter"
-  EXECUTABLE simulation_its_adapter
+  PLUGIN "simulation_adapter::SimulationAdapter"
+  EXECUTABLE simulation_adapter
   EXECUTOR SingleThreadedExecutor
 )
 

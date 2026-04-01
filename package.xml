@@ -2,8 +2,8 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
 
-  <name>simulation_its_adapter</name>
-  <version>2.0.0</version>
+  <name>simulation_adapter</name>
+  <version>1.2.0</version>
   <description>This package connects simulation cores to the automated driving stack.</description>
 
   <maintainer email="christian.geller@ika.rwth-aachen.de">Christian Geller</maintainer>

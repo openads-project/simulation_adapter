@@ -1,10 +1,10 @@
-# simulation_its_adapter
+# simulation_adapter
 
-This package contains the SimulationItsAdapter - a ROS 2 Node that connects the simulation to the automated driving stack by converting incoming messages from simulation cores, e.g. [carla_its_converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_its_converter) and [sumo_its_interface](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/sumo/sumo_its_interface), to `fixed_frame_id` and `vehicle_frame_id` frame. Moreover, the node can load a lanelet map based on the currently reported simulation map info.
+This package contains the SimulationAdapter - a ROS 2 Node that connects the simulation to the automated driving stack by converting incoming messages from simulation cores, e.g. [carla_converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_converter) and [sumo_its_interface](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/sumo/sumo_its_interface), to `fixed_frame_id` and `vehicle_frame_id` frame. Moreover, the node can load a lanelet map based on the currently reported simulation map info.
 
-- [simulation\_its\_adapter](#simulation_its_adapter)
+- [simulation\_adapter](#simulation_adapter)
     - [Container Images](#container-images)
-  - [`simulation_its_adapter`](#simulation_its_adapter-1)
+  - [`simulation_adapter`](#simulation_adapter-1)
     - [Subscribed Topics](#subscribed-topics)
     - [Published Topics](#published-topics)
     - [Parameters](#parameters)
@@ -14,10 +14,10 @@ This package contains the SimulationItsAdapter - a ROS 2 Node that connects the 
 
 | Description | Image:Tag | Default Command |
 | --- | --- | --- |
-| ROS 2 Node that connects the simulation to the automated driving stack | `gitlab.ika.rwth-aachen.de:5050/fb-fi/simulation/simulation_its_adapter:latest` | `ros2 launch simulation_its_adapter simulation_its_adapter.launch.py` |
+| ROS 2 Node that connects the simulation to the automated driving stack | `gitlab.ika.rwth-aachen.de:5050/fb-fi/simulation/simulation_adapter:latest` | `ros2 launch simulation_adapter simulation_adapter.launch.py` |
 
 
-## `simulation_its_adapter`
+## `simulation_adapter`
 
 ### Subscribed Topics
 
