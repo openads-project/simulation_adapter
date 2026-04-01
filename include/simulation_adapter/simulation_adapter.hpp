@@ -31,7 +31,7 @@ namespace sm = std_msgs::msg;
 namespace tp = trajectory_planning_msgs::msg;
 
 
-namespace simulation_its_adapter {
+namespace simulation_adapter {
 
 template <typename C> struct is_vector : std::false_type {};
 template <typename T, typename A> struct is_vector<std::vector<T, A>> : std::true_type {};
@@ -39,9 +39,9 @@ template <typename C> inline constexpr bool is_vector_v = is_vector<C>::value;
 
 
 /**
- * @brief SimulationItsAdapter class
+ * @brief SimulationAdapter class
  */
-class SimulationItsAdapter : public rclcpp::Node {
+class SimulationAdapter : public rclcpp::Node {
 
  public:
 
@@ -50,7 +50,7 @@ class SimulationItsAdapter : public rclcpp::Node {
    *
    * @param options node options
    */
-  explicit SimulationItsAdapter(const rclcpp::NodeOptions& options);
+  explicit SimulationAdapter(const rclcpp::NodeOptions& options);
 
  private:
 
@@ -266,4 +266,4 @@ class SimulationItsAdapter : public rclcpp::Node {
 };
 
 
-}  // namespace simulation_its_adapter
+}  // namespace simulation_adapter

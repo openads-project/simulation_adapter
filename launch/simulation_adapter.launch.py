@@ -22,9 +22,9 @@ def generate_launch_description():
     ]
 
     args = [
-        DeclareLaunchArgument("name", default_value="simulation_its_adapter", description="node name"),
+        DeclareLaunchArgument("name", default_value="simulation_adapter", description="node name"),
         DeclareLaunchArgument("namespace", default_value="", description="node namespace"),
-        DeclareLaunchArgument("params", default_value=os.path.join(get_package_share_directory("simulation_its_adapter"), "config", "params.yml"), description="path to parameter file"),
+        DeclareLaunchArgument("params", default_value=os.path.join(get_package_share_directory("simulation_adapter"), "config", "params.yml"), description="path to parameter file"),
         DeclareLaunchArgument("log_level", default_value="info", description="ROS logging level (debug, info, warn, error, fatal)"),
         DeclareLaunchArgument("use_sim_time", default_value="true", description="use simulation clock"),
         DeclareLaunchArgument("set_ll2_map", default_value="true", description="automatically set lanelet2 map from simulation map info"),
@@ -33,8 +33,8 @@ def generate_launch_description():
 
     nodes = [
         Node(
-            package="simulation_its_adapter",
-            executable="simulation_its_adapter",
+            package="simulation_adapter",
+            executable="simulation_adapter",
             namespace=LaunchConfiguration("namespace"),
             name=LaunchConfiguration("name"),
             parameters=[LaunchConfiguration("params")],
