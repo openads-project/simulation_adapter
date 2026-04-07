@@ -253,6 +253,11 @@ class SimulationAdapter : public rclcpp::Node {
   std::string vehicle_frame_id_ = "geo_center";
 
   /**
+   * @brief Ego output mode, either "tf" or "odometry_state"
+   */
+  std::string ego_output_mode_ = "tf";
+
+  /**
    * @brief Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id
    */
   double simulation_vehicle_frame_id_to_vehicle_frame_id_ = 0.0;

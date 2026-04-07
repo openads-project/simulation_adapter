@@ -33,10 +33,15 @@ This package contains the SimulationAdapter - a ROS 2 Node that connects the sim
 | Topic | Type | Description |
 | --- | --- | --- |
 | `~/ego_data` | `perception_msgs::msg::EgoData` | Ego data transformed to `fixed_frame_id` / `vehicle_frame_id` |
-| `~/ego_odometry` | `nav_msgs::msg::Odometry` | Ego pose in `map` with `base_link` as child frame |
-| `~/ego_vehicle_state` | `perception_msgs::msg::ObjectState` | Ego steering state containing `model_id`, `SteeringAngleAck`, and `SteeringAngleRateAck` |
+| `~/ego_odometry` | `nav_msgs::msg::Odometry` | Ego pose in `map` with `base_link` as child frame, published in `odometry_state` mode |
+| `~/ego_vehicle_state` | `perception_msgs::msg::ObjectState` | Ego steering state containing `model_id`, `SteeringAngleAck`, and `SteeringAngleRateAck`, published in `odometry_state` mode |
 | `~/object_list` | `perception_msgs::msg::ObjectList` | Object list in `vehicle_frame_id` |
 | `~/object_list_fixed` | `perception_msgs::msg::ObjectList` | Object list in `fixed_frame_id` |
+
+`ego_output_mode=tf` keeps the current TF-based behavior.
+`ego_output_mode=odometry_state` disables the static TF publication from `simulation_vehicle_frame_id` to `vehicle_frame_id` and publishes `~/ego_odometry` plus `~/ego_vehicle_state` instead.
+This mode expects `vehicle_frame_id=base_link`.
+In that mode, `~/object_list` is not published because it depends on the skipped vehicle-frame TF.
 
 ### Parameters
 
@@ -48,6 +53,7 @@ This package contains the SimulationAdapter - a ROS 2 Node that connects the sim
 | `fixed_frame_id` | `string` | `map` | Fixed frame id used by the driving stack |
 | `simulation_vehicle_frame_id` | `string` | `ego_vehicle` | Vehicle frame id used by the simulation |
 | `vehicle_frame_id` | `string` | `base_link` | Vehicle frame id used by the driving stack |
+| `ego_output_mode` | `string` | `tf` | Ego output mode: `tf` or `odometry_state` |
 | `simulation_vehicle_frame_id_to_vehicle_frame_id` | `double` | `0.0` | Longitudinal offset (m) from `simulation_vehicle_frame_id` to `vehicle_frame_id` |
 | `maps.simulation_maps` | `string[]` | `[campus]` | List of supported simulation map names (parallel to `maps.lanelet_files`) |
 | `maps.lanelet_files` | `string[]` | `[/data/maps/aachen.osm]` | Lanelet2 map file paths (parallel to `maps.simulation_maps`) |
