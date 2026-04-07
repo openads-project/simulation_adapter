@@ -377,9 +377,13 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
   if (odometry_state_mode) {
     // Odometry is published in map/base_link convention: pose in map, twist in the body frame.
     nav_msgs::msg::Odometry ego_odometry;
-    ego_odometry.header = ego_data.state.header;
+    ego_odometry.header.frame_id = fixed_frame_id_;
+    ego_odometry.header.stamp = ego_data.state.header.stamp;
     ego_odometry.child_frame_id = "base_link";
-    ego_odometry.pose.pose = perception_msgs::object_access::getPose(ego_data.state);
+    ego_odometry.pose.pose.position.x = perception_msgs::object_access::getX(ego_data.state);
+    ego_odometry.pose.pose.position.y = perception_msgs::object_access::getY(ego_data.state);
+    ego_odometry.pose.pose.position.z = perception_msgs::object_access::getZ(ego_data.state);
+    ego_odometry.pose.pose.orientation = to_map_tf.transform.rotation;
     ego_odometry.pose.covariance = perception_msgs::object_access::getPoseWithCovariance(ego_data.state).covariance;
     ego_odometry.twist.twist.linear = perception_msgs::object_access::getVelocity(ego_data.state);
     ego_odometry.twist.twist.angular.z = perception_msgs::object_access::getYawRate(ego_data.state);
