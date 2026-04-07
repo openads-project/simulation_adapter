@@ -9,6 +9,7 @@
 #include <perception_msgs/msg/ego_data.hpp>
 #include <perception_msgs/msg/object_list.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <trajectory_planning_msgs/msg/trajectory.hpp>
 
@@ -169,6 +170,16 @@ class SimulationAdapter : public rclcpp::Node {
   rclcpp::Publisher<pm::EgoData>::SharedPtr pub_ego_data_;
 
   /**
+   * @brief Publisher for ego odometry in map/base_link frames
+   */
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_ego_odometry_;
+
+  /**
+   * @brief Publisher for ego object state containing the steering acknowledgement values
+   */
+  rclcpp::Publisher<pm::ObjectState>::SharedPtr pub_ego_vehicle_state_;
+
+  /**
    * @brief Publisher for object list in vehicle frame
    */
   rclcpp::Publisher<pm::ObjectList>::SharedPtr pub_object_list_;
@@ -206,6 +217,8 @@ class SimulationAdapter : public rclcpp::Node {
 
   // output topic names
   const std::string kEgoDataTopic = "~/ego_data";
+  const std::string kEgoOdometryTopic = "~/ego_odometry";
+  const std::string kEgoVehicleStateTopic = "~/ego_vehicle_state";
   const std::string kObjectListTopic = "~/object_list";
   const std::string kObjectListFixedTopic = "~/object_list_fixed";
 

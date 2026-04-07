@@ -199,6 +199,12 @@ void SimulationAdapter::setup() {
   pub_ego_data_ = this->create_publisher<pm::EgoData>(kEgoDataTopic, 1);
   RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_ego_data_->get_topic_name());
 
+  pub_ego_odometry_ = this->create_publisher<nav_msgs::msg::Odometry>(kEgoOdometryTopic, 1);
+  RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_ego_odometry_->get_topic_name());
+
+  pub_ego_vehicle_state_ = this->create_publisher<pm::ObjectState>(kEgoVehicleStateTopic, 1);
+  RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_ego_vehicle_state_->get_topic_name());
+
   pub_object_list_ = this->create_publisher<pm::ObjectList>(kObjectListTopic, 1);
   RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_object_list_->get_topic_name());
 
@@ -337,6 +343,29 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
 
   // publish ego data in fixed_frame_id
   pub_ego_data_->publish(ego_data);
+
+  // Odometry is published in map/base_link convention: pose in map, twist in the body frame.
+  nav_msgs::msg::Odometry ego_odometry;
+  ego_odometry.header = ego_data.state.header;
+  ego_odometry.child_frame_id = "base_link";
+  ego_odometry.pose.pose = perception_msgs::object_access::getPose(ego_data.state);
+  ego_odometry.pose.covariance = perception_msgs::object_access::getPoseWithCovariance(ego_data.state).covariance;
+  ego_odometry.twist.twist.linear = perception_msgs::object_access::getVelocity(ego_data.state);
+  ego_odometry.twist.twist.angular.z = perception_msgs::object_access::getYawRate(ego_data.state);
+  pub_ego_odometry_->publish(ego_odometry);
+
+  pm::ObjectState ego_vehicle_state;
+  perception_msgs::object_access::initializeState(ego_vehicle_state, pm::EGO::MODEL_ID);
+  ego_vehicle_state.header = ego_data.state.header;
+  if (perception_msgs::object_access::hasSteeringAngleAck(ego_data.state.model_id)) {
+    perception_msgs::object_access::setSteeringAngleAck(
+        ego_vehicle_state, perception_msgs::object_access::getSteeringAngleAck(ego_data.state));
+  }
+  if (perception_msgs::object_access::hasSteeringAngleRateAck(ego_data.state.model_id)) {
+    perception_msgs::object_access::setSteeringAngleRateAck(
+        ego_vehicle_state, perception_msgs::object_access::getSteeringAngleRateAck(ego_data.state));
+  }
+  pub_ego_vehicle_state_->publish(ego_vehicle_state);
 }
 
 void SimulationAdapter::objectListCallback(const pm::ObjectList::ConstSharedPtr& msg) {
