@@ -170,7 +170,7 @@ class SimulationAdapter : public rclcpp::Node {
   rclcpp::Publisher<pm::EgoData>::SharedPtr pub_ego_data_;
 
   /**
-   * @brief Publisher for ego odometry in map/base_link frames
+   * @brief Publisher for ego odometry in map/vehicle_frame_id frames
    */
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_ego_odometry_;
 
@@ -253,9 +253,19 @@ class SimulationAdapter : public rclcpp::Node {
   std::string vehicle_frame_id_ = "geo_center";
 
   /**
-   * @brief Ego output mode, either "tf" or "odometry_state"
+   * @brief Whether to publish the static TF from simulation_vehicle_frame_id to vehicle_frame_id
    */
-  std::string ego_output_mode_ = "tf";
+  bool publish_vehicle_frame_tf_ = true;
+
+  /**
+   * @brief Whether to publish ego odometry
+   */
+  bool publish_ego_odometry_ = false;
+
+  /**
+   * @brief Whether to publish the ego vehicle state
+   */
+  bool publish_ego_vehicle_state_ = false;
 
   /**
    * @brief Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id

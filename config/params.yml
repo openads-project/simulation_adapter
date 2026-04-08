@@ -6,7 +6,9 @@
     fixed_frame_id: map                       # Name of the fixed frame id over time
     simulation_vehicle_frame_id: ego_vehicle  # Name of the vehicle frame id in simulation
     vehicle_frame_id: base_link               # Name of the vehicle frame id.
-    ego_output_mode: tf                       # Ego output mode: tf or odometry_state
+    publish_vehicle_frame_tf: true            # Publish the static TF from simulation_vehicle_frame_id to vehicle_frame_id
+    publish_ego_odometry: false               # Publish ego odometry
+    publish_ego_vehicle_state: false          # Publish ego vehicle state
     simulation_vehicle_frame_id_to_vehicle_frame_id: 0.0   # Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id
 
     maps:
