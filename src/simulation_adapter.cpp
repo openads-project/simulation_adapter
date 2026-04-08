@@ -306,8 +306,8 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
 
   ego_data.state.reference_point.value = pm::ObjectReferencePoint::REAR_AXLE_GROUND;
   ego_data.state.reference_point.translation_to_geometric_center.x = -simulation_vehicle_frame_id_to_vehicle_frame_id_;
-  ego_data.state.reference_point.translation_to_geometric_center.z = perception_msgs::object_access::getHeight(ego_data.state) / 2.0;
-  perception_msgs::object_access::setZ(ego_data, perception_msgs::object_access::getZ(ego_data.state) - perception_msgs::object_access::getHeight(ego_data.state) / 2.0);
+  ego_data.state.reference_point.translation_to_geometric_center.z = msg->height / 2.0;
+  perception_msgs::object_access::setZ(ego_data, perception_msgs::object_access::getZ(ego_data.state) - msg->height / 2.0);
 
   // add planned trajectory to ego_data if exists
   int n = trajectory_planning_msgs::trajectory_access::getSamplePointSize(trajectory_planned_);
