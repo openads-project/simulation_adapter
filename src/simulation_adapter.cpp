@@ -277,6 +277,7 @@ void SimulationAdapter::mapInfoCallback(const sm::String::ConstSharedPtr& msg) {
   }
 }
 
+
 void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) {
   auto timeout = rclcpp::Duration::from_seconds(1.0);
   gm::TransformStamped vehicle_frame_position_in_map_tf;
@@ -294,42 +295,19 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
   }
   tf2::doTransform(*msg, ego_data, to_map_tf);
 
-  // Adjust the ego pose when odometry/state output is enabled.
-  if (publish_ego_odometry_ || publish_ego_vehicle_state_) {
-    tf2::Quaternion vehicle_orientation;
-    tf2::fromMsg(perception_msgs::object_access::getOrientation(ego_data.state), vehicle_orientation);
-    const tf2::Vector3 vehicle_offset(simulation_vehicle_frame_id_to_vehicle_frame_id_, 0.0, 0.0);
-    const tf2::Vector3 offset_in_map = tf2::quatRotate(vehicle_orientation, vehicle_offset);
+  tf2::Quaternion vehicle_orientation;
+  tf2::fromMsg(perception_msgs::object_access::getOrientation(ego_data.state), vehicle_orientation);
+  const tf2::Vector3 vehicle_offset(simulation_vehicle_frame_id_to_vehicle_frame_id_, 0.0, 0.0);
+  const tf2::Vector3 offset_in_map = tf2::quatRotate(vehicle_orientation, vehicle_offset);
 
-    perception_msgs::object_access::setX(ego_data, perception_msgs::object_access::getX(ego_data.state) + offset_in_map.x());
-    perception_msgs::object_access::setY(ego_data, perception_msgs::object_access::getY(ego_data.state) + offset_in_map.y());
-    perception_msgs::object_access::setZ(ego_data, perception_msgs::object_access::getZ(ego_data.state) + offset_in_map.z());
-    ego_data.state.reference_point.value = pm::ObjectReferencePoint::REAR_AXLE_GROUND;
-    ego_data.state.reference_point.translation_to_geometric_center.x = -simulation_vehicle_frame_id_to_vehicle_frame_id_;
-    ego_data.state.reference_point.translation_to_geometric_center.z = msg->height / 2.0;
-  } else if (vehicle_frame_id_ == "base_link") {
-    try {
-      vehicle_frame_position_in_map_tf =
-          tf2_buffer_->lookupTransform(ego_data.header.frame_id, vehicle_frame_id_, msg->header.stamp, timeout);
-    } catch (tf2::TransformException& ex) {
-      RCLCPP_WARN(this->get_logger(),
-                  "Transformation from '%s' to '%s' is not available. No transformed ego-data could be published.",
-                  vehicle_frame_id_.c_str(), ego_data.header.frame_id.c_str());
-      return;
-    }
+  perception_msgs::object_access::setX(ego_data, perception_msgs::object_access::getX(ego_data.state) + offset_in_map.x());
+  perception_msgs::object_access::setY(ego_data, perception_msgs::object_access::getY(ego_data.state) + offset_in_map.y());
+  perception_msgs::object_access::setZ(ego_data, perception_msgs::object_access::getZ(ego_data.state) + offset_in_map.z());
 
-    // set transformed ego_data header frames
-    ego_data.header.frame_id = vehicle_frame_position_in_map_tf.header.frame_id;
-    ego_data.state.header.frame_id = vehicle_frame_position_in_map_tf.header.frame_id;
-
-    perception_msgs::object_access::setX(ego_data, vehicle_frame_position_in_map_tf.transform.translation.x);
-    perception_msgs::object_access::setY(ego_data, vehicle_frame_position_in_map_tf.transform.translation.y);
-    perception_msgs::object_access::setZ(ego_data, vehicle_frame_position_in_map_tf.transform.translation.z);
-    perception_msgs::object_access::setOrientation(ego_data, vehicle_frame_position_in_map_tf.transform.rotation);
-    ego_data.state.reference_point.value = pm::ObjectReferencePoint::REAR_AXLE_GROUND;
-    ego_data.state.reference_point.translation_to_geometric_center.x = -simulation_vehicle_frame_id_to_vehicle_frame_id_;
-    ego_data.state.reference_point.translation_to_geometric_center.z = msg->height / 2.0;
-  }
+  ego_data.state.reference_point.value = pm::ObjectReferencePoint::REAR_AXLE_GROUND;
+  ego_data.state.reference_point.translation_to_geometric_center.x = -simulation_vehicle_frame_id_to_vehicle_frame_id_;
+  ego_data.state.reference_point.translation_to_geometric_center.z = perception_msgs::object_access::getHeight(ego_data.state) / 2.0;
+  perception_msgs::object_access::setZ(ego_data, perception_msgs::object_access::getZ(ego_data.state) - perception_msgs::object_access::getHeight(ego_data.state) / 2.0);
 
   // add planned trajectory to ego_data if exists
   int n = trajectory_planning_msgs::trajectory_access::getSamplePointSize(trajectory_planned_);
