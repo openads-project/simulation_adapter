@@ -399,10 +399,6 @@ void SimulationAdapter::objectListCallback(const pm::ObjectList::ConstSharedPtr&
   // publish object list in fixed_frame_id
   pub_object_list_fixed_->publish(msg_object_list_fixed);
 
-  if (!publish_vehicle_frame_tf_) {
-    return;
-  }
-
   // Option B: transform object list to vehicle_frame_id_
   pm::ObjectList msg_object_list;
 
@@ -422,9 +418,6 @@ void SimulationAdapter::objectListCallback(const pm::ObjectList::ConstSharedPtr&
 }
 
 void SimulationAdapter::initializeVehicleFrameTransform() {
-  if (!publish_vehicle_frame_tf_) {
-    return;
-  }
 
   /* set up a transformation link between fixed_frame_id and vehicle_frame_id
 
