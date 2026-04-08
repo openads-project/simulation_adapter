@@ -21,6 +21,7 @@ def generate_launch_description():
         DeclareLaunchArgument("output_object_list_fixed_topic", default_value="~/object_list_fixed"),
         DeclareLaunchArgument("output_ego_odometry_topic", default_value="~/ego_odometry"),
         DeclareLaunchArgument("output_ego_vehicle_state_topic", default_value="~/ego_vehicle_state"),
+        DeclareLaunchArgument("output_ego_imu_topic", default_value="~/ego_imu"),
     ]
 
     args = [

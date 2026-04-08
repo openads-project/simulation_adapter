@@ -21,6 +21,8 @@ SimulationAdapter::SimulationAdapter(const rclcpp::NodeOptions& options) : Node(
                                 "Whether to publish ego odometry.");
   this->declareAndLoadParameter("publish_ego_vehicle_state", publish_ego_vehicle_state_,
                                 "Whether to publish the ego vehicle state.");
+  this->declareAndLoadParameter("publish_ego_imu", publish_ego_imu_,
+                                "Whether to publish the ego IMU.");
 
   this->declareAndLoadParameter("simulation_vehicle_frame_id_to_vehicle_frame_id", simulation_vehicle_frame_id_to_vehicle_frame_id_,
                                 "Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id.");
@@ -220,6 +222,11 @@ void SimulationAdapter::setup() {
     RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_ego_vehicle_state_->get_topic_name());
   }
 
+  if (publish_ego_imu_) {
+    pub_ego_imu_ = this->create_publisher<sensor_msgs::msg::Imu>(kEgoImuTopic, 1);
+    RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_ego_imu_->get_topic_name());
+  }
+
   pub_object_list_ = this->create_publisher<pm::ObjectList>(kObjectListTopic, 1);
   RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_object_list_->get_topic_name());
 
@@ -376,6 +383,16 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
           ego_vehicle_state, perception_msgs::object_access::getSteeringAngleRateAck(ego_data.state));
     }
     pub_ego_vehicle_state_->publish(ego_vehicle_state);
+  }
+
+  if (publish_ego_imu_) {
+    sensor_msgs::msg::Imu ego_imu;
+    ego_imu.header.stamp = ego_data.state.header.stamp;
+    ego_imu.header.frame_id = vehicle_frame_id_;
+    ego_imu.orientation_covariance[0] = -1.0;
+    ego_imu.angular_velocity_covariance[0] = -1.0;
+    ego_imu.linear_acceleration = perception_msgs::object_access::getAcceleration(ego_data.state);
+    pub_ego_imu_->publish(ego_imu);
   }
 }
 
