@@ -38,7 +38,6 @@ This package contains the SimulationAdapter - a ROS 2 Node that connects the sim
 | `~/object_list` | `perception_msgs::msg::ObjectList` | Object list in `vehicle_frame_id` |
 | `~/object_list_fixed` | `perception_msgs::msg::ObjectList` | Object list in `fixed_frame_id` |
 
-
 ### Parameters
 
 | Parameter | Type | Default | Description |

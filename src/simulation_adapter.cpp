@@ -277,7 +277,6 @@ void SimulationAdapter::mapInfoCallback(const sm::String::ConstSharedPtr& msg) {
   }
 }
 
-
 void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) {
   auto timeout = rclcpp::Duration::from_seconds(1.0);
   gm::TransformStamped vehicle_frame_position_in_map_tf;
