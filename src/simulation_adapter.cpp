@@ -379,7 +379,7 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
     ego_odometry.pose.pose.position.x = perception_msgs::object_access::getX(ego_data.state);
     ego_odometry.pose.pose.position.y = perception_msgs::object_access::getY(ego_data.state);
     ego_odometry.pose.pose.position.z = perception_msgs::object_access::getZ(ego_data.state);
-    ego_odometry.pose.pose.orientation = to_map_tf.transform.rotation;
+    ego_odometry.pose.pose.orientation = perception_msgs::object_access::getOrientation(ego_data.state);
     ego_odometry.pose.covariance = perception_msgs::object_access::getPoseWithCovariance(ego_data.state).covariance;
     ego_odometry.twist.twist.linear = perception_msgs::object_access::getVelocity(ego_data.state);
     ego_odometry.twist.twist.angular.z = perception_msgs::object_access::getYawRate(ego_data.state);
