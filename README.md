@@ -32,8 +32,8 @@ This package contains the SimulationAdapter - a ROS 2 Node that connects the sim
 
 | Topic | Type | Description |
 | --- | --- | --- |
-| `~/ego_data` | `perception_msgs::msg::EgoData` | Ego data transformed to `fixed_frame_id` / `vehicle_frame_id` |
-| `~/ego_odometry` | `nav_msgs::msg::Odometry` | Ego pose in `map` with `vehicle_frame_id` as child frame, published when `publish_ego_odometry=true` |
+| `~/ego_data` | `perception_msgs::msg::EgoData` | Ego data in `fixed_frame_id`, shifted to the configured vehicle reference point and tagged as `REAR_AXLE_GROUND` |
+| `~/ego_odometry` | `nav_msgs::msg::Odometry` | Ego pose in `fixed_frame_id` with `vehicle_frame_id` as child frame, published when `publish_ego_odometry=true` |
 | `~/ego_vehicle_state` | `perception_msgs::msg::ObjectState` | Ego steering state containing `model_id`, `SteeringAngleAck`, and `SteeringAngleRateAck`, published when `publish_ego_vehicle_state=true` |
 | `~/object_list` | `perception_msgs::msg::ObjectList` | Object list in `vehicle_frame_id` |
 | `~/object_list_fixed` | `perception_msgs::msg::ObjectList` | Object list in `fixed_frame_id` |
