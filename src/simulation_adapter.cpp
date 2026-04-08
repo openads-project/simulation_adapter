@@ -281,6 +281,7 @@ void SimulationAdapter::mapInfoCallback(const sm::String::ConstSharedPtr& msg) {
 void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) {
   auto timeout = rclcpp::Duration::from_seconds(1.0);
   gm::TransformStamped vehicle_frame_position_in_map_tf;
+  RCLCPP_WARN(this->get_logger(), "Incoming  Z at egoDataCallback: %f", perception_msgs::object_access::getZ(msg->state));
 
   // transform ego_data (input header is simulation_fixed_frame_id, output header is fixed_frame_id)
   pm::EgoData ego_data;
@@ -294,6 +295,7 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
     return;
   }
   tf2::doTransform(*msg, ego_data, to_map_tf);
+  RCLCPP_WARN(this->get_logger(), "EgoData Z in map frame: %f", perception_msgs::object_access::getZ(ego_data.state));
 
   tf2::Quaternion vehicle_orientation;
   tf2::fromMsg(perception_msgs::object_access::getOrientation(ego_data.state), vehicle_orientation);
@@ -304,10 +306,14 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
   perception_msgs::object_access::setY(ego_data, perception_msgs::object_access::getY(ego_data.state) + offset_in_map.y());
   perception_msgs::object_access::setZ(ego_data, perception_msgs::object_access::getZ(ego_data.state) + offset_in_map.z());
 
+  // print getz before and after for debugging
+  RCLCPP_WARN(this->get_logger(), "EgoData Z before applying vehicle frame transform: %f", perception_msgs::object_access::getZ(ego_data.state));
   ego_data.state.reference_point.value = pm::ObjectReferencePoint::REAR_AXLE_GROUND;
   ego_data.state.reference_point.translation_to_geometric_center.x = -simulation_vehicle_frame_id_to_vehicle_frame_id_;
   ego_data.state.reference_point.translation_to_geometric_center.z = msg->height / 2.0;
   perception_msgs::object_access::setZ(ego_data, perception_msgs::object_access::getZ(ego_data.state) - msg->height / 2.0);
+
+  RCLCPP_WARN(this->get_logger(), "EgoData Z after applying vehicle frame transform: %f", perception_msgs::object_access::getZ(ego_data.state));
 
   // add planned trajectory to ego_data if exists
   int n = trajectory_planning_msgs::trajectory_access::getSamplePointSize(trajectory_planned_);
