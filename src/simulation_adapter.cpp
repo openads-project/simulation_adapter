@@ -15,6 +15,14 @@ SimulationAdapter::SimulationAdapter(const rclcpp::NodeOptions& options) : Node(
   this->declareAndLoadParameter("simulation_vehicle_frame_id", simulation_vehicle_frame_id_,
                                 "Name of the vehicle frame id in simulation.");
   this->declareAndLoadParameter("vehicle_frame_id", vehicle_frame_id_, "Name of the vehicle frame id.");
+  this->declareAndLoadParameter("publish_vehicle_frame_tf", publish_vehicle_frame_tf_,
+                                "Whether to publish the static TF from simulation_vehicle_frame_id to vehicle_frame_id.");
+  this->declareAndLoadParameter("publish_ego_odometry", publish_ego_odometry_,
+                                "Whether to publish ego odometry.");
+  this->declareAndLoadParameter("publish_ego_vehicle_state", publish_ego_vehicle_state_,
+                                "Whether to publish the ego vehicle state.");
+  this->declareAndLoadParameter("publish_ego_imu", publish_ego_imu_,
+                                "Whether to publish the ego IMU.");
 
   this->declareAndLoadParameter("simulation_vehicle_frame_id_to_vehicle_frame_id", simulation_vehicle_frame_id_to_vehicle_frame_id_,
                                 "Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id.");
@@ -190,14 +198,34 @@ void SimulationAdapter::setup() {
       kInputTrajectoryTopic, 1, std::bind(&SimulationAdapter::trajectoryCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_trajectory_->get_topic_name());
 
-  tf_init_timer_ = this->create_wall_timer(
-      500ms, std::bind(&SimulationAdapter::initializeVehicleFrameTransform, this));
-  RCLCPP_INFO(this->get_logger(), "Started timer to initialize transformation from '%s' to '%s'",
-              fixed_frame_id_.c_str(), vehicle_frame_id_.c_str());
+  if (publish_vehicle_frame_tf_) {
+    tf_init_timer_ = this->create_wall_timer(
+        500ms, std::bind(&SimulationAdapter::initializeVehicleFrameTransform, this));
+    RCLCPP_INFO(this->get_logger(), "Started timer to initialize transformation from '%s' to '%s'",
+                fixed_frame_id_.c_str(), vehicle_frame_id_.c_str());
+  } else {
+    RCLCPP_INFO(this->get_logger(), "Static TF publication from '%s' to '%s' is disabled",
+                simulation_vehicle_frame_id_.c_str(), vehicle_frame_id_.c_str());
+  }
 
   // set up publisher for output topics
   pub_ego_data_ = this->create_publisher<pm::EgoData>(kEgoDataTopic, 1);
   RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_ego_data_->get_topic_name());
+
+  if (publish_ego_odometry_) {
+    pub_ego_odometry_ = this->create_publisher<nav_msgs::msg::Odometry>(kEgoOdometryTopic, 1);
+    RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_ego_odometry_->get_topic_name());
+  }
+
+  if (publish_ego_vehicle_state_) {
+    pub_ego_vehicle_state_ = this->create_publisher<pm::ObjectState>(kEgoVehicleStateTopic, 1);
+    RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_ego_vehicle_state_->get_topic_name());
+  }
+
+  if (publish_ego_imu_) {
+    pub_ego_imu_ = this->create_publisher<sensor_msgs::msg::Imu>(kEgoImuTopic, 1);
+    RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_ego_imu_->get_topic_name());
+  }
 
   pub_object_list_ = this->create_publisher<pm::ObjectList>(kObjectListTopic, 1);
   RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", pub_object_list_->get_topic_name());
@@ -258,8 +286,7 @@ void SimulationAdapter::mapInfoCallback(const sm::String::ConstSharedPtr& msg) {
 
 void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) {
   auto timeout = rclcpp::Duration::from_seconds(1.0);
-
-  gm::TransformStamped vehicle_frame_position_in_simulation_map_tf, vehicle_frame_position_in_map_tf, simulation_map_to_map_tf;
+  gm::TransformStamped vehicle_frame_position_in_map_tf;
 
   // transform ego_data (input header is simulation_fixed_frame_id, output header is fixed_frame_id)
   pm::EgoData ego_data;
@@ -274,30 +301,19 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
   }
   tf2::doTransform(*msg, ego_data, to_map_tf);
 
-  // update reference point only if vehicle_frame_id is base_link
-  if (vehicle_frame_id_ == "base_link") {
-    try {
-      vehicle_frame_position_in_map_tf =
-          tf2_buffer_->lookupTransform(ego_data.header.frame_id, vehicle_frame_id_, msg->header.stamp, timeout);
-    } catch (tf2::TransformException& ex) {
-      RCLCPP_WARN(this->get_logger(),
-                  "Transformation from '%s' to '%s' is not available. No transformed ego-data could be published.",
-                  vehicle_frame_id_.c_str(), ego_data.header.frame_id.c_str());
-      return;
-    }
+  tf2::Quaternion vehicle_orientation;
+  tf2::fromMsg(perception_msgs::object_access::getOrientation(ego_data.state), vehicle_orientation);
+  const tf2::Vector3 vehicle_offset(simulation_vehicle_frame_id_to_vehicle_frame_id_, 0.0, 0.0);
+  const tf2::Vector3 offset_in_map = tf2::quatRotate(vehicle_orientation, vehicle_offset);
 
-    // set transformed ego_data header frames
-    ego_data.header.frame_id = vehicle_frame_position_in_map_tf.header.frame_id;
-    ego_data.state.header.frame_id = vehicle_frame_position_in_map_tf.header.frame_id;
+  perception_msgs::object_access::setX(ego_data, perception_msgs::object_access::getX(ego_data.state) + offset_in_map.x());
+  perception_msgs::object_access::setY(ego_data, perception_msgs::object_access::getY(ego_data.state) + offset_in_map.y());
+  perception_msgs::object_access::setZ(ego_data, perception_msgs::object_access::getZ(ego_data.state) + offset_in_map.z());
 
-    perception_msgs::object_access::setX(ego_data, vehicle_frame_position_in_map_tf.transform.translation.x);
-    perception_msgs::object_access::setY(ego_data, vehicle_frame_position_in_map_tf.transform.translation.y);
-    perception_msgs::object_access::setZ(ego_data, vehicle_frame_position_in_map_tf.transform.translation.z);
-    perception_msgs::object_access::setOrientation(ego_data, vehicle_frame_position_in_map_tf.transform.rotation);
-    ego_data.state.reference_point.value = pm::ObjectReferencePoint::REAR_AXLE_GROUND;
-    ego_data.state.reference_point.translation_to_geometric_center.x = -simulation_vehicle_frame_id_to_vehicle_frame_id_;
-    ego_data.state.reference_point.translation_to_geometric_center.z = msg->height / 2.0;
-  }
+  ego_data.state.reference_point.value = pm::ObjectReferencePoint::REAR_AXLE_GROUND;
+  ego_data.state.reference_point.translation_to_geometric_center.x = -simulation_vehicle_frame_id_to_vehicle_frame_id_;
+  ego_data.state.reference_point.translation_to_geometric_center.z = msg->height / 2.0;
+  perception_msgs::object_access::setZ(ego_data, perception_msgs::object_access::getZ(ego_data.state) - msg->height / 2.0);
 
   // add planned trajectory to ego_data if exists
   int n = trajectory_planning_msgs::trajectory_access::getSamplePointSize(trajectory_planned_);
@@ -337,6 +353,47 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
 
   // publish ego data in fixed_frame_id
   pub_ego_data_->publish(ego_data);
+
+  if (publish_ego_odometry_) {
+    // Odometry is published in map/<vehicle_frame_id> convention: pose in map, twist in the body frame.
+    nav_msgs::msg::Odometry ego_odometry;
+    ego_odometry.header.frame_id = fixed_frame_id_;
+    ego_odometry.header.stamp = ego_data.state.header.stamp;
+    ego_odometry.child_frame_id = vehicle_frame_id_;
+    ego_odometry.pose.pose.position.x = perception_msgs::object_access::getX(ego_data.state);
+    ego_odometry.pose.pose.position.y = perception_msgs::object_access::getY(ego_data.state);
+    ego_odometry.pose.pose.position.z = perception_msgs::object_access::getZ(ego_data.state);
+    ego_odometry.pose.pose.orientation = perception_msgs::object_access::getOrientation(ego_data.state);
+    ego_odometry.pose.covariance = perception_msgs::object_access::getPoseWithCovariance(ego_data.state).covariance;
+    ego_odometry.twist.twist.linear = perception_msgs::object_access::getVelocity(ego_data.state);
+    ego_odometry.twist.twist.angular.z = perception_msgs::object_access::getYawRate(ego_data.state);
+    pub_ego_odometry_->publish(ego_odometry);
+  }
+
+  if (publish_ego_vehicle_state_) {
+    pm::ObjectState ego_vehicle_state;
+    perception_msgs::object_access::initializeState(ego_vehicle_state, pm::EGO::MODEL_ID);
+    ego_vehicle_state.header = ego_data.state.header;
+    if (perception_msgs::object_access::hasSteeringAngleAck(ego_data.state.model_id)) {
+      perception_msgs::object_access::setSteeringAngleAck(
+          ego_vehicle_state, perception_msgs::object_access::getSteeringAngleAck(ego_data.state));
+    }
+    if (perception_msgs::object_access::hasSteeringAngleRateAck(ego_data.state.model_id)) {
+      perception_msgs::object_access::setSteeringAngleRateAck(
+          ego_vehicle_state, perception_msgs::object_access::getSteeringAngleRateAck(ego_data.state));
+    }
+    pub_ego_vehicle_state_->publish(ego_vehicle_state);
+  }
+
+  if (publish_ego_imu_) {
+    sensor_msgs::msg::Imu ego_imu;
+    ego_imu.header.stamp = ego_data.state.header.stamp;
+    ego_imu.header.frame_id = vehicle_frame_id_;
+    ego_imu.orientation_covariance[0] = -1.0;
+    ego_imu.angular_velocity_covariance[0] = -1.0;
+    ego_imu.linear_acceleration = perception_msgs::object_access::getAcceleration(ego_data.state);
+    pub_ego_imu_->publish(ego_imu);
+  }
 }
 
 void SimulationAdapter::objectListCallback(const pm::ObjectList::ConstSharedPtr& msg) {
@@ -377,6 +434,7 @@ void SimulationAdapter::objectListCallback(const pm::ObjectList::ConstSharedPtr&
 }
 
 void SimulationAdapter::initializeVehicleFrameTransform() {
+
   /* set up a transformation link between fixed_frame_id and vehicle_frame_id
 
            /        utm_<zone>     \

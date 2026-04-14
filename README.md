@@ -32,7 +32,10 @@ This package contains the SimulationAdapter - a ROS 2 Node that connects the sim
 
 | Topic | Type | Description |
 | --- | --- | --- |
-| `~/ego_data` | `perception_msgs::msg::EgoData` | Ego data transformed to `fixed_frame_id` / `vehicle_frame_id` |
+| `~/ego_data` | `perception_msgs::msg::EgoData` | Ego data in `fixed_frame_id`, shifted to the configured vehicle reference point and tagged as `REAR_AXLE_GROUND` |
+| `~/ego_odometry` | `nav_msgs::msg::Odometry` | Ego pose in `fixed_frame_id` with `vehicle_frame_id` as child frame, published when `publish_ego_odometry=true` |
+| `~/ego_vehicle_state` | `perception_msgs::msg::ObjectState` | Ego steering state containing `model_id`, `SteeringAngleAck`, and `SteeringAngleRateAck`, published when `publish_ego_vehicle_state=true` |
+| `~/ego_imu` | `sensor_msgs::msg::Imu` | Ego IMU in `vehicle_frame_id` with only `linear_acceleration` populated, published when `publish_ego_imu=true` |
 | `~/object_list` | `perception_msgs::msg::ObjectList` | Object list in `vehicle_frame_id` |
 | `~/object_list_fixed` | `perception_msgs::msg::ObjectList` | Object list in `fixed_frame_id` |
 
@@ -46,6 +49,10 @@ This package contains the SimulationAdapter - a ROS 2 Node that connects the sim
 | `fixed_frame_id` | `string` | `map` | Fixed frame id used by the driving stack |
 | `simulation_vehicle_frame_id` | `string` | `ego_vehicle` | Vehicle frame id used by the simulation |
 | `vehicle_frame_id` | `string` | `base_link` | Vehicle frame id used by the driving stack |
+| `publish_vehicle_frame_tf` | `bool` | `true` | Publish the static TF from `simulation_vehicle_frame_id` to `vehicle_frame_id` |
+| `publish_ego_odometry` | `bool` | `false` | Publish ego odometry |
+| `publish_ego_vehicle_state` | `bool` | `false` | Publish ego vehicle state |
+| `publish_ego_imu` | `bool` | `false` | Publish ego IMU with linear acceleration only |
 | `simulation_vehicle_frame_id_to_vehicle_frame_id` | `double` | `0.0` | Longitudinal offset (m) from `simulation_vehicle_frame_id` to `vehicle_frame_id` |
 | `maps.simulation_maps` | `string[]` | `[campus]` | List of supported simulation map names (parallel to `maps.lanelet_files`) |
 | `maps.lanelet_files` | `string[]` | `[/data/maps/aachen.osm]` | Lanelet2 map file paths (parallel to `maps.simulation_maps`) |

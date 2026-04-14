@@ -9,6 +9,8 @@
 #include <perception_msgs/msg/ego_data.hpp>
 #include <perception_msgs/msg/object_list.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <trajectory_planning_msgs/msg/trajectory.hpp>
 
@@ -169,6 +171,21 @@ class SimulationAdapter : public rclcpp::Node {
   rclcpp::Publisher<pm::EgoData>::SharedPtr pub_ego_data_;
 
   /**
+   * @brief Publisher for ego odometry in map/vehicle_frame_id frames
+   */
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_ego_odometry_;
+
+  /**
+   * @brief Publisher for ego object state containing the steering acknowledgement values
+   */
+  rclcpp::Publisher<pm::ObjectState>::SharedPtr pub_ego_vehicle_state_;
+
+  /**
+   * @brief Publisher for ego IMU containing linear acceleration only
+   */
+  rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr pub_ego_imu_;
+
+  /**
    * @brief Publisher for object list in vehicle frame
    */
   rclcpp::Publisher<pm::ObjectList>::SharedPtr pub_object_list_;
@@ -206,6 +223,9 @@ class SimulationAdapter : public rclcpp::Node {
 
   // output topic names
   const std::string kEgoDataTopic = "~/ego_data";
+  const std::string kEgoOdometryTopic = "~/ego_odometry";
+  const std::string kEgoVehicleStateTopic = "~/ego_vehicle_state";
+  const std::string kEgoImuTopic = "~/ego_imu";
   const std::string kObjectListTopic = "~/object_list";
   const std::string kObjectListFixedTopic = "~/object_list_fixed";
 
@@ -238,6 +258,26 @@ class SimulationAdapter : public rclcpp::Node {
    * @brief Name of the vehicle frame id in the driving stack
    */
   std::string vehicle_frame_id_ = "geo_center";
+
+  /**
+   * @brief Whether to publish the static TF from simulation_vehicle_frame_id to vehicle_frame_id
+   */
+  bool publish_vehicle_frame_tf_ = true;
+
+  /**
+   * @brief Whether to publish ego odometry
+   */
+  bool publish_ego_odometry_ = false;
+
+  /**
+   * @brief Whether to publish the ego vehicle state
+   */
+  bool publish_ego_vehicle_state_ = false;
+
+  /**
+   * @brief Whether to publish the ego IMU
+   */
+  bool publish_ego_imu_ = false;
 
   /**
    * @brief Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id
