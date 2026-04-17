@@ -285,7 +285,7 @@ void SimulationAdapter::mapInfoCallback(const sm::String::ConstSharedPtr& msg) {
 }
 
 void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) {
-  auto timeout = rclcpp::Duration::from_seconds(1.0);
+  auto timeout = rclcpp::Duration::from_seconds(0.1);
   gm::TransformStamped vehicle_frame_position_in_map_tf;
 
   // transform ego_data (input header is simulation_fixed_frame_id, output header is fixed_frame_id)
@@ -397,7 +397,8 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
 }
 
 void SimulationAdapter::objectListCallback(const pm::ObjectList::ConstSharedPtr& msg) {
-  auto timeout = rclcpp::Duration::from_seconds(1.0);
+  auto timeout = rclcpp::Duration::from_seconds(0.1);
+  auto no_wait = rclcpp::Duration::from_seconds(0.0);
 
   // Option A: transform object_list to fixed_frame_id
   pm::ObjectList msg_object_list_fixed;
@@ -421,10 +422,10 @@ void SimulationAdapter::objectListCallback(const pm::ObjectList::ConstSharedPtr&
   gm::TransformStamped to_vehicle_frame_tf;
   try {
     to_vehicle_frame_tf =
-        tf2_buffer_->lookupTransform(vehicle_frame_id_, msg->header.frame_id, msg->header.stamp, timeout);
+        tf2_buffer_->lookupTransform(vehicle_frame_id_, msg->header.frame_id, msg->header.stamp, no_wait);
   } catch (tf2::TransformException& ex) {
-    RCLCPP_WARN(this->get_logger(), "Transformation from '%s' to '%s' is not available", msg->header.frame_id.c_str(),
-                vehicle_frame_id_.c_str());
+    RCLCPP_WARN(this->get_logger(), "Skipping object list transform from '%s' to '%s': %s",
+                msg->header.frame_id.c_str(), vehicle_frame_id_.c_str(), ex.what());
     return;
   }
   tf2::doTransform(*msg, msg_object_list, to_vehicle_frame_tf);
