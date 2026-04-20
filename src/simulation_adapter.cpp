@@ -128,12 +128,12 @@ void SimulationAdapter::declareAndLoadParameter(const std::string& name,
  * @return parameter change result
  */
 rcl_interfaces::msg::SetParametersResult SimulationAdapter::parametersCallback(const std::vector<rclcpp::Parameter>& parameters) {
-
   for (const auto& param : parameters) {
     for (auto& auto_reconfigurable_param : auto_reconfigurable_params_) {
       if (param.get_name() == std::get<0>(auto_reconfigurable_param)) {
         std::get<1>(auto_reconfigurable_param)(param);
-        RCLCPP_INFO(this->get_logger(), "Reconfigured parameter '%s' to: %s", param.get_name().c_str(), param.value_to_string().c_str());
+        RCLCPP_INFO(this->get_logger(), "Reconfigured parameter '%s' to: %s", param.get_name().c_str(),
+                    param.value_to_string().c_str());
         break;
       }
     }
@@ -156,6 +156,8 @@ void SimulationAdapter::setup() {
   static_br_tf_ = std::make_unique<tf2_ros::StaticTransformBroadcaster>(this);
 
   map_info_ = "";
+
+  parallel_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
   // parameters client to map server for setting map server's parameters
   map_server_parameters_client_ = std::make_shared<rclcpp::AsyncParametersClient>(this, map_server_name_);
@@ -181,26 +183,31 @@ void SimulationAdapter::setup() {
   rclcpp::QoS qosLatching = rclcpp::QoS(rclcpp::KeepLast(1));
   qosLatching.transient_local();
   qosLatching.reliable();
+  rclcpp::SubscriptionOptions parallel_options;
+  parallel_options.callback_group = parallel_callback_group_;
   sub_map_info_ = this->create_subscription<sm::String>(
       kInputMapInfoTopic, qosLatching,
-      std::bind(&SimulationAdapter::mapInfoCallback, this, std::placeholders::_1));
+      std::bind(&SimulationAdapter::mapInfoCallback, this, std::placeholders::_1), parallel_options);
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_map_info_->get_topic_name());
 
   sub_ego_data_ = this->create_subscription<pm::EgoData>(
-      kInputEgoDataTopic, 1, std::bind(&SimulationAdapter::egoDataCallback, this, std::placeholders::_1));
+      kInputEgoDataTopic, 1, std::bind(&SimulationAdapter::egoDataCallback, this, std::placeholders::_1),
+      parallel_options);
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_ego_data_->get_topic_name());
 
   sub_object_list_ = this->create_subscription<pm::ObjectList>(
-      kInputObjectListTopic, 1, std::bind(&SimulationAdapter::objectListCallback, this, std::placeholders::_1));
+      kInputObjectListTopic, 1, std::bind(&SimulationAdapter::objectListCallback, this, std::placeholders::_1),
+      parallel_options);
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_object_list_->get_topic_name());
 
   sub_trajectory_ = this->create_subscription<tp::Trajectory>(
-      kInputTrajectoryTopic, 1, std::bind(&SimulationAdapter::trajectoryCallback, this, std::placeholders::_1));
+      kInputTrajectoryTopic, 1, std::bind(&SimulationAdapter::trajectoryCallback, this, std::placeholders::_1),
+      parallel_options);
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_trajectory_->get_topic_name());
 
   if (publish_vehicle_frame_tf_) {
     tf_init_timer_ = this->create_wall_timer(
-        500ms, std::bind(&SimulationAdapter::initializeVehicleFrameTransform, this));
+        500ms, std::bind(&SimulationAdapter::initializeVehicleFrameTransform, this), parallel_callback_group_);
     RCLCPP_INFO(this->get_logger(), "Started timer to initialize transformation from '%s' to '%s'",
                 fixed_frame_id_.c_str(), vehicle_frame_id_.c_str());
   } else {
@@ -434,7 +441,6 @@ void SimulationAdapter::objectListCallback(const pm::ObjectList::ConstSharedPtr&
 }
 
 void SimulationAdapter::initializeVehicleFrameTransform() {
-
   /* set up a transformation link between fixed_frame_id and vehicle_frame_id
 
            /        utm_<zone>     \

@@ -31,7 +31,7 @@ add_library(${TARGET_NAME} SHARED
 rclcpp_components_register_node(${TARGET_NAME}
   PLUGIN "simulation_adapter::SimulationAdapter"
   EXECUTABLE simulation_adapter
-  EXECUTOR SingleThreadedExecutor
+  EXECUTOR MultiThreadedExecutor
 )
 
 target_include_directories(${TARGET_NAME} PUBLIC

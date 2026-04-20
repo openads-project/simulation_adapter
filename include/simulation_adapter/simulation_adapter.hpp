@@ -141,6 +141,11 @@ class SimulationAdapter : public rclcpp::Node {
   OnSetParametersCallbackHandle::SharedPtr parameters_callback_;
 
   /**
+   * @brief Reentrant callback group that allows all node callbacks to run in parallel
+   */
+  rclcpp::CallbackGroup::SharedPtr parallel_callback_group_;
+
+  /**
    * @brief Parameters client used to configure the lanelet2 map server
    */
   std::shared_ptr<rclcpp::AsyncParametersClient> map_server_parameters_client_;
