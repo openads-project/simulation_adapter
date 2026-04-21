@@ -6,10 +6,11 @@
 #include <vector>
 
 // definitions
+#include <rclcpp/rclcpp.hpp>
+
+#include <nav_msgs/msg/odometry.hpp>
 #include <perception_msgs/msg/ego_data.hpp>
 #include <perception_msgs/msg/object_list.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <trajectory_planning_msgs/msg/trajectory.hpp>
@@ -50,9 +51,13 @@ class SimulationAdapter : public rclcpp::Node {
   /**
    * @brief Constructor
    *
-   * @param options node options
    */
-  explicit SimulationAdapter(const rclcpp::NodeOptions& options);
+  SimulationAdapter();
+
+  /**
+   * @brief Number of threads for MultiThreadedExecutor
+   */
+  int num_threads_ = 1;
 
  private:
 
@@ -139,11 +144,6 @@ class SimulationAdapter : public rclcpp::Node {
    * @brief Callback handle for dynamic parameter reconfiguration
    */
   OnSetParametersCallbackHandle::SharedPtr parameters_callback_;
-
-  /**
-   * @brief Reentrant callback group that allows all node callbacks to run in parallel
-   */
-  rclcpp::CallbackGroup::SharedPtr parallel_callback_group_;
 
   /**
    * @brief Parameters client used to configure the lanelet2 map server

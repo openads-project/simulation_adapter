@@ -7,9 +7,9 @@
     simulation_vehicle_frame_id: ego_vehicle  # Name of the vehicle frame id in simulation
     vehicle_frame_id: base_link               # Name of the vehicle frame id.
     publish_vehicle_frame_tf: true            # Publish the static TF from simulation_vehicle_frame_id to vehicle_frame_id
+    publish_ego_imu: false                    # Publish ego IMU with linear acceleration only
     publish_ego_odometry: false               # Publish ego odometry
     publish_ego_vehicle_state: false          # Publish ego vehicle state
-    publish_ego_imu: false                    # Publish ego IMU with linear acceleration only
     simulation_vehicle_frame_id_to_vehicle_frame_id: 0.0   # Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id
 
     maps:

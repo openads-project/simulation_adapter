@@ -1,14 +1,13 @@
 #include <simulation_adapter/simulation_adapter.hpp>
 
-#include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(simulation_adapter::SimulationAdapter)
-
 
 namespace simulation_adapter {
 
-SimulationAdapter::SimulationAdapter(const rclcpp::NodeOptions& options) : Node("simulation_adapter", options) {
+
+SimulationAdapter::SimulationAdapter() : Node("simulation_adapter") {
+
   this->declareAndLoadParameter("map_server_name", map_server_name_, "Name of the map server.");
-  this->declareAndLoadParameter("set_ll2_map", set_ll2_map_,
+  this->declareAndLoadParameter("load_lanelet_map", set_ll2_map_,
                                 "Automatically set the ll2 map based on the simulation map.");
   this->declareAndLoadParameter("simulation_fixed_frame_id", simulation_fixed_frame_id_, "Name of the fixed frame id in simulation.");
   this->declareAndLoadParameter("fixed_frame_id", fixed_frame_id_, "Name of the fixed frame id over time.");
@@ -29,9 +28,11 @@ SimulationAdapter::SimulationAdapter(const rclcpp::NodeOptions& options) : Node(
 
   this->declareAndLoadParameter("maps.simulation_maps", simulation_maps_, "List of supported simulation maps.");
   this->declareAndLoadParameter("maps.lanelet_files", lanelet_files_, "Lanelet files for all supported simulation maps");
+  this->declareAndLoadParameter("num_threads", num_threads_, "number of threads for MultiThreadedExecutor", false, false, false, 1, std::thread::hardware_concurrency(), 1);
 
   this->setup();
 }
+
 
 /**
  * @brief Declares and loads a ROS parameter
@@ -157,8 +158,6 @@ void SimulationAdapter::setup() {
 
   map_info_ = "";
 
-  parallel_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
-
   // parameters client to map server for setting map server's parameters
   map_server_parameters_client_ = std::make_shared<rclcpp::AsyncParametersClient>(this, map_server_name_);
   using namespace std::chrono_literals;
@@ -183,31 +182,31 @@ void SimulationAdapter::setup() {
   rclcpp::QoS qosLatching = rclcpp::QoS(rclcpp::KeepLast(1));
   qosLatching.transient_local();
   qosLatching.reliable();
-  rclcpp::SubscriptionOptions parallel_options;
-  parallel_options.callback_group = parallel_callback_group_;
+  rclcpp::SubscriptionOptions subscriber_options;
+  subscriber_options.callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   sub_map_info_ = this->create_subscription<sm::String>(
       kInputMapInfoTopic, qosLatching,
-      std::bind(&SimulationAdapter::mapInfoCallback, this, std::placeholders::_1), parallel_options);
+      std::bind(&SimulationAdapter::mapInfoCallback, this, std::placeholders::_1), subscriber_options);
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_map_info_->get_topic_name());
 
   sub_ego_data_ = this->create_subscription<pm::EgoData>(
       kInputEgoDataTopic, 1, std::bind(&SimulationAdapter::egoDataCallback, this, std::placeholders::_1),
-      parallel_options);
+      subscriber_options);
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_ego_data_->get_topic_name());
 
   sub_object_list_ = this->create_subscription<pm::ObjectList>(
       kInputObjectListTopic, 1, std::bind(&SimulationAdapter::objectListCallback, this, std::placeholders::_1),
-      parallel_options);
+      subscriber_options);
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_object_list_->get_topic_name());
 
   sub_trajectory_ = this->create_subscription<tp::Trajectory>(
       kInputTrajectoryTopic, 1, std::bind(&SimulationAdapter::trajectoryCallback, this, std::placeholders::_1),
-      parallel_options);
+      subscriber_options);
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_trajectory_->get_topic_name());
 
   if (publish_vehicle_frame_tf_) {
     tf_init_timer_ = this->create_wall_timer(
-        500ms, std::bind(&SimulationAdapter::initializeVehicleFrameTransform, this), parallel_callback_group_);
+        500ms, std::bind(&SimulationAdapter::initializeVehicleFrameTransform, this), subscriber_options.callback_group);
     RCLCPP_INFO(this->get_logger(), "Started timer to initialize transformation from '%s' to '%s'",
                 fixed_frame_id_.c_str(), vehicle_frame_id_.c_str());
   } else {
@@ -543,3 +542,18 @@ void SimulationAdapter::trajectoryCallback(const tp::Trajectory::ConstSharedPtr&
 
 
 }  // namespace simulation_adapter
+
+
+
+int main(int argc, char *argv[]) {
+
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<simulation_adapter::SimulationAdapter>();
+  rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), node->num_threads_);
+  RCLCPP_INFO(node->get_logger(), "Spinning node '%s' with %s (%d threads)", node->get_fully_qualified_name(), "MultiThreadedExecutor", node->num_threads_);
+  executor.add_node(node);
+  executor.spin();
+  rclcpp::shutdown();
+
+  return 0;
+}
