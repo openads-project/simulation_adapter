@@ -182,31 +182,38 @@ void SimulationAdapter::setup() {
   rclcpp::QoS qosLatching = rclcpp::QoS(rclcpp::KeepLast(1));
   qosLatching.transient_local();
   qosLatching.reliable();
-  rclcpp::SubscriptionOptions subscriber_options;
-  subscriber_options.callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  reentrant_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
+  mutually_exclusive_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+  rclcpp::SubscriptionOptions mutually_exclusive_subscription_options;
+  mutually_exclusive_subscription_options.callback_group = mutually_exclusive_callback_group_;
+
+  rclcpp::SubscriptionOptions reentrant_subscription_options;
+  reentrant_subscription_options.callback_group = reentrant_callback_group_;
+
   sub_map_info_ = this->create_subscription<sm::String>(
       kInputMapInfoTopic, qosLatching,
-      std::bind(&SimulationAdapter::mapInfoCallback, this, std::placeholders::_1), subscriber_options);
+      std::bind(&SimulationAdapter::mapInfoCallback, this, std::placeholders::_1), reentrant_subscription_options);
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_map_info_->get_topic_name());
 
   sub_ego_data_ = this->create_subscription<pm::EgoData>(
       kInputEgoDataTopic, 1, std::bind(&SimulationAdapter::egoDataCallback, this, std::placeholders::_1),
-      subscriber_options);
+      reentrant_subscription_options);
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_ego_data_->get_topic_name());
 
   sub_object_list_ = this->create_subscription<pm::ObjectList>(
       kInputObjectListTopic, 1, std::bind(&SimulationAdapter::objectListCallback, this, std::placeholders::_1),
-      subscriber_options);
+      reentrant_subscription_options);
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_object_list_->get_topic_name());
 
   sub_trajectory_ = this->create_subscription<tp::Trajectory>(
-      kInputTrajectoryTopic, 1, std::bind(&SimulationAdapter::trajectoryCallback, this, std::placeholders::_1),
-      subscriber_options);
+      kInputTrajectoryTopic, 1, std::bind(&SimulationAdapter::trajectoryCallback, this, std::placeholders::_1), 
+      mutually_exclusive_subscription_options);
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_trajectory_->get_topic_name());
 
   if (publish_vehicle_frame_tf_) {
     tf_init_timer_ = this->create_wall_timer(
-        500ms, std::bind(&SimulationAdapter::initializeVehicleFrameTransform, this), subscriber_options.callback_group);
+        500ms, std::bind(&SimulationAdapter::initializeVehicleFrameTransform, this), mutually_exclusive_callback_group_);
     RCLCPP_INFO(this->get_logger(), "Started timer to initialize transformation from '%s' to '%s'",
                 fixed_frame_id_.c_str(), vehicle_frame_id_.c_str());
   } else {
