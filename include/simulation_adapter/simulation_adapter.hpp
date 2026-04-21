@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mutex>
 #include <memory>
 #include <optional>
 #include <string>
@@ -149,11 +150,6 @@ class SimulationAdapter : public rclcpp::Node {
    * @brief Callback group for callbacks that may run concurrently
    */
   rclcpp::CallbackGroup::SharedPtr reentrant_callback_group_;
-
-  /**
-   * @brief Callback group for callbacks that should remain serialized
-   */
-  rclcpp::CallbackGroup::SharedPtr mutually_exclusive_callback_group_;
 
   /**
    * @brief Parameters client used to configure the lanelet2 map server
@@ -313,6 +309,11 @@ class SimulationAdapter : public rclcpp::Node {
    * @brief Latest planned trajectory, transformed to fixed_frame_id
    */
   tp::Trajectory trajectory_planned_;
+
+  /**
+   * @brief Protects planned trajectory access across concurrent callbacks
+   */
+  mutable std::mutex trajectory_planned_mutex_;
 
   /**
    * @brief Last received simulation map info string

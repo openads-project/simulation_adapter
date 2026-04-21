@@ -183,10 +183,6 @@ void SimulationAdapter::setup() {
   qosLatching.transient_local();
   qosLatching.reliable();
   reentrant_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
-  mutually_exclusive_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-
-  rclcpp::SubscriptionOptions mutually_exclusive_subscription_options;
-  mutually_exclusive_subscription_options.callback_group = mutually_exclusive_callback_group_;
 
   rclcpp::SubscriptionOptions reentrant_subscription_options;
   reentrant_subscription_options.callback_group = reentrant_callback_group_;
@@ -207,13 +203,13 @@ void SimulationAdapter::setup() {
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_object_list_->get_topic_name());
 
   sub_trajectory_ = this->create_subscription<tp::Trajectory>(
-      kInputTrajectoryTopic, 1, std::bind(&SimulationAdapter::trajectoryCallback, this, std::placeholders::_1), 
-      mutually_exclusive_subscription_options);
+      kInputTrajectoryTopic, 1, std::bind(&SimulationAdapter::trajectoryCallback, this, std::placeholders::_1),
+      reentrant_subscription_options);
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_trajectory_->get_topic_name());
 
   if (publish_vehicle_frame_tf_) {
     tf_init_timer_ = this->create_wall_timer(
-        500ms, std::bind(&SimulationAdapter::initializeVehicleFrameTransform, this), mutually_exclusive_callback_group_);
+        500ms, std::bind(&SimulationAdapter::initializeVehicleFrameTransform, this), reentrant_callback_group_);
     RCLCPP_INFO(this->get_logger(), "Started timer to initialize transformation from '%s' to '%s'",
                 fixed_frame_id_.c_str(), vehicle_frame_id_.c_str());
   } else {
@@ -329,7 +325,13 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
   perception_msgs::object_access::setZ(ego_data, perception_msgs::object_access::getZ(ego_data.state) - msg->height / 2.0);
 
   // add planned trajectory to ego_data if exists
-  int n = trajectory_planning_msgs::trajectory_access::getSamplePointSize(trajectory_planned_);
+  tp::Trajectory trajectory_planned_snapshot;
+  {
+    std::lock_guard<std::mutex> lock(trajectory_planned_mutex_);
+    trajectory_planned_snapshot = trajectory_planned_;
+  }
+
+  int n = trajectory_planning_msgs::trajectory_access::getSamplePointSize(trajectory_planned_snapshot);
   if (n > 0) {
     // clear current trajectory
     ego_data.trajectory_planned.clear();
@@ -341,25 +343,25 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
 
     // update trajectory state
     perception_msgs::object_access::setStandstill(
-        object_state, trajectory_planning_msgs::trajectory_access::getStandstill(trajectory_planned_));
+        object_state, trajectory_planning_msgs::trajectory_access::getStandstill(trajectory_planned_snapshot));
 
     for (int i = 0; i < n; i++) {
       // update header stamp
-      object_state.header = trajectory_planned_.header;
-      float time = trajectory_planning_msgs::trajectory_access::getT(trajectory_planned_, i);
+      object_state.header = trajectory_planned_snapshot.header;
+      float time = trajectory_planning_msgs::trajectory_access::getT(trajectory_planned_snapshot, i);
       object_state.header.stamp.sec += (int)time;
       object_state.header.stamp.nanosec += (time - (int)time) * 1e9;
 
       perception_msgs::object_access::setX(object_state,
-                                           trajectory_planning_msgs::trajectory_access::getX(trajectory_planned_, i));
+                                           trajectory_planning_msgs::trajectory_access::getX(trajectory_planned_snapshot, i));
       perception_msgs::object_access::setY(object_state,
-                                           trajectory_planning_msgs::trajectory_access::getY(trajectory_planned_, i));
+                                           trajectory_planning_msgs::trajectory_access::getY(trajectory_planned_snapshot, i));
       perception_msgs::object_access::setVelLon(
-          object_state, trajectory_planning_msgs::trajectory_access::getV(trajectory_planned_, i));
+          object_state, trajectory_planning_msgs::trajectory_access::getV(trajectory_planned_snapshot, i));
       perception_msgs::object_access::setAccLon(
-          object_state, trajectory_planning_msgs::trajectory_access::getA(trajectory_planned_, i));
+          object_state, trajectory_planning_msgs::trajectory_access::getA(trajectory_planned_snapshot, i));
       perception_msgs::object_access::setYaw(
-          object_state, trajectory_planning_msgs::trajectory_access::getTheta(trajectory_planned_, i));
+          object_state, trajectory_planning_msgs::trajectory_access::getTheta(trajectory_planned_snapshot, i));
       ego_data.trajectory_planned.push_back(object_state);
     }
   }
@@ -539,7 +541,9 @@ void SimulationAdapter::trajectoryCallback(const tp::Trajectory::ConstSharedPtr&
 
   // transform trajectory to fixed_frame_id frame
   try {
-    trajectory_planned_ = tf2_buffer_->transform(*msg, fixed_frame_id_, tf2::durationFromSec(0.01));
+    auto transformed_trajectory = tf2_buffer_->transform(*msg, fixed_frame_id_, tf2::durationFromSec(0.01));
+    std::lock_guard<std::mutex> lock(trajectory_planned_mutex_);
+    trajectory_planned_ = std::move(transformed_trajectory);
   } catch (tf2::TransformException& ex) {
     RCLCPP_WARN(this->get_logger(), "Trajectory could not be transformed from '%s' to '%s'",
                 msg->header.frame_id.c_str(), fixed_frame_id_.c_str());
