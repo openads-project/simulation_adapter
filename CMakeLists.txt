@@ -22,7 +22,7 @@ find_package(tf2_trajectory_planning_msgs REQUIRED)
 find_package(trajectory_planning_msgs REQUIRED)
 find_package(trajectory_planning_msgs_utils REQUIRED)
 
-set(TARGET_NAME simulation_adapter_component)
+set(TARGET_NAME simulation_adapter)
 
 add_executable(${TARGET_NAME} src/simulation_adapter.cpp)
 
