@@ -31,7 +31,7 @@ def generate_launch_description():
         DeclareLaunchArgument("log_level", default_value="info", description="ROS logging level (debug, info, warn, error, fatal)"),
         DeclareLaunchArgument("use_sim_time", default_value="true", description="use simulation clock"),
         DeclareLaunchArgument("load_lanelet_map", default_value="true", description="automatically set lanelet2 map from simulation map info"),
-        DeclareLaunchArgument("num_threads", default_value="1", description="number of threads for MultiThreadedExecutor"),
+        DeclareLaunchArgument("num_threads", default_value="2", description="number of threads for MultiThreadedExecutor"),
         *remappable_topics,
     ]
 
