@@ -22,17 +22,9 @@ find_package(tf2_trajectory_planning_msgs REQUIRED)
 find_package(trajectory_planning_msgs REQUIRED)
 find_package(trajectory_planning_msgs_utils REQUIRED)
 
-set(TARGET_NAME simulation_adapter_component)
+set(TARGET_NAME simulation_adapter)
 
-add_library(${TARGET_NAME} SHARED
-  src/simulation_adapter.cpp
-)
-
-rclcpp_components_register_node(${TARGET_NAME}
-  PLUGIN "simulation_adapter::SimulationAdapter"
-  EXECUTABLE simulation_adapter
-  EXECUTOR SingleThreadedExecutor
-)
+add_executable(${TARGET_NAME} src/simulation_adapter.cpp)
 
 target_include_directories(${TARGET_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -59,9 +51,7 @@ target_link_libraries(${TARGET_NAME} PUBLIC
 )
 
 install(TARGETS ${TARGET_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY launch

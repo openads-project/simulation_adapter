@@ -1,15 +1,17 @@
 #pragma once
 
+#include <mutex>
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
 // definitions
+#include <rclcpp/rclcpp.hpp>
+
+#include <nav_msgs/msg/odometry.hpp>
 #include <perception_msgs/msg/ego_data.hpp>
 #include <perception_msgs/msg/object_list.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <trajectory_planning_msgs/msg/trajectory.hpp>
@@ -50,9 +52,13 @@ class SimulationAdapter : public rclcpp::Node {
   /**
    * @brief Constructor
    *
-   * @param options node options
    */
-  explicit SimulationAdapter(const rclcpp::NodeOptions& options);
+  SimulationAdapter();
+
+  /**
+   * @brief Number of threads for MultiThreadedExecutor
+   */
+  int num_threads_ = 1;
 
  private:
 
@@ -139,6 +145,11 @@ class SimulationAdapter : public rclcpp::Node {
    * @brief Callback handle for dynamic parameter reconfiguration
    */
   OnSetParametersCallbackHandle::SharedPtr parameters_callback_;
+
+  /**
+   * @brief Callback group for callbacks that may run concurrently
+   */
+  rclcpp::CallbackGroup::SharedPtr reentrant_callback_group_;
 
   /**
    * @brief Parameters client used to configure the lanelet2 map server
@@ -298,6 +309,11 @@ class SimulationAdapter : public rclcpp::Node {
    * @brief Latest planned trajectory, transformed to fixed_frame_id
    */
   tp::Trajectory trajectory_planned_;
+
+  /**
+   * @brief Protects planned trajectory access across concurrent callbacks
+   */
+  mutable std::mutex trajectory_planned_mutex_;
 
   /**
    * @brief Last received simulation map info string

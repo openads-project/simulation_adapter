@@ -44,7 +44,7 @@ This package contains the SimulationAdapter - a ROS 2 Node that connects the sim
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
 | `map_server_name` | `string` | `/localization/ll2_map_server` | Name of the lanelet2 map server node |
-| `set_ll2_map` | `bool` | `true` | Automatically load the lanelet2 map based on the simulation map info |
+| `load_lanelet_map` | `bool` | `true` | Automatically load the lanelet2 map based on the simulation map info |
 | `simulation_fixed_frame_id` | `string` | `simulation_map` | Fixed frame id used by the simulation |
 | `fixed_frame_id` | `string` | `map` | Fixed frame id used by the driving stack |
 | `simulation_vehicle_frame_id` | `string` | `ego_vehicle` | Vehicle frame id used by the simulation |

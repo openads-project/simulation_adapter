@@ -19,9 +19,9 @@ def generate_launch_description():
         DeclareLaunchArgument("output_ego_data_topic", default_value="~/ego_data"),
         DeclareLaunchArgument("output_object_list_topic", default_value="~/object_list"),
         DeclareLaunchArgument("output_object_list_fixed_topic", default_value="~/object_list_fixed"),
+        DeclareLaunchArgument("output_ego_imu_topic", default_value="~/ego_imu"),
         DeclareLaunchArgument("output_ego_odometry_topic", default_value="~/ego_odometry"),
         DeclareLaunchArgument("output_ego_vehicle_state_topic", default_value="~/ego_vehicle_state"),
-        DeclareLaunchArgument("output_ego_imu_topic", default_value="~/ego_imu"),
     ]
 
     args = [
@@ -30,7 +30,7 @@ def generate_launch_description():
         DeclareLaunchArgument("params", default_value=os.path.join(get_package_share_directory("simulation_adapter"), "config", "params.yml"), description="path to parameter file"),
         DeclareLaunchArgument("log_level", default_value="info", description="ROS logging level (debug, info, warn, error, fatal)"),
         DeclareLaunchArgument("use_sim_time", default_value="true", description="use simulation clock"),
-        DeclareLaunchArgument("set_ll2_map", default_value="true", description="automatically set lanelet2 map from simulation map info"),
+        DeclareLaunchArgument("load_lanelet_map", default_value="true", description="automatically set lanelet2 map from simulation map info"),
         *remappable_topics,
     ]
 
@@ -52,6 +52,6 @@ def generate_launch_description():
         *remappable_topics,
         *args,
         SetParameter("use_sim_time", LaunchConfiguration("use_sim_time")),
-        SetParameter("set_ll2_map", LaunchConfiguration("set_ll2_map")),
+        SetParameter("load_lanelet_map", LaunchConfiguration("load_lanelet_map")),
         *nodes,
     ])

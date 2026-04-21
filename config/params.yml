@@ -1,15 +1,16 @@
 /**:
   ros__parameters:
-    map_server_name: /localization/ll2_map_server      # Name of map server
+    num_threads: 2                                  # Number of threads for MultiThreadedExecutor
+    map_server_name: /localization/ll2_map_server   # Name of map server
 
     simulation_fixed_frame_id: simulation_map # Name of the fixed frame id in simulation
     fixed_frame_id: map                       # Name of the fixed frame id over time
     simulation_vehicle_frame_id: ego_vehicle  # Name of the vehicle frame id in simulation
     vehicle_frame_id: base_link               # Name of the vehicle frame id.
     publish_vehicle_frame_tf: true            # Publish the static TF from simulation_vehicle_frame_id to vehicle_frame_id
+    publish_ego_imu: false                    # Publish ego IMU with linear acceleration only
     publish_ego_odometry: false               # Publish ego odometry
     publish_ego_vehicle_state: false          # Publish ego vehicle state
-    publish_ego_imu: false                    # Publish ego IMU with linear acceleration only
     simulation_vehicle_frame_id_to_vehicle_frame_id: 0.0   # Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id
 
     maps:
