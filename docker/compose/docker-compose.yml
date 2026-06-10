@@ -1,7 +1,7 @@
 services:
 
   simulation-adapter:
-    image: ghcr.io/openads-project/simulation_adapter:v1.3.0
+    image: ghcr.io/openads-project/simulation_adapter:v1.4.0
     environment:
       # --- name ------
       NAMESPACE: /
