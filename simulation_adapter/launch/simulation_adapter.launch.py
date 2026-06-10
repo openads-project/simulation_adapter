@@ -13,16 +13,46 @@ from launch_ros.actions import Node, SetParameter
 def generate_launch_description():
     """Generate the simulation adapter launch description."""
     remappable_topics = [
-        DeclareLaunchArgument("input_map_info_topic", default_value="~/input_map_info"),
-        DeclareLaunchArgument("input_ego_data_topic", default_value="~/input_ego_data"),
-        DeclareLaunchArgument("input_object_list_topic", default_value="~/input_object_list"),
-        DeclareLaunchArgument("input_trajectory_topic", default_value="~/input_trajectory"),
-        DeclareLaunchArgument("output_ego_data_topic", default_value="~/ego_data"),
-        DeclareLaunchArgument("output_object_list_topic", default_value="~/object_list"),
-        DeclareLaunchArgument("output_object_list_fixed_topic", default_value="~/object_list_fixed"),
-        DeclareLaunchArgument("output_ego_imu_topic", default_value="~/ego_imu"),
-        DeclareLaunchArgument("output_ego_odometry_topic", default_value="~/ego_odometry"),
-        DeclareLaunchArgument("output_ego_vehicle_state_topic", default_value="~/ego_vehicle_state"),
+        DeclareLaunchArgument(
+            "input_map_info_topic", default_value="~/input_map_info", description="input topic for simulation map info"
+        ),
+        DeclareLaunchArgument(
+            "input_ego_data_topic", default_value="~/input_ego_data", description="input topic for simulation ego data"
+        ),
+        DeclareLaunchArgument(
+            "input_object_list_topic",
+            default_value="~/input_object_list",
+            description="input topic for simulation object lists",
+        ),
+        DeclareLaunchArgument(
+            "input_trajectory_topic",
+            default_value="~/input_trajectory",
+            description="input topic for planned trajectories",
+        ),
+        DeclareLaunchArgument(
+            "output_ego_data_topic", default_value="~/ego_data", description="output topic for transformed ego data"
+        ),
+        DeclareLaunchArgument(
+            "output_object_list_topic",
+            default_value="~/object_list",
+            description="output topic for transformed object lists",
+        ),
+        DeclareLaunchArgument(
+            "output_object_list_fixed_topic",
+            default_value="~/object_list_fixed",
+            description="output topic for object lists in the fixed frame",
+        ),
+        DeclareLaunchArgument("output_ego_imu_topic", default_value="~/ego_imu", description="output topic for ego IMU data"),
+        DeclareLaunchArgument(
+            "output_ego_odometry_topic",
+            default_value="~/ego_odometry",
+            description="output topic for ego odometry",
+        ),
+        DeclareLaunchArgument(
+            "output_ego_vehicle_state_topic",
+            default_value="~/ego_vehicle_state",
+            description="output topic for ego vehicle state",
+        ),
     ]
 
     args = [

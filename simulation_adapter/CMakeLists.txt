@@ -32,26 +32,28 @@ target_include_directories(${TARGET_NAME} PUBLIC
 )
 target_compile_features(${TARGET_NAME} PUBLIC c_std_99 cxx_std_17)
 
-target_link_libraries(${TARGET_NAME} PUBLIC
-  rclcpp::rclcpp
-  ${rclcpp_components_TARGETS}
-  ${geometry_msgs_TARGETS}
-  ${nav_msgs_TARGETS}
-  ${perception_msgs_TARGETS}
-  ${perception_msgs_utils_TARGETS}
-  ${sensor_msgs_TARGETS}
-  ${std_msgs_TARGETS}
-  ${tf2_TARGETS}
-  ${tf2_geometry_msgs_TARGETS}
-  ${tf2_perception_msgs_TARGETS}
-  ${tf2_ros_TARGETS}
-  ${tf2_trajectory_planning_msgs_TARGETS}
-  ${trajectory_planning_msgs_TARGETS}
-  ${trajectory_planning_msgs_utils_TARGETS}
+ament_target_dependencies(${TARGET_NAME}
+  geometry_msgs
+  nav_msgs
+  perception_msgs
+  perception_msgs_utils
+  rclcpp
+  rclcpp_components
+  sensor_msgs
+  std_msgs
+  tf2
+  tf2_geometry_msgs
+  tf2_perception_msgs
+  tf2_ros
+  tf2_trajectory_planning_msgs
+  trajectory_planning_msgs
+  trajectory_planning_msgs_utils
 )
 
 install(TARGETS ${TARGET_NAME}
-  DESTINATION lib/${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
 install(DIRECTORY launch
@@ -63,5 +65,13 @@ install(DIRECTORY config
   DESTINATION share/${PROJECT_NAME}
   OPTIONAL
 )
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  set(ament_cmake_clang_format_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../.vscode/format/.clang-format)
+  set(ament_cmake_clang_tidy_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../.vscode/lint/.clang-tidy)
+  set(ament_cmake_flake8_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../.vscode/lint/ament_flake8.ini)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 ament_package()
