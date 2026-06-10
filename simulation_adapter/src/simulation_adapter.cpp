@@ -343,8 +343,7 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
       // update header stamp
       object_state.header = trajectory_planned_snapshot.header;
       const double time = static_cast<double>(trajectory_planning_msgs::trajectory_access::getT(trajectory_planned_snapshot, i));
-      object_state.header.stamp =
-          (rclcpp::Time(trajectory_planned_snapshot.header.stamp) + rclcpp::Duration::from_seconds(time)).to_msg();
+      object_state.header.stamp = rclcpp::Time(trajectory_planned_snapshot.header.stamp) + rclcpp::Duration::from_seconds(time);
 
       perception_msgs::object_access::setX(object_state,
                                            trajectory_planning_msgs::trajectory_access::getX(trajectory_planned_snapshot, i));
