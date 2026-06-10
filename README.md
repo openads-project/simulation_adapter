@@ -14,7 +14,7 @@
 
 **Adapts OpenADSim data to OpenADStack-compatible ROS 2 interfaces**
 
-The `simulation_adapter` bridges simulation cores and automated driving software by converting OpenADSim data into OpenADStack-compatible ROS 2 interfaces. It consumes simulation map information, ego state, object lists, and planned trajectories, then republishes stack-facing outputs in the configured coordinate frames. Key features:
+The [simulation_adapter](simulation_adapter/README.md) node bridges simulation cores and automated driving software by converting OpenADSim data into OpenADStack-compatible ROS 2 interfaces. It consumes simulation map information, ego state, object lists, and planned trajectories, then republishes stack-facing outputs in the configured coordinate frames. Key features:
 
 - **Frame adaptation**: transforms ego data, object lists, and trajectories between simulation and automated-driving frame conventions.
 - **Map handover**: forwards the active simulation map to the lanelet2 map server.

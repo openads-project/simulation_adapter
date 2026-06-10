@@ -1,3 +1,6 @@
+// Copyright Institute for Automotive Engineering (ika), RWTH Aachen University
+// SPDX-License-Identifier: Apache-2.0
+
 #include <simulation_adapter/simulation_adapter.hpp>
 
 namespace simulation_adapter {
@@ -339,9 +342,9 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
     for (int i = 0; i < n; i++) {
       // update header stamp
       object_state.header = trajectory_planned_snapshot.header;
-      float time = trajectory_planning_msgs::trajectory_access::getT(trajectory_planned_snapshot, i);
-      object_state.header.stamp.sec += (int)time;
-      object_state.header.stamp.nanosec += (time - (int)time) * 1e9;
+      const double time = static_cast<double>(trajectory_planning_msgs::trajectory_access::getT(trajectory_planned_snapshot, i));
+      object_state.header.stamp =
+          (rclcpp::Time(trajectory_planned_snapshot.header.stamp) + rclcpp::Duration::from_seconds(time)).to_msg();
 
       perception_msgs::object_access::setX(object_state,
                                            trajectory_planning_msgs::trajectory_access::getX(trajectory_planned_snapshot, i));
@@ -543,6 +546,13 @@ void SimulationAdapter::trajectoryCallback(const tp::Trajectory::ConstSharedPtr&
 
 }  // namespace simulation_adapter
 
+/**
+ * @brief Initializes and spins the simulation adapter node.
+ *
+ * @param argc Number of command-line arguments.
+ * @param argv Command-line argument values.
+ * @return Process exit code.
+ */
 int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<simulation_adapter::SimulationAdapter>();

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Launch the simulation adapter node."""
+
+# Copyright Institute for Automotive Engineering (ika), RWTH Aachen University
+# SPDX-License-Identifier: Apache-2.0
 
 import os
 
@@ -89,7 +91,6 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            *remappable_topics,
             *args,
             SetParameter("use_sim_time", LaunchConfiguration("use_sim_time")),
             SetParameter("load_lanelet_map", LaunchConfiguration("load_lanelet_map")),
