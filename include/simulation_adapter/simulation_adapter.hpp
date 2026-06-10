@@ -1,7 +1,7 @@
 #pragma once
 
-#include <mutex>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <vector>
@@ -21,10 +21,10 @@
 #include <trajectory_planning_msgs_utils/trajectory_access.hpp>
 
 // tf2
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2_perception_msgs/tf2_perception_msgs.hpp>
 #include <tf2_trajectory_planning_msgs/tf2_trajectory_planning_msgs.hpp>
 
@@ -34,21 +34,20 @@ namespace pm = perception_msgs::msg;
 namespace sm = std_msgs::msg;
 namespace tp = trajectory_planning_msgs::msg;
 
-
 namespace simulation_adapter {
 
-template <typename C> struct is_vector : std::false_type {};
-template <typename T, typename A> struct is_vector<std::vector<T, A>> : std::true_type {};
-template <typename C> inline constexpr bool is_vector_v = is_vector<C>::value;
-
+template <typename C>
+struct is_vector : std::false_type {};
+template <typename T, typename A>
+struct is_vector<std::vector<T, A>> : std::true_type {};
+template <typename C>
+inline constexpr bool is_vector_v = is_vector<C>::value;
 
 /**
  * @brief SimulationAdapter class
  */
 class SimulationAdapter : public rclcpp::Node {
-
  public:
-
   /**
    * @brief Constructor
    *
@@ -61,7 +60,6 @@ class SimulationAdapter : public rclcpp::Node {
   int num_threads_ = 1;
 
  private:
-
   /**
    * @brief Declares and loads a ROS parameter
    *
@@ -135,7 +133,6 @@ class SimulationAdapter : public rclcpp::Node {
   void initializeVehicleFrameTransform();
 
  private:
-
   /**
    * @brief Auto-reconfigurable parameters for dynamic reconfiguration
    */
@@ -320,6 +317,5 @@ class SimulationAdapter : public rclcpp::Node {
    */
   std::string map_info_;
 };
-
 
 }  // namespace simulation_adapter

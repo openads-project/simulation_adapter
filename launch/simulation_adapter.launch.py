@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Launch the simulation adapter node."""
 
 import os
 
@@ -10,7 +11,7 @@ from launch_ros.actions import Node, SetParameter
 
 
 def generate_launch_description():
-
+    """Generate the simulation adapter launch description."""
     remappable_topics = [
         DeclareLaunchArgument("input_map_info_topic", default_value="~/input_map_info"),
         DeclareLaunchArgument("input_ego_data_topic", default_value="~/input_ego_data"),
@@ -27,10 +28,18 @@ def generate_launch_description():
     args = [
         DeclareLaunchArgument("name", default_value="simulation_adapter", description="node name"),
         DeclareLaunchArgument("namespace", default_value="", description="node namespace"),
-        DeclareLaunchArgument("params", default_value=os.path.join(get_package_share_directory("simulation_adapter"), "config", "params.yml"), description="path to parameter file"),
-        DeclareLaunchArgument("log_level", default_value="info", description="ROS logging level (debug, info, warn, error, fatal)"),
+        DeclareLaunchArgument(
+            "params",
+            default_value=os.path.join(get_package_share_directory("simulation_adapter"), "config", "params.yml"),
+            description="path to parameter file",
+        ),
+        DeclareLaunchArgument(
+            "log_level", default_value="info", description="ROS logging level (debug, info, warn, error, fatal)"
+        ),
         DeclareLaunchArgument("use_sim_time", default_value="true", description="use simulation clock"),
-        DeclareLaunchArgument("load_lanelet_map", default_value="true", description="automatically set lanelet2 map from simulation map info"),
+        DeclareLaunchArgument(
+            "load_lanelet_map", default_value="true", description="automatically set lanelet2 map from simulation map info"
+        ),
         *remappable_topics,
     ]
 
@@ -48,10 +57,12 @@ def generate_launch_description():
         )
     ]
 
-    return LaunchDescription([
-        *remappable_topics,
-        *args,
-        SetParameter("use_sim_time", LaunchConfiguration("use_sim_time")),
-        SetParameter("load_lanelet_map", LaunchConfiguration("load_lanelet_map")),
-        *nodes,
-    ])
+    return LaunchDescription(
+        [
+            *remappable_topics,
+            *args,
+            SetParameter("use_sim_time", LaunchConfiguration("use_sim_time")),
+            SetParameter("load_lanelet_map", LaunchConfiguration("load_lanelet_map")),
+            *nodes,
+        ]
+    )
