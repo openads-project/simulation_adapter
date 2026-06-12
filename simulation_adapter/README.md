@@ -6,6 +6,42 @@ Adapts OpenADSim data to OpenADStack-compatible ROS 2 interfaces
 
 ### `simulation_adapter`
 
+```mermaid
+flowchart LR
+    NODE("simulation_adapter")
+    S0:::hidden -->|~/input_map_info| NODE
+    S1:::hidden -->|~/input_ego_data| NODE
+    S2:::hidden -->|~/input_object_list| NODE
+    S3:::hidden -->|~/input_trajectory| NODE
+    NODE -->|~/ego_data| P0:::hidden
+    NODE -->|~/ego_odometry| P1:::hidden
+    NODE -->|~/ego_vehicle_state| P2:::hidden
+    NODE -->|~/ego_imu| P3:::hidden
+    NODE -->|~/object_list| P4:::hidden
+    NODE -->|~/object_list_fixed| P5:::hidden
+    classDef hidden display: none;
+```
+
+#### Subscribed Topics
+
+| Topic | Type | Description |
+| --- | --- | --- |
+| `~/input_map_info` | `std_msgs/msg/String` | input topic for simulation map info |
+| `~/input_ego_data` | `perception_msgs/msg/EgoData` | input topic for simulation ego data |
+| `~/input_object_list` | `perception_msgs/msg/ObjectList` | input topic for simulation object lists |
+| `~/input_trajectory` | `trajectory_planning_msgs/msg/Trajectory` | input topic for planned trajectories |
+
+#### Published Topics
+
+| Topic | Type | Description |
+| --- | --- | --- |
+| `~/ego_data` | `perception_msgs/msg/EgoData` | output topic for transformed ego data |
+| `~/ego_odometry` | `nav_msgs/msg/Odometry` | output topic for ego odometry |
+| `~/ego_vehicle_state` | `perception_msgs/msg/ObjectState` | output topic for ego vehicle state |
+| `~/ego_imu` | `sensor_msgs/msg/Imu` | output topic for ego IMU data |
+| `~/object_list` | `perception_msgs/msg/ObjectList` | output topic for transformed object lists |
+| `~/object_list_fixed` | `perception_msgs/msg/ObjectList` | output topic for object lists in the fixed frame |
+
 #### Parameters
 
 | Parameter | Type | Default | Description |

@@ -6,17 +6,19 @@ services:
       # --- name ------
       NAMESPACE: /
       NAME: simulation_adapter
-      # --- other -----
+      # --- inputs ----
       INPUT_MAP_INFO_TOPIC: ~/input_map_info
       INPUT_EGO_DATA_TOPIC: ~/input_ego_data
       INPUT_OBJECT_LIST_TOPIC: ~/input_object_list
       INPUT_TRAJECTORY_TOPIC: ~/input_trajectory
+      # --- outputs ---
       OUTPUT_EGO_DATA_TOPIC: ~/ego_data
       OUTPUT_OBJECT_LIST_TOPIC: ~/object_list
       OUTPUT_OBJECT_LIST_FIXED_TOPIC: ~/object_list_fixed
       OUTPUT_EGO_IMU_TOPIC: ~/ego_imu
       OUTPUT_EGO_ODOMETRY_TOPIC: ~/ego_odometry
       OUTPUT_EGO_VEHICLE_STATE_TOPIC: ~/ego_vehicle_state
+      # --- other -----
       LOG_LEVEL: ${LOG_LEVEL:-info}
       USE_SIM_TIME: ${USE_SIM_TIME:-true}
       PARAMS: ${PARAMS:-/docker-ros/ws/install/simulation_adapter/share/simulation_adapter/config/params.yml}
