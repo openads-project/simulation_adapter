@@ -110,7 +110,7 @@ class SimulationAdapter : public rclcpp::Node {
   void mapInfoCallback(const sm::String::ConstSharedPtr& msg);
 
   /**
-   * @brief Converts incoming ego data to fixed_frame_id and vehicle_frame_id frames
+   * @brief Converts incoming ego data to fixed_frame_id and adjusts the reference point
    *
    * @param msg ego data message
    */

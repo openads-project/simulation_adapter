@@ -289,9 +289,9 @@ void SimulationAdapter::mapInfoCallback(const sm::String::ConstSharedPtr& msg) {
 
 void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) {
   auto timeout = rclcpp::Duration::from_seconds(0.1);
-  gm::TransformStamped vehicle_frame_position_in_map_tf;
 
-  // transform ego_data (input header is simulation_fixed_frame_id, output header is fixed_frame_id)
+  // Transform ego_data pose into fixed_frame_id. The reference point is adjusted below under the assumption that
+  // simulation_vehicle_frame_id and vehicle_frame_id differ only by a longitudinal offset and share orientation.
   pm::EgoData ego_data;
 
   gm::TransformStamped to_map_tf;
@@ -304,6 +304,8 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
   }
   tf2::doTransform(*msg, ego_data, to_map_tf);
 
+  // Move the reported position from simulation_vehicle_frame_id to vehicle_frame_id. This is only a pose/reference-point
+  // correction; velocity and acceleration are kept as provided by the simulation.
   tf2::Quaternion vehicle_orientation;
   tf2::fromMsg(perception_msgs::object_access::getOrientation(ego_data.state), vehicle_orientation);
   const tf2::Vector3 vehicle_offset(simulation_vehicle_frame_id_to_vehicle_frame_id_, 0.0, 0.0);
