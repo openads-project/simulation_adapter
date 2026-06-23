@@ -268,7 +268,7 @@ class SimulationAdapter : public rclcpp::Node {
   /**
    * @brief Name of the vehicle frame id in the driving stack
    */
-  std::string vehicle_frame_id_ = "geo_center";
+  std::string vehicle_frame_id_ = "base_link";
 
   /**
    * @brief Whether to publish the static TF from simulation_vehicle_frame_id to vehicle_frame_id
