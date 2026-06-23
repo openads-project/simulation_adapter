@@ -137,6 +137,11 @@ class SimulationAdapter : public rclcpp::Node {
 
  private:
   /**
+   * @brief Number of threads for MultiThreadedExecutor
+   */
+  int num_threads_ = 1;
+
+  /**
    * @brief Auto-reconfigurable parameters for dynamic reconfiguration
    */
   std::vector<std::tuple<std::string, std::function<void(const rclcpp::Parameter&)>>> auto_reconfigurable_params_;
