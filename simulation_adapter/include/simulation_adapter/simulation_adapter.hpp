@@ -60,9 +60,14 @@ class SimulationAdapter : public rclcpp::Node {
   /**
    * @brief Number of threads for MultiThreadedExecutor
    */
-  int num_threads_ = 1;
+  int getNumThreads() const { return num_threads_; }
 
  private:
+  /**
+   * @brief Number of threads for MultiThreadedExecutor
+   */
+  int num_threads_ = 1;
+
   /**
    * @brief Declares and loads a ROS parameter
    *
@@ -134,12 +139,6 @@ class SimulationAdapter : public rclcpp::Node {
    * @brief Timer callback that initializes the static TF link between simulation and driving-stack frames
    */
   void initializeVehicleFrameTransform();
-
- private:
-  /**
-   * @brief Number of threads for MultiThreadedExecutor
-   */
-  int num_threads_ = 1;
 
   /**
    * @brief Auto-reconfigurable parameters for dynamic reconfiguration

@@ -81,7 +81,7 @@ def generate_launch_description():
             executable="simulation_adapter",
             namespace=LaunchConfiguration("namespace"),
             name=LaunchConfiguration("name"),
-            parameters=[LaunchConfiguration("params")],
+            parameters=[LaunchConfiguration("params"), {"load_lanelet_map": LaunchConfiguration("load_lanelet_map")}],
             arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
             remappings=[(la.default_value[0].text, LaunchConfiguration(la.name)) for la in remappable_topics],
             output="screen",
@@ -93,7 +93,6 @@ def generate_launch_description():
         [
             *args,
             SetParameter("use_sim_time", LaunchConfiguration("use_sim_time")),
-            SetParameter("load_lanelet_map", LaunchConfiguration("load_lanelet_map")),
             *nodes,
         ]
     )

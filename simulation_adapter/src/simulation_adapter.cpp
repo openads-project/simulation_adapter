@@ -162,6 +162,7 @@ void SimulationAdapter::setup() {
       RCLCPP_FATAL(this->get_logger(), "Interrupted while waiting for the map server ('%s') parameter service, shutting down",
                    map_server_name_.c_str());
       rclcpp::shutdown();
+      return;
     }
     RCLCPP_WARN(this->get_logger(), "Waiting for map server ('%s') parameter service ...", map_server_name_.c_str());
   }
@@ -476,7 +477,7 @@ void SimulationAdapter::initializeVehicleFrameTransform() {
     // step 1: simulation_fixed_frame_id -> fixed_frame_id
     try {
       tf2_buffer_->lookupTransform(fixed_frame_id_, simulation_fixed_frame_id_, timezero);
-    } catch (const tf2::TransformException& e) {
+    } catch (const tf2::TransformException& ex) {
       RCLCPP_WARN(this->get_logger(),
                   "Transformation from '%s' to '%s' is not available. Should be provided using a shared parent "
                   "utm frame.",
@@ -488,7 +489,7 @@ void SimulationAdapter::initializeVehicleFrameTransform() {
     // step 2: simulation_fixed_frame_id -> simulation_vehicle_frame_id
     try {
       tf2_buffer_->lookupTransform(simulation_vehicle_frame_id_, simulation_fixed_frame_id_, timezero);
-    } catch (const tf2::TransformException& e) {
+    } catch (const tf2::TransformException& ex) {
       RCLCPP_WARN(this->get_logger(), "\tTransformation from '%s' to '%s' not available", simulation_fixed_frame_id_.c_str(),
                   simulation_vehicle_frame_id_.c_str());
       RCLCPP_WARN(this->get_logger(), "\tSkipped ...");
@@ -498,9 +499,9 @@ void SimulationAdapter::initializeVehicleFrameTransform() {
     // step 3: simulation_vehicle_frame_id -> vehicle_frame_id
     try {
       tf2_buffer_->lookupTransform(vehicle_frame_id_, simulation_vehicle_frame_id_, timezero);
-    } catch (const tf2::TransformException& e) {
-      RCLCPP_WARN(this->get_logger(), "\tTransformation from '%s' to '%s' is not available", simulation_vehicle_frame_id_.c_str(),
-                  vehicle_frame_id_.c_str());
+    } catch (const tf2::TransformException& ex) {
+      RCLCPP_WARN(this->get_logger(), "\tTransformation from '%s' to '%s' is not available:  %s",
+                  simulation_vehicle_frame_id_.c_str(), vehicle_frame_id_.c_str(), ex.what());
 
       // publish static transformation from simulation_vehicle_frame_id to vehicle_frame_id
       gm::TransformStamped ego_vehicle_to_vehicle_frame;
@@ -557,9 +558,9 @@ void SimulationAdapter::trajectoryCallback(const tp::Trajectory::ConstSharedPtr&
 int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<simulation_adapter::SimulationAdapter>();
-  rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), node->num_threads_);
+  rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), node->getNumThreads());
   RCLCPP_INFO(node->get_logger(), "Spinning node '%s' with %s (%d threads)", node->get_fully_qualified_name(),
-              "MultiThreadedExecutor", node->num_threads_);
+              "MultiThreadedExecutor", node->getNumThreads());
   executor.add_node(node);
   executor.spin();
   rclcpp::shutdown();

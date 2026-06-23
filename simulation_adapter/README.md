@@ -26,21 +26,21 @@ flowchart LR
 
 | Topic | Type | Description |
 | --- | --- | --- |
-| `~/input_map_info` | `std_msgs/msg/String` | input topic for simulation map info |
-| `~/input_ego_data` | `perception_msgs/msg/EgoData` | input topic for simulation ego data |
-| `~/input_object_list` | `perception_msgs/msg/ObjectList` | input topic for simulation object lists |
-| `~/input_trajectory` | `trajectory_planning_msgs/msg/Trajectory` | input topic for planned trajectories |
+| `~/input_map_info` | `std_msgs/msg/String` | Input topic for simulation map info |
+| `~/input_ego_data` | `perception_msgs/msg/EgoData` | Input topic for simulation ego data |
+| `~/input_object_list` | `perception_msgs/msg/ObjectList` | Input topic for simulation object lists |
+| `~/input_trajectory` | `trajectory_planning_msgs/msg/Trajectory` | Input topic for planned trajectories |
 
 #### Published Topics
 
 | Topic | Type | Description |
 | --- | --- | --- |
-| `~/ego_data` | `perception_msgs/msg/EgoData` | output topic for transformed ego data |
-| `~/ego_odometry` | `nav_msgs/msg/Odometry` | output topic for ego odometry |
-| `~/ego_vehicle_state` | `perception_msgs/msg/ObjectState` | output topic for ego vehicle state |
-| `~/ego_imu` | `sensor_msgs/msg/Imu` | output topic for ego IMU data |
-| `~/object_list` | `perception_msgs/msg/ObjectList` | output topic for transformed object lists |
-| `~/object_list_fixed` | `perception_msgs/msg/ObjectList` | output topic for object lists in the fixed frame |
+| `~/ego_data` | `perception_msgs/msg/EgoData` | Output topic for transformed ego data |
+| `~/ego_odometry` | `nav_msgs/msg/Odometry` | Output topic for ego odometry |
+| `~/ego_vehicle_state` | `perception_msgs/msg/ObjectState` | Output topic for ego vehicle state |
+| `~/ego_imu` | `sensor_msgs/msg/Imu` | Output topic for ego IMU data |
+| `~/object_list` | `perception_msgs/msg/ObjectList` | Output topic for transformed object lists |
+| `~/object_list_fixed` | `perception_msgs/msg/ObjectList` | Output topic for object lists in the fixed frame |
 
 #### Parameters
 
@@ -67,19 +67,19 @@ flowchart LR
 
 | Argument | Default | Description |
 | --- | --- | --- |
-| `input_map_info_topic` | `"~/input_map_info"` | input topic for simulation map info |
-| `input_ego_data_topic` | `"~/input_ego_data"` | input topic for simulation ego data |
-| `input_object_list_topic` | `"~/input_object_list"` | input topic for simulation object lists |
-| `input_trajectory_topic` | `"~/input_trajectory"` | input topic for planned trajectories |
-| `output_ego_data_topic` | `"~/ego_data"` | output topic for transformed ego data |
-| `output_object_list_topic` | `"~/object_list"` | output topic for transformed object lists |
-| `output_object_list_fixed_topic` | `"~/object_list_fixed"` | output topic for object lists in the fixed frame |
-| `output_ego_imu_topic` | `"~/ego_imu"` | output topic for ego IMU data |
-| `output_ego_odometry_topic` | `"~/ego_odometry"` | output topic for ego odometry |
-| `output_ego_vehicle_state_topic` | `"~/ego_vehicle_state"` | output topic for ego vehicle state |
-| `name` | `"simulation_adapter"` | node name |
-| `namespace` | `""` | node namespace |
-| `params` | `os.path.join(get_package_share_directory("simulation_adapter"), "config", "params.yml")` | path to parameter file |
+| `input_map_info_topic` | `"~/input_map_info"` | Input topic for simulation map info |
+| `input_ego_data_topic` | `"~/input_ego_data"` | Input topic for simulation ego data |
+| `input_object_list_topic` | `"~/input_object_list"` | Input topic for simulation object lists |
+| `input_trajectory_topic` | `"~/input_trajectory"` | Input topic for planned trajectories |
+| `output_ego_data_topic` | `"~/ego_data"` | Output topic for transformed ego data |
+| `output_object_list_topic` | `"~/object_list"` | Output topic for transformed object lists |
+| `output_object_list_fixed_topic` | `"~/object_list_fixed"` | Output topic for object lists in the fixed frame |
+| `output_ego_imu_topic` | `"~/ego_imu"` | Output topic for ego IMU data |
+| `output_ego_odometry_topic` | `"~/ego_odometry"` | Output topic for ego odometry |
+| `output_ego_vehicle_state_topic` | `"~/ego_vehicle_state"` | Output topic for ego vehicle state |
+| `name` | `"simulation_adapter"` | Node name |
+| `namespace` | `""` | Node namespace |
+| `params` | `os.path.join(get_package_share_directory("simulation_adapter"), "config", "params.yml")` | Path to parameter file |
 | `log_level` | `"info"` | ROS logging level (debug, info, warn, error, fatal) |
-| `use_sim_time` | `"true"` | use simulation clock |
-| `load_lanelet_map` | `"true"` | automatically set lanelet2 map from simulation map info |
+| `use_sim_time` | `"true"` | Use simulation clock |
+| `load_lanelet_map` | `"true"` | Automatically set lanelet2 map from simulation map info |

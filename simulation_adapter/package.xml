@@ -7,9 +7,9 @@
   <description>Adapts OpenADSim data to OpenADStack-compatible ROS 2 interfaces</description>
 
   <maintainer email="christian.geller@ika.rwth-aachen.de">Christian Geller</maintainer>
+
   <author email="christian.geller@ika.rwth-aachen.de">Christian Geller</author>
   <author email="guido.linden@ika.rwth-aachen.de">Guido Linden</author>
-  <author email="jean-pierre.busch@ika.rwth-aachen.de">Jean-Pierre Busch</author>
   <author email="silas.damaschke@ika.rwth-aachen.de">Silas Damaschke</author>
 
   <license>Apache-2.0</license>
@@ -17,7 +17,6 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>rclcpp_components</depend>
 
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
