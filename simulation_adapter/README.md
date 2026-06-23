@@ -51,7 +51,7 @@ flowchart LR
 | `simulation_fixed_frame_id` | `string` | `"simulation_map"` | Name of the fixed frame id in simulation. |
 | `fixed_frame_id` | `string` | `"map"` | Name of the fixed frame id over time. |
 | `simulation_vehicle_frame_id` | `string` | `"ego_vehicle"` | Name of the vehicle frame id in simulation. |
-| `vehicle_frame_id` | `string` | `"geo_center"` | Name of the vehicle frame id. |
+| `vehicle_frame_id` | `string` | `"base_link"` | Name of the vehicle frame id. |
 | `publish_vehicle_frame_tf` | `bool` | `true` | Whether to publish the static TF from simulation_vehicle_frame_id to vehicle_frame_id. |
 | `publish_ego_odometry` | `bool` | `false` | Whether to publish ego odometry. |
 | `publish_ego_vehicle_state` | `bool` | `false` | Whether to publish the ego vehicle state. |
