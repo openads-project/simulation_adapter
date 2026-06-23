@@ -1,7 +1,10 @@
+// Copyright Institute for Automotive Engineering (ika), RWTH Aachen University
+// SPDX-License-Identifier: Apache-2.0
+
 #pragma once
 
-#include <mutex>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <vector>
@@ -21,10 +24,10 @@
 #include <trajectory_planning_msgs_utils/trajectory_access.hpp>
 
 // tf2
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2_perception_msgs/tf2_perception_msgs.hpp>
 #include <tf2_trajectory_planning_msgs/tf2_trajectory_planning_msgs.hpp>
 
@@ -34,21 +37,20 @@ namespace pm = perception_msgs::msg;
 namespace sm = std_msgs::msg;
 namespace tp = trajectory_planning_msgs::msg;
 
-
 namespace simulation_adapter {
 
-template <typename C> struct is_vector : std::false_type {};
-template <typename T, typename A> struct is_vector<std::vector<T, A>> : std::true_type {};
-template <typename C> inline constexpr bool is_vector_v = is_vector<C>::value;
-
+template <typename C>
+struct is_vector : std::false_type {};
+template <typename T, typename A>
+struct is_vector<std::vector<T, A>> : std::true_type {};
+template <typename C>
+inline constexpr bool is_vector_v = is_vector<C>::value;
 
 /**
  * @brief SimulationAdapter class
  */
 class SimulationAdapter : public rclcpp::Node {
-
  public:
-
   /**
    * @brief Constructor
    *
@@ -58,9 +60,13 @@ class SimulationAdapter : public rclcpp::Node {
   /**
    * @brief Number of threads for MultiThreadedExecutor
    */
-  int num_threads_ = 1;
+  int getNumThreads() const { return num_threads_; }
 
  private:
+  /**
+   * @brief Number of threads for MultiThreadedExecutor
+   */
+  int num_threads_ = 1;
 
   /**
    * @brief Declares and loads a ROS parameter
@@ -109,7 +115,7 @@ class SimulationAdapter : public rclcpp::Node {
   void mapInfoCallback(const sm::String::ConstSharedPtr& msg);
 
   /**
-   * @brief Converts incoming ego data to fixed_frame_id and vehicle_frame_id frames
+   * @brief Converts incoming ego data to fixed_frame_id and adjusts the reference point
    *
    * @param msg ego data message
    */
@@ -133,8 +139,6 @@ class SimulationAdapter : public rclcpp::Node {
    * @brief Timer callback that initializes the static TF link between simulation and driving-stack frames
    */
   void initializeVehicleFrameTransform();
-
- private:
 
   /**
    * @brief Auto-reconfigurable parameters for dynamic reconfiguration
@@ -268,7 +272,7 @@ class SimulationAdapter : public rclcpp::Node {
   /**
    * @brief Name of the vehicle frame id in the driving stack
    */
-  std::string vehicle_frame_id_ = "geo_center";
+  std::string vehicle_frame_id_ = "base_link";
 
   /**
    * @brief Whether to publish the static TF from simulation_vehicle_frame_id to vehicle_frame_id
@@ -320,6 +324,5 @@ class SimulationAdapter : public rclcpp::Node {
    */
   std::string map_info_;
 };
-
 
 }  // namespace simulation_adapter

@@ -1,58 +1,112 @@
 # simulation_adapter
 
-This package contains the SimulationAdapter - a ROS 2 Node that connects the simulation to the automated driving stack by converting incoming messages from simulation cores, e.g. [carla_converter](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/carla/carla_converter) and [sumo_its_interface](https://gitlab.ika.rwth-aachen.de/fb-fi/simulation/sumo/sumo_its_interface), to `fixed_frame_id` and `vehicle_frame_id` frame. Moreover, the node can load a lanelet map based on the currently reported simulation map info.
+<p align="center">
+  <a href="https://github.com/openads-project"><img src="https://img.shields.io/badge/OpenADS-f5ff01"/></a>
+  <a href="https://www.ros.org"><img src="https://img.shields.io/badge/ROS 2-jazzy-22314e"/></a>
+  <a href="https://github.com/openads-project/simulation_adapter/releases/latest"><img src="https://img.shields.io/github/v/release/openads-project/simulation_adapter"/></a>
+  <a href="https://github.com/openads-project/simulation_adapter/blob/main/LICENSE"><img src="https://img.shields.io/github/license/openads-project/simulation_adapter"/></a>
+  <br>
+  <a href="https://github.com/openads-project/simulation_adapter/actions/workflows/docker-ros.yml"><img src="https://github.com/openads-project/simulation_adapter/actions/workflows/docker-ros.yml/badge.svg"/></a>
+  <a href="https://github.com/openads-project/simulation_adapter/actions/workflows/compose-oci.yml"><img src="https://github.com/openads-project/simulation_adapter/actions/workflows/compose-oci.yml/badge.svg"/></a>
+  <a href="https://openads-project.github.io/simulation_adapter"><img src="https://github.com/openads-project/simulation_adapter/actions/workflows/docs.yml/badge.svg"/></a>
+  <a href="https://github.com/openads-project/simulation_adapter/actions/workflows/consistency.yml"><img src="https://github.com/openads-project/simulation_adapter/actions/workflows/consistency.yml/badge.svg"/></a>
+</p>
 
-- [simulation\_adapter](#simulation_adapter)
-    - [Container Images](#container-images)
-  - [`simulation_adapter`](#simulation_adapter-1)
-    - [Subscribed Topics](#subscribed-topics)
-    - [Published Topics](#published-topics)
-    - [Parameters](#parameters)
+**Adapts OpenADSim data to vehicle-specific OpenADStack interfaces**
+
+The [simulation_adapter](simulation_adapter/README.md) connects [OpenADSim](https://github.com/openads-project/openadsim)-provided data to the [OpenADStack](https://github.com/openads-project/openadstack). Simulator-specific converters, such as [`carla_converter`](https://github.com/openads-project/carla_converter) or `sumo_converter`, only translate simulator output into the OpenADSim message format. The simulation adapter adapts those interfaces for the configured OpenADStack and into vehicle-specific coordinate sytem. Key features:
+
+- **Frame adaptation**: transforms ego data, object lists, and trajectories between simulation and automated-driving frame conventions.
+- **Map handover**: forwards the active simulation map to the lanelet2 map server.
+- **Optional ego outputs**: publishes ego IMU, odometry, and vehicle state topics when enabled.
+- **Configurable integration**: exposes launch arguments for topic remapping, parameters, namespace, node name, and log level.
+
+<p align="center">
+  <strong>🚀 <a href="#-quick-start">Quick Start</a></strong> • <strong>💻 <a href="#-development">Development</a></strong> • <strong>📝 <a href="#-documentation">Documentation</a></strong>
+</p>
 
 
-### Container Images
+> [!IMPORTANT]
+> This repository is part of [***OpenADS***](https://github.com/openads-project), the *Open Automated Driving Systems* project. *OpenADS* and its modules have been initiated and are currently being maintained by the [**Institute for Automotive Engineering (ika) at RWTH Aachen University**](https://www.ika.rwth-aachen.de/de/).
 
-| Description | Image:Tag | Default Command |
+
+## 🚀 Quick Start
+
+1. Start a container of the pre-built runtime image.
+    ```bash
+    docker run --rm -it ghcr.io/openads-project/simulation_adapter:latest bash
+    ```
+1. Inside the container, launch the pre-built nodes.
+    ```bash
+    ros2 launch simulation_adapter simulation_adapter.launch.py
+    ```
+
+## 💻 Development
+
+### Set up Development Environment
+
+1. Clone the repository.
+    ```bash
+    git clone https://github.com/openads-project/simulation_adapter.git
+    ```
+1. Initialize the [`.openads-dev-environment`](https://github.com/openads-project/openads-dev-environment) submodule containing development environment configuration.
+    ```bash
+    cd simulation_adapter
+    git submodule update --init --recursive
+    ```
+1. Open the repository in [Visual Studio Code](https://code.visualstudio.com).
+    ```bash
+    code .
+    ```
+1. Install the recommended VS Code extensions.
+    > *Ctrl+Shift+P / Extensions: Show Recommended Extensions / Install Workspace Recommended Extensions (Cloud Download Icon)*
+1. Reopen the repository in a [Dev Container](https://code.visualstudio.com/docs/devcontainers/containers).
+    > *Ctrl+Shift+P / Dev Containers: Rebuild and Reopen in Container*
+
+### Build
+
+> *Ctrl+Shift+B*
+
+```bash
+colcon build
+```
+
+### Run Tests
+
+> *Ctrl+Shift+P / Tasks: Run Test Task*
+
+```bash
+colcon build --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+colcon test
+colcon test-result --verbose
+```
+
+
+## 📝 Documentation
+
+Package and node interfaces are documented in the respective package READMEs listed below. Implementation details are found in the [Source Code Documentation](https://openads-project.github.io/simulation_adapter).
+
+| Package | Description |
+| --- | --- |
+| [simulation_adapter](simulation_adapter/README.md) | Adapts OpenADSim data to vehicle-specific OpenADStack interfaces. |
+
+## ⚖️ Licensing
+
+The source code in this repository is licensed under Apache-2.0, see [LICENSE](LICENSE). Container images provided by this repository may contain third-party software shipped with their own license terms.
+
+## 🙏 Acknowledgements
+
+Development and maintenance of this repository are supported by the following projects. We acknowledge the funding of the respective institutions.
+
+| Project | Funding Institution | Grant Number |
 | --- | --- | --- |
-| ROS 2 Node that connects the simulation to the automated driving stack | `gitlab.ika.rwth-aachen.de:5050/fb-fi/simulation/simulation_adapter:latest` | `ros2 launch simulation_adapter simulation_adapter.launch.py` |
+| [AIGGREGATE](https://aiggregate.eu/) | 🇪🇺 European Union | 101202457 |
+| [AIthena](https://aithena.eu/) | 🇪🇺 European Union | 101076754 |
+| [autotech.agil](https://www.autotechagil.de/) | 🇩🇪 Federal Ministry for Research, Technology and Space (BMFTR) | 01IS22088A |
 
+<p>
+  <img src="https://www.drought.uni-freiburg.de/stressres/images/bmftr-logo/image" height=70>
+  <img src="https://ec.europa.eu/regional_policy/images/information-sources/logo-download-center/eu_funded_en.jpg" height=70>
+</p>
 
-## `simulation_adapter`
-
-### Subscribed Topics
-
-| Topic | Type | Description |
-| --- | --- | --- |
-| `~/input_map_info` | `std_msgs::msg::String` | Current simulation map info (latching QoS) |
-| `~/input_ego_data` | `perception_msgs::msg::EgoData` | Ego data in `simulation_fixed_frame_id` |
-| `~/input_object_list` | `perception_msgs::msg::ObjectList` | Object list in `simulation_fixed_frame_id` |
-| `~/input_trajectory` | `trajectory_planning_msgs::msg::Trajectory` | Planned trajectory in any TF-reachable frame |
-
-### Published Topics
-
-| Topic | Type | Description |
-| --- | --- | --- |
-| `~/ego_data` | `perception_msgs::msg::EgoData` | Ego data in `fixed_frame_id`, shifted to the configured vehicle reference point and tagged as `REAR_AXLE_GROUND` |
-| `~/ego_odometry` | `nav_msgs::msg::Odometry` | Ego pose in `fixed_frame_id` with `vehicle_frame_id` as child frame, published when `publish_ego_odometry=true` |
-| `~/ego_vehicle_state` | `perception_msgs::msg::ObjectState` | Ego steering state containing `model_id`, `SteeringAngleAck`, and `SteeringAngleRateAck`, published when `publish_ego_vehicle_state=true` |
-| `~/ego_imu` | `sensor_msgs::msg::Imu` | Ego IMU in `vehicle_frame_id` with only `linear_acceleration` populated, published when `publish_ego_imu=true` |
-| `~/object_list` | `perception_msgs::msg::ObjectList` | Object list in `vehicle_frame_id` |
-| `~/object_list_fixed` | `perception_msgs::msg::ObjectList` | Object list in `fixed_frame_id` |
-
-### Parameters
-
-| Parameter | Type | Default | Description |
-| --- | --- | --- | --- |
-| `map_server_name` | `string` | `/localization/ll2_map_server` | Name of the lanelet2 map server node |
-| `load_lanelet_map` | `bool` | `true` | Automatically load the lanelet2 map based on the simulation map info |
-| `simulation_fixed_frame_id` | `string` | `simulation_map` | Fixed frame id used by the simulation |
-| `fixed_frame_id` | `string` | `map` | Fixed frame id used by the driving stack |
-| `simulation_vehicle_frame_id` | `string` | `ego_vehicle` | Vehicle frame id used by the simulation |
-| `vehicle_frame_id` | `string` | `base_link` | Vehicle frame id used by the driving stack |
-| `publish_vehicle_frame_tf` | `bool` | `true` | Publish the static TF from `simulation_vehicle_frame_id` to `vehicle_frame_id` |
-| `publish_ego_odometry` | `bool` | `false` | Publish ego odometry |
-| `publish_ego_vehicle_state` | `bool` | `false` | Publish ego vehicle state |
-| `publish_ego_imu` | `bool` | `false` | Publish ego IMU with linear acceleration only |
-| `simulation_vehicle_frame_id_to_vehicle_frame_id` | `double` | `0.0` | Longitudinal offset (m) from `simulation_vehicle_frame_id` to `vehicle_frame_id` |
-| `maps.simulation_maps` | `string[]` | `[campus]` | List of supported simulation map names (parallel to `maps.lanelet_files`) |
-| `maps.lanelet_files` | `string[]` | `[/data/maps/aachen.osm]` | Lanelet2 map file paths (parallel to `maps.simulation_maps`) |
+<sub><sup>Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Climate, Infrastructure and Environment Executive Agency (CINEA). Neither the European Union nor CINEA can be held responsible for them.</sup></sub>

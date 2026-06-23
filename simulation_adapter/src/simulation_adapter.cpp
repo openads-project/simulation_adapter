@@ -1,38 +1,37 @@
-#include <simulation_adapter/simulation_adapter.hpp>
+// Copyright Institute for Automotive Engineering (ika), RWTH Aachen University
+// SPDX-License-Identifier: Apache-2.0
 
+#include <simulation_adapter/simulation_adapter.hpp>
 
 namespace simulation_adapter {
 
-
 SimulationAdapter::SimulationAdapter() : Node("simulation_adapter") {
-
   this->declareAndLoadParameter("map_server_name", map_server_name_, "Name of the map server.");
-  this->declareAndLoadParameter("load_lanelet_map", set_ll2_map_,
-                                "Automatically set the ll2 map based on the simulation map.");
-  this->declareAndLoadParameter("simulation_fixed_frame_id", simulation_fixed_frame_id_, "Name of the fixed frame id in simulation.");
+  this->declareAndLoadParameter("load_lanelet_map", set_ll2_map_, "Automatically set the ll2 map based on the simulation map.");
+  this->declareAndLoadParameter("simulation_fixed_frame_id", simulation_fixed_frame_id_,
+                                "Name of the fixed frame id in simulation.");
   this->declareAndLoadParameter("fixed_frame_id", fixed_frame_id_, "Name of the fixed frame id over time.");
   this->declareAndLoadParameter("simulation_vehicle_frame_id", simulation_vehicle_frame_id_,
                                 "Name of the vehicle frame id in simulation.");
   this->declareAndLoadParameter("vehicle_frame_id", vehicle_frame_id_, "Name of the vehicle frame id.");
   this->declareAndLoadParameter("publish_vehicle_frame_tf", publish_vehicle_frame_tf_,
                                 "Whether to publish the static TF from simulation_vehicle_frame_id to vehicle_frame_id.");
-  this->declareAndLoadParameter("publish_ego_odometry", publish_ego_odometry_,
-                                "Whether to publish ego odometry.");
+  this->declareAndLoadParameter("publish_ego_odometry", publish_ego_odometry_, "Whether to publish ego odometry.");
   this->declareAndLoadParameter("publish_ego_vehicle_state", publish_ego_vehicle_state_,
                                 "Whether to publish the ego vehicle state.");
-  this->declareAndLoadParameter("publish_ego_imu", publish_ego_imu_,
-                                "Whether to publish the ego IMU.");
+  this->declareAndLoadParameter("publish_ego_imu", publish_ego_imu_, "Whether to publish the ego IMU.");
 
-  this->declareAndLoadParameter("simulation_vehicle_frame_id_to_vehicle_frame_id", simulation_vehicle_frame_id_to_vehicle_frame_id_,
+  this->declareAndLoadParameter("simulation_vehicle_frame_id_to_vehicle_frame_id",
+                                simulation_vehicle_frame_id_to_vehicle_frame_id_,
                                 "Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id.");
 
   this->declareAndLoadParameter("maps.simulation_maps", simulation_maps_, "List of supported simulation maps.");
   this->declareAndLoadParameter("maps.lanelet_files", lanelet_files_, "Lanelet files for all supported simulation maps");
-  this->declareAndLoadParameter("num_threads", num_threads_, "number of threads for MultiThreadedExecutor", false, false, false, 1, std::thread::hardware_concurrency(), 1);
+  this->declareAndLoadParameter("num_threads", num_threads_, "number of threads for MultiThreadedExecutor", false, false, false,
+                                1, std::thread::hardware_concurrency(), 1);
 
   this->setup();
 }
-
 
 /**
  * @brief Declares and loads a ROS parameter
@@ -50,16 +49,15 @@ SimulationAdapter::SimulationAdapter() : Node("simulation_adapter") {
  */
 template <typename T>
 void SimulationAdapter::declareAndLoadParameter(const std::string& name,
-                                                  T& param,
-                                                  const std::string& description,
-                                                  const bool add_to_auto_reconfigurable_params,
-                                                  const bool is_required,
-                                                  const bool read_only,
-                                                  const std::optional<double>& from_value,
-                                                  const std::optional<double>& to_value,
-                                                  const std::optional<double>& step_value,
-                                                  const std::string& additional_constraints) {
-
+                                                T& param,
+                                                const std::string& description,
+                                                const bool add_to_auto_reconfigurable_params,
+                                                const bool is_required,
+                                                const bool read_only,
+                                                const std::optional<double>& from_value,
+                                                const std::optional<double>& to_value,
+                                                const std::optional<double>& step_value,
+                                                const std::string& additional_constraints) {
   rcl_interfaces::msg::ParameterDescriptor param_desc;
   param_desc.description = description;
   param_desc.additional_constraints = additional_constraints;
@@ -68,12 +66,12 @@ void SimulationAdapter::declareAndLoadParameter(const std::string& name,
   auto type = rclcpp::ParameterValue(param).get_type();
 
   if (from_value.has_value() && to_value.has_value()) {
-    if constexpr(std::is_integral_v<T>) {
+    if constexpr (std::is_integral_v<T>) {
       rcl_interfaces::msg::IntegerRange range;
       T step = static_cast<T>(step_value.has_value() ? step_value.value() : 1);
       range.set__from_value(static_cast<T>(from_value.value())).set__to_value(static_cast<T>(to_value.value())).set__step(step);
       param_desc.integer_range = {range};
-    } else if constexpr(std::is_floating_point_v<T>) {
+    } else if constexpr (std::is_floating_point_v<T>) {
       rcl_interfaces::msg::FloatingPointRange range;
       T step = static_cast<T>(step_value.has_value() ? step_value.value() : 1.0);
       range.set__from_value(static_cast<T>(from_value.value())).set__to_value(static_cast<T>(to_value.value())).set__step(step);
@@ -89,7 +87,7 @@ void SimulationAdapter::declareAndLoadParameter(const std::string& name,
     param = this->get_parameter(name).get_value<T>();
     std::stringstream ss;
     ss << "Loaded parameter '" << name << "': ";
-    if constexpr(is_vector_v<T>) {
+    if constexpr (is_vector_v<T>) {
       ss << "[";
       for (const auto& element : param) ss << element << (&element != &param.back() ? ", " : "]");
     } else {
@@ -103,7 +101,7 @@ void SimulationAdapter::declareAndLoadParameter(const std::string& name,
     } else {
       std::stringstream ss;
       ss << "Missing parameter '" << name << "', using default value: ";
-      if constexpr(is_vector_v<T>) {
+      if constexpr (is_vector_v<T>) {
         ss << "[";
         for (const auto& element : param) ss << element << (&element != &param.back() ? ", " : "]");
       } else {
@@ -115,9 +113,7 @@ void SimulationAdapter::declareAndLoadParameter(const std::string& name,
   }
 
   if (add_to_auto_reconfigurable_params) {
-    std::function<void(const rclcpp::Parameter&)> setter = [&param](const rclcpp::Parameter& p) {
-      param = p.get_value<T>();
-    };
+    std::function<void(const rclcpp::Parameter&)> setter = [&param](const rclcpp::Parameter& p) { param = p.get_value<T>(); };
     auto_reconfigurable_params_.push_back(std::make_tuple(name, setter));
   }
 }
@@ -163,18 +159,18 @@ void SimulationAdapter::setup() {
   using namespace std::chrono_literals;
   while (!map_server_parameters_client_->wait_for_service(1s)) {
     if (!rclcpp::ok()) {
-      RCLCPP_FATAL(this->get_logger(),
-                   "Interrupted while waiting for the map server ('%s') parameter service, shutting down",
+      RCLCPP_FATAL(this->get_logger(), "Interrupted while waiting for the map server ('%s') parameter service, shutting down",
                    map_server_name_.c_str());
       rclcpp::shutdown();
+      return;
     }
     RCLCPP_WARN(this->get_logger(), "Waiting for map server ('%s') parameter service ...", map_server_name_.c_str());
   }
   RCLCPP_INFO(this->get_logger(), "Connected to map server ('%s') parameter service", map_server_name_.c_str());
 
   // create a callback for dynamic parameter configuration
-  parameters_callback_ = this->add_on_set_parameters_callback(
-      std::bind(&SimulationAdapter::parametersCallback, this, std::placeholders::_1));
+  parameters_callback_ =
+      this->add_on_set_parameters_callback(std::bind(&SimulationAdapter::parametersCallback, this, std::placeholders::_1));
 
   // setup subscriber for input topics
   // Use transient_local (latching) QoS so the node receives the map info even
@@ -188,8 +184,8 @@ void SimulationAdapter::setup() {
   reentrant_subscription_options.callback_group = reentrant_callback_group_;
 
   sub_map_info_ = this->create_subscription<sm::String>(
-      kInputMapInfoTopic, qosLatching,
-      std::bind(&SimulationAdapter::mapInfoCallback, this, std::placeholders::_1), reentrant_subscription_options);
+      kInputMapInfoTopic, qosLatching, std::bind(&SimulationAdapter::mapInfoCallback, this, std::placeholders::_1),
+      reentrant_subscription_options);
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_map_info_->get_topic_name());
 
   sub_ego_data_ = this->create_subscription<pm::EgoData>(
@@ -208,13 +204,13 @@ void SimulationAdapter::setup() {
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", sub_trajectory_->get_topic_name());
 
   if (publish_vehicle_frame_tf_) {
-    tf_init_timer_ = this->create_wall_timer(
-        500ms, std::bind(&SimulationAdapter::initializeVehicleFrameTransform, this), reentrant_callback_group_);
-    RCLCPP_INFO(this->get_logger(), "Started timer to initialize transformation from '%s' to '%s'",
-                fixed_frame_id_.c_str(), vehicle_frame_id_.c_str());
+    tf_init_timer_ = this->create_wall_timer(500ms, std::bind(&SimulationAdapter::initializeVehicleFrameTransform, this),
+                                             reentrant_callback_group_);
+    RCLCPP_INFO(this->get_logger(), "Started timer to initialize transformation from '%s' to '%s'", fixed_frame_id_.c_str(),
+                vehicle_frame_id_.c_str());
   } else {
-    RCLCPP_INFO(this->get_logger(), "Static TF publication from '%s' to '%s' is disabled",
-                simulation_vehicle_frame_id_.c_str(), vehicle_frame_id_.c_str());
+    RCLCPP_INFO(this->get_logger(), "Static TF publication from '%s' to '%s' is disabled", simulation_vehicle_frame_id_.c_str(),
+                vehicle_frame_id_.c_str());
   }
 
   // set up publisher for output topics
@@ -263,7 +259,8 @@ void SimulationAdapter::mapInfoCallback(const sm::String::ConstSharedPtr& msg) {
     // find simulation_map_name in simulation_maps_
     auto it = std::find(simulation_maps_.begin(), simulation_maps_.end(), simulation_map_name);
     if (it == simulation_maps_.end()) {
-      RCLCPP_ERROR(this->get_logger(), "Simulation map name '%s' not found in the list of supported maps", simulation_map_name.c_str());
+      RCLCPP_ERROR(this->get_logger(), "Simulation map name '%s' not found in the list of supported maps",
+                   simulation_map_name.c_str());
       return;
     }
 
@@ -280,24 +277,22 @@ void SimulationAdapter::mapInfoCallback(const sm::String::ConstSharedPtr& msg) {
 
     // change map by setting map server parameters
     map_server_parameters_client_->set_parameters(
-      {rclcpp::Parameter("map_filepath", lanelet_map_name),
-       rclcpp::Parameter("map_frame_id", fixed_frame_id_)},
-      [this](std::shared_future<std::vector<rcl_interfaces::msg::SetParametersResult>> future) {
-        auto results = future.get();
-        for (const auto& result : results) {
-          if (!result.successful)
-            RCLCPP_ERROR(this->get_logger(), "Failed to set parameter: %s", result.reason.c_str());
-        }
-        RCLCPP_INFO(this->get_logger(), "Finished setting map server parameters");
-      });
+        {rclcpp::Parameter("map_filepath", lanelet_map_name), rclcpp::Parameter("map_frame_id", fixed_frame_id_)},
+        [this](std::shared_future<std::vector<rcl_interfaces::msg::SetParametersResult>> future) {
+          auto results = future.get();
+          for (const auto& result : results) {
+            if (!result.successful) RCLCPP_ERROR(this->get_logger(), "Failed to set parameter: %s", result.reason.c_str());
+          }
+          RCLCPP_INFO(this->get_logger(), "Finished setting map server parameters");
+        });
   }
 }
 
 void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) {
   auto timeout = rclcpp::Duration::from_seconds(0.1);
-  gm::TransformStamped vehicle_frame_position_in_map_tf;
 
-  // transform ego_data (input header is simulation_fixed_frame_id, output header is fixed_frame_id)
+  // Transform ego_data pose into fixed_frame_id. The reference point is adjusted below under the assumption that
+  // simulation_vehicle_frame_id and vehicle_frame_id differ only by a longitudinal offset and share orientation.
   pm::EgoData ego_data;
 
   gm::TransformStamped to_map_tf;
@@ -310,6 +305,8 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
   }
   tf2::doTransform(*msg, ego_data, to_map_tf);
 
+  // Move the reported position from simulation_vehicle_frame_id to vehicle_frame_id. This is only a pose/reference-point
+  // correction; velocity and acceleration are kept as provided by the simulation.
   tf2::Quaternion vehicle_orientation;
   tf2::fromMsg(perception_msgs::object_access::getOrientation(ego_data.state), vehicle_orientation);
   const tf2::Vector3 vehicle_offset(simulation_vehicle_frame_id_to_vehicle_frame_id_, 0.0, 0.0);
@@ -348,9 +345,8 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
     for (int i = 0; i < n; i++) {
       // update header stamp
       object_state.header = trajectory_planned_snapshot.header;
-      float time = trajectory_planning_msgs::trajectory_access::getT(trajectory_planned_snapshot, i);
-      object_state.header.stamp.sec += (int)time;
-      object_state.header.stamp.nanosec += (time - (int)time) * 1e9;
+      const double time = trajectory_planning_msgs::trajectory_access::getT(trajectory_planned_snapshot, i);
+      object_state.header.stamp = rclcpp::Time(trajectory_planned_snapshot.header.stamp) + rclcpp::Duration::from_seconds(time);
 
       perception_msgs::object_access::setX(object_state,
                                            trajectory_planning_msgs::trajectory_access::getX(trajectory_planned_snapshot, i));
@@ -390,8 +386,8 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
     perception_msgs::object_access::initializeState(ego_vehicle_state, pm::EGO::MODEL_ID);
     ego_vehicle_state.header = ego_data.state.header;
     if (perception_msgs::object_access::hasSteeringAngleAck(ego_data.state.model_id)) {
-      perception_msgs::object_access::setSteeringAngleAck(
-          ego_vehicle_state, perception_msgs::object_access::getSteeringAngleAck(ego_data.state));
+      perception_msgs::object_access::setSteeringAngleAck(ego_vehicle_state,
+                                                          perception_msgs::object_access::getSteeringAngleAck(ego_data.state));
     }
     if (perception_msgs::object_access::hasSteeringAngleRateAck(ego_data.state.model_id)) {
       perception_msgs::object_access::setSteeringAngleRateAck(
@@ -435,11 +431,10 @@ void SimulationAdapter::objectListCallback(const pm::ObjectList::ConstSharedPtr&
 
   gm::TransformStamped to_vehicle_frame_tf;
   try {
-    to_vehicle_frame_tf =
-        tf2_buffer_->lookupTransform(vehicle_frame_id_, msg->header.frame_id, msg->header.stamp, timeout);
+    to_vehicle_frame_tf = tf2_buffer_->lookupTransform(vehicle_frame_id_, msg->header.frame_id, msg->header.stamp, timeout);
   } catch (tf2::TransformException& ex) {
-    RCLCPP_WARN(this->get_logger(), "Skipping object list transform from '%s' to '%s': %s",
-                msg->header.frame_id.c_str(), vehicle_frame_id_.c_str(), ex.what());
+    RCLCPP_WARN(this->get_logger(), "Skipping object list transform from '%s' to '%s': %s", msg->header.frame_id.c_str(),
+                vehicle_frame_id_.c_str(), ex.what());
     return;
   }
   tf2::doTransform(*msg, msg_object_list, to_vehicle_frame_tf);
@@ -471,18 +466,18 @@ void SimulationAdapter::initializeVehicleFrameTransform() {
     tf2_buffer_->lookupTransform(vehicle_frame_id_, fixed_frame_id_, timezero);
     if (tf_init_timer_ && !tf_init_timer_->is_canceled()) {
       tf_init_timer_->cancel();
-      RCLCPP_INFO(this->get_logger(), "Static transformation from '%s' to '%s' is now available",
-                  vehicle_frame_id_.c_str(), fixed_frame_id_.c_str());
+      RCLCPP_INFO(this->get_logger(), "Static transformation from '%s' to '%s' is now available", vehicle_frame_id_.c_str(),
+                  fixed_frame_id_.c_str());
     }
     return;
   } catch (const tf2::TransformException&) {
-    RCLCPP_DEBUG(this->get_logger(), "Transformation from '%s' to '%s' not yet available, retrying ...",
-                 fixed_frame_id_.c_str(), vehicle_frame_id_.c_str());
+    RCLCPP_DEBUG(this->get_logger(), "Transformation from '%s' to '%s' not yet available, retrying ...", fixed_frame_id_.c_str(),
+                 vehicle_frame_id_.c_str());
 
     // step 1: simulation_fixed_frame_id -> fixed_frame_id
     try {
       tf2_buffer_->lookupTransform(fixed_frame_id_, simulation_fixed_frame_id_, timezero);
-    } catch (const tf2::TransformException& e) {
+    } catch (const tf2::TransformException& ex) {
       RCLCPP_WARN(this->get_logger(),
                   "Transformation from '%s' to '%s' is not available. Should be provided using a shared parent "
                   "utm frame.",
@@ -494,7 +489,7 @@ void SimulationAdapter::initializeVehicleFrameTransform() {
     // step 2: simulation_fixed_frame_id -> simulation_vehicle_frame_id
     try {
       tf2_buffer_->lookupTransform(simulation_vehicle_frame_id_, simulation_fixed_frame_id_, timezero);
-    } catch (const tf2::TransformException& e) {
+    } catch (const tf2::TransformException& ex) {
       RCLCPP_WARN(this->get_logger(), "\tTransformation from '%s' to '%s' not available", simulation_fixed_frame_id_.c_str(),
                   simulation_vehicle_frame_id_.c_str());
       RCLCPP_WARN(this->get_logger(), "\tSkipped ...");
@@ -504,9 +499,9 @@ void SimulationAdapter::initializeVehicleFrameTransform() {
     // step 3: simulation_vehicle_frame_id -> vehicle_frame_id
     try {
       tf2_buffer_->lookupTransform(vehicle_frame_id_, simulation_vehicle_frame_id_, timezero);
-    } catch (const tf2::TransformException& e) {
-      RCLCPP_WARN(this->get_logger(), "\tTransformation from '%s' to '%s' is not available",
-                  simulation_vehicle_frame_id_.c_str(), vehicle_frame_id_.c_str());
+    } catch (const tf2::TransformException& ex) {
+      RCLCPP_WARN(this->get_logger(), "\tTransformation from '%s' to '%s' is not available:  %s",
+                  simulation_vehicle_frame_id_.c_str(), vehicle_frame_id_.c_str(), ex.what());
 
       // publish static transformation from simulation_vehicle_frame_id to vehicle_frame_id
       gm::TransformStamped ego_vehicle_to_vehicle_frame;
@@ -526,8 +521,8 @@ void SimulationAdapter::initializeVehicleFrameTransform() {
       ego_vehicle_to_vehicle_frame.transform.rotation.w = q.w();
 
       static_br_tf_->sendTransform(ego_vehicle_to_vehicle_frame);
-      RCLCPP_INFO(this->get_logger(), "\tTransformation from '%s' to '%s' was published",
-                  simulation_vehicle_frame_id_.c_str(), vehicle_frame_id_.c_str());
+      RCLCPP_INFO(this->get_logger(), "\tTransformation from '%s' to '%s' was published", simulation_vehicle_frame_id_.c_str(),
+                  vehicle_frame_id_.c_str());
     }
   }
 }
@@ -545,23 +540,27 @@ void SimulationAdapter::trajectoryCallback(const tp::Trajectory::ConstSharedPtr&
     std::lock_guard<std::mutex> lock(trajectory_planned_mutex_);
     trajectory_planned_ = std::move(transformed_trajectory);
   } catch (tf2::TransformException& ex) {
-    RCLCPP_WARN(this->get_logger(), "Trajectory could not be transformed from '%s' to '%s'",
-                msg->header.frame_id.c_str(), fixed_frame_id_.c_str());
+    RCLCPP_WARN(this->get_logger(), "Trajectory could not be transformed from '%s' to '%s'", msg->header.frame_id.c_str(),
+                fixed_frame_id_.c_str());
     return;
   }
 }
 
-
 }  // namespace simulation_adapter
 
-
-
-int main(int argc, char *argv[]) {
-
+/**
+ * @brief Initializes and spins the simulation adapter node.
+ *
+ * @param argc Number of command-line arguments.
+ * @param argv Command-line argument values.
+ * @return Process exit code.
+ */
+int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<simulation_adapter::SimulationAdapter>();
-  rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), node->num_threads_);
-  RCLCPP_INFO(node->get_logger(), "Spinning node '%s' with %s (%d threads)", node->get_fully_qualified_name(), "MultiThreadedExecutor", node->num_threads_);
+  rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), node->getNumThreads());
+  RCLCPP_INFO(node->get_logger(), "Spinning node '%s' with %s (%d threads)", node->get_fully_qualified_name(),
+              "MultiThreadedExecutor", node->getNumThreads());
   executor.add_node(node);
   executor.spin();
   rclcpp::shutdown();
