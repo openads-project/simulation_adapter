@@ -1,13 +1,14 @@
 # simulation_adapter
 
 <p align="center">
-  <a href="https://openads-project.github.io"><img src="https://img.shields.io/badge/OpenADS-f5ff01"/></a>
+  <a href="https://openads-project.github.io"><img src="https://img.shields.io/badge/OpenADS-45ccc6"/></a>
   <a href="https://www.ros.org"><img src="https://img.shields.io/badge/ROS 2-jazzy-22314e"/></a>
   <a href="https://github.com/openads-project/simulation_adapter/releases/latest"><img src="https://img.shields.io/github/v/release/openads-project/simulation_adapter"/></a>
   <a href="https://github.com/openads-project/simulation_adapter/blob/main/LICENSE"><img src="https://img.shields.io/github/license/openads-project/simulation_adapter"/></a>
   <br>
   <a href="https://github.com/openads-project/simulation_adapter/actions/workflows/docker-ros.yml"><img src="https://github.com/openads-project/simulation_adapter/actions/workflows/docker-ros.yml/badge.svg"/></a>
   <a href="https://github.com/openads-project/simulation_adapter/actions/workflows/compose-oci.yml"><img src="https://github.com/openads-project/simulation_adapter/actions/workflows/compose-oci.yml/badge.svg"/></a>
+  <a href="https://github.com/openads-project/simulation_adapter/actions/workflows/helm-oci.yml"><img src="https://github.com/openads-project/simulation_adapter/actions/workflows/helm-oci.yml/badge.svg"/></a>
   <a href="https://openads-project.github.io/simulation_adapter"><img src="https://github.com/openads-project/simulation_adapter/actions/workflows/docs.yml/badge.svg"/></a>
   <a href="https://github.com/openads-project/simulation_adapter/actions/workflows/consistency.yml"><img src="https://github.com/openads-project/simulation_adapter/actions/workflows/consistency.yml/badge.svg"/></a>
 </p>
