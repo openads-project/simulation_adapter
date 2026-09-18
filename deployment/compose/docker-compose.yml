@@ -1,7 +1,7 @@
 services:
 
   simulation-adapter:
-    image: ghcr.io/openads-project/simulation_adapter:v1.4.1
+    image: ghcr.io/openads-project/simulation_adapter:v1.4.2
     environment:
       # --- name ------
       NAMESPACE: /
@@ -21,8 +21,8 @@ services:
       # --- other -----
       LOG_LEVEL: ${LOG_LEVEL:-info}
       USE_SIM_TIME: ${USE_SIM_TIME:-true}
-      PARAMS: ${PARAMS:-/docker-ros/ws/install/simulation_adapter/share/simulation_adapter/config/params.yml}
-      LOAD_LANELET_MAP: ${LOAD_LANELET_MAP:-true}
+      PARAMS: /docker-ros/ws/install/simulation_adapter/share/simulation_adapter/config/params.yml
+      LOAD_LANELET_MAP: true
     command:
       - /bin/bash
       - -ic

@@ -1,7 +1,7 @@
 apiVersion: v2
 name: simulation-adapter
-version: 1.4.1
-appVersion: 1.4.1
+version: 1.4.2
+appVersion: 1.4.2
 description: Adapts OpenADSim data to vehicle-specific OpenADStack interfaces
 dependencies:
   - repository: oci://ghcr.io/openads-project/openads-helm

@@ -3,7 +3,7 @@
 <package format="3">
 
   <name>simulation_adapter</name>
-  <version>1.4.1</version>
+  <version>1.4.2</version>
   <description>Adapts OpenADSim data to vehicle-specific OpenADStack interfaces.</description>
 
   <maintainer email="christian.geller@rwth-aachen.de">Christian Geller</maintainer>
