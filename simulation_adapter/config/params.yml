@@ -8,7 +8,6 @@
     simulation_vehicle_frame_id: ego_vehicle  # Name of the vehicle frame id in simulation
     vehicle_frame_id: base_link               # Name of the vehicle frame id.
     publish_vehicle_frame_tf: true            # Publish the static TF from simulation_vehicle_frame_id to vehicle_frame_id
-    omit_planned_trajectory_covariance: true  # omit unavailable covariance in generated trajectory states
     publish_ego_imu: false                    # Publish ego IMU with linear acceleration only
     publish_ego_odometry: false               # Publish ego odometry
     publish_ego_vehicle_state: false          # Publish ego vehicle state

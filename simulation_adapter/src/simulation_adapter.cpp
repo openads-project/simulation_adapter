@@ -20,9 +20,6 @@ SimulationAdapter::SimulationAdapter() : Node("simulation_adapter") {
   this->declareAndLoadParameter("publish_ego_vehicle_state", publish_ego_vehicle_state_,
                                 "Whether to publish the ego vehicle state.");
   this->declareAndLoadParameter("publish_ego_imu", publish_ego_imu_, "Whether to publish the ego IMU.");
-  this->declareAndLoadParameter("omit_planned_trajectory_covariance", omit_planned_trajectory_covariance_,
-                                "Leave generated planned trajectory covariance empty when no estimate is available.", false,
-                                false, true);
 
   this->declareAndLoadParameter("simulation_vehicle_frame_id_to_vehicle_frame_id",
                                 simulation_vehicle_frame_id_to_vehicle_frame_id_,
@@ -339,7 +336,7 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
     // initialize state
     pm::ObjectState object_state;
     perception_msgs::object_access::initializeState(object_state, 1);
-    if (omit_planned_trajectory_covariance_) object_state.continuous_state_covariance.clear();
+    object_state.continuous_state_covariance.clear();
     object_state.reference_point = ego_data.state.reference_point;
 
     // update trajectory state
