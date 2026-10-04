@@ -335,8 +335,7 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
 
     // initialize state
     pm::ObjectState object_state;
-    perception_msgs::object_access::initializeState(object_state, 1);
-    object_state.continuous_state_covariance.clear();
+    perception_msgs::object_access::initializeState(object_state, 1, false);
     object_state.reference_point = ego_data.state.reference_point;
 
     // update trajectory state
