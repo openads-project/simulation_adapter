@@ -6,10 +6,6 @@ Adapts OpenADSim data to vehicle-specific OpenADStack interfaces.
 
 ### `simulation_adapter`
 
-Generated planned trajectory states have no covariance estimate. Their `continuous_state_covariance` arrays remain empty, meaning unavailable uncertainty rather than zero uncertainty. The current ego state retains its covariance. All trajectory points and other state fields are preserved.
-
-This requires the empty-covariance helpers and transforms in [perception_interfaces#28](https://github.com/ika-rwth-aachen/perception_interfaces/pull/28), pinned in `.repos` until released. For a live sample with 51 EGO trajectory states at 20 Hz, omission reduces serialized `EgoData` from 81,604 to 12,652 bytes (1.63 to 0.25 MB/s, 84.5% less ROS payload). WAN savings depend on transport compression.
-
 ```mermaid
 flowchart LR
     NODE("simulation_adapter")
