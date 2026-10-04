@@ -295,6 +295,11 @@ class SimulationAdapter : public rclcpp::Node {
   bool publish_ego_imu_ = false;
 
   /**
+   * @brief whether to omit covariance from generated planned trajectory states
+   */
+  bool omit_planned_trajectory_covariance_ = true;
+
+  /**
    * @brief Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id
    */
   double simulation_vehicle_frame_id_to_vehicle_frame_id_ = 0.0;

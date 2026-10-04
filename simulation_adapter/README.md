@@ -6,6 +6,10 @@ Adapts OpenADSim data to vehicle-specific OpenADStack interfaces.
 
 ### `simulation_adapter`
 
+Generated planned trajectory states have no covariance estimate. By default, their `continuous_state_covariance` arrays remain empty, meaning unavailable uncertainty rather than zero uncertainty. The current ego state retains its covariance. Set `omit_planned_trajectory_covariance: false` to retain the previous full placeholder matrices. All trajectory points and other state fields are preserved.
+
+This requires the empty-covariance helpers and transforms in [perception_interfaces#28](https://github.com/ika-rwth-aachen/perception_interfaces/pull/28), pinned in `.repos` until released. For a live sample with 51 EGO trajectory states at 20 Hz, omission reduces serialized `EgoData` from 81,604 to 12,652 bytes (1.63 to 0.25 MB/s, 84.5% less ROS payload). WAN savings depend on transport compression.
+
 ```mermaid
 flowchart LR
     NODE("simulation_adapter")
@@ -56,6 +60,7 @@ flowchart LR
 | `publish_ego_odometry` | `bool` | `false` | Whether to publish ego odometry. |
 | `publish_ego_vehicle_state` | `bool` | `false` | Whether to publish the ego vehicle state. |
 | `publish_ego_imu` | `bool` | `false` | Whether to publish the ego IMU. |
+| `omit_planned_trajectory_covariance` | `bool` | `true` | Leave generated planned trajectory covariance empty when no estimate is available. |
 | `simulation_vehicle_frame_id_to_vehicle_frame_id` | `float` | `0.0` | Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id. |
 | `maps.simulation_maps` | `string[]` | `[]` | List of supported simulation maps. |
 | `maps.lanelet_files` | `string[]` | `[]` | Lanelet files for all supported simulation maps |
