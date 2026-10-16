@@ -335,7 +335,7 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
 
     // initialize state
     pm::ObjectState object_state;
-    perception_msgs::object_access::initializeState(object_state, pm::EGO::MODEL_ID, false);
+    perception_msgs::object_access::initializeState(object_state, pm::EGO::MODEL_ID);
     object_state.reference_point = ego_data.state.reference_point;
 
     // update trajectory state
@@ -383,7 +383,7 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
 
   if (publish_ego_vehicle_state_) {
     pm::ObjectState ego_vehicle_state;
-    perception_msgs::object_access::initializeState(ego_vehicle_state, pm::EGO::MODEL_ID, false);
+    perception_msgs::object_access::initializeState(ego_vehicle_state, pm::EGO::MODEL_ID);
     ego_vehicle_state.header = ego_data.state.header;
     if (perception_msgs::object_access::hasSteeringAngleAck(ego_data.state.model_id)) {
       perception_msgs::object_access::setSteeringAngleAck(ego_vehicle_state,
