@@ -18,7 +18,7 @@ SimulationAdapter::SimulationAdapter() : Node("simulation_adapter") {
                                 "Whether to publish the static TF from simulation_vehicle_frame_id to vehicle_frame_id.");
   this->declareAndLoadParameter("publish_ego_odometry", publish_ego_odometry_, "Whether to publish ego odometry.");
   this->declareAndLoadParameter("publish_ego_vehicle_state", publish_ego_vehicle_state_,
-                                "Whether to publish the ego vehicle state.");
+                                "Whether to publish the ego vehicle state in fixed_frame_id.");
   this->declareAndLoadParameter("publish_ego_imu", publish_ego_imu_, "Whether to publish the ego IMU.");
 
   this->declareAndLoadParameter("simulation_vehicle_frame_id_to_vehicle_frame_id",
@@ -382,18 +382,7 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
   }
 
   if (publish_ego_vehicle_state_) {
-    pm::ObjectState ego_vehicle_state;
-    perception_msgs::object_access::initializeState(ego_vehicle_state, pm::EGO::MODEL_ID);
-    ego_vehicle_state.header = ego_data.state.header;
-    if (perception_msgs::object_access::hasSteeringAngleAck(ego_data.state.model_id)) {
-      perception_msgs::object_access::setSteeringAngleAck(ego_vehicle_state,
-                                                          perception_msgs::object_access::getSteeringAngleAck(ego_data.state));
-    }
-    if (perception_msgs::object_access::hasSteeringAngleRateAck(ego_data.state.model_id)) {
-      perception_msgs::object_access::setSteeringAngleRateAck(
-          ego_vehicle_state, perception_msgs::object_access::getSteeringAngleRateAck(ego_data.state));
-    }
-    pub_ego_vehicle_state_->publish(ego_vehicle_state);
+    pub_ego_vehicle_state_->publish(ego_data.state);
   }
 
   if (publish_ego_imu_) {
