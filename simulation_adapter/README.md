@@ -37,7 +37,7 @@ flowchart LR
 | --- | --- | --- |
 | `~/ego_data` | `perception_msgs/msg/EgoData` | Output topic for transformed ego data |
 | `~/ego_odometry` | `nav_msgs/msg/Odometry` | Output topic for ego odometry |
-| `~/ego_vehicle_state` | `perception_msgs/msg/ObjectState` | Output topic for ego vehicle state |
+| `~/ego_vehicle_state` | `perception_msgs/msg/ObjectState` | Output topic for the ego vehicle state (EGO model) in the fixed frame |
 | `~/ego_imu` | `sensor_msgs/msg/Imu` | Output topic for ego IMU data |
 | `~/object_list` | `perception_msgs/msg/ObjectList` | Output topic for transformed object lists |
 | `~/object_list_fixed` | `perception_msgs/msg/ObjectList` | Output topic for object lists in the fixed frame |
@@ -54,7 +54,7 @@ flowchart LR
 | `vehicle_frame_id` | `string` | `"base_link"` | Name of the vehicle frame id. |
 | `publish_vehicle_frame_tf` | `bool` | `true` | Whether to publish the static TF from simulation_vehicle_frame_id to vehicle_frame_id. |
 | `publish_ego_odometry` | `bool` | `false` | Whether to publish ego odometry. |
-| `publish_ego_vehicle_state` | `bool` | `false` | Whether to publish the ego vehicle state. |
+| `publish_ego_vehicle_state` | `bool` | `false` | Whether to publish the ego vehicle state in fixed_frame_id. |
 | `publish_ego_imu` | `bool` | `false` | Whether to publish the ego IMU. |
 | `simulation_vehicle_frame_id_to_vehicle_frame_id` | `float` | `0.0` | Longitudinal offset from simulation_vehicle_frame_id to vehicle_frame_id. |
 | `maps.simulation_maps` | `string[]` | `[]` | List of supported simulation maps. |
