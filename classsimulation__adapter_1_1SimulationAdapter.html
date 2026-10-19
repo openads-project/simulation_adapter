@@ -28,7 +28,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">simulation_adapter<span id="projectnumber">&#160;v1.4.2</span>
+   <div id="projectname">simulation_adapter<span id="projectnumber">&#160;v1.5.0</span>
    </div>
   </td>
  </tr>
@@ -318,7 +318,7 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">   18</span>                                <span class="stringliteral">&quot;Whether to publish the static TF from simulation_vehicle_frame_id to vehicle_frame_id.&quot;</span>);</div>
 <div class="line"><span class="lineno">   19</span>  this-&gt;<a class="code hl_function" href="#acff2a1d20d0718cc360e0bc67489f702">declareAndLoadParameter</a>(<span class="stringliteral">&quot;publish_ego_odometry&quot;</span>, <a class="code hl_variable" href="#af325494c833e467f2443933f6b752611">publish_ego_odometry_</a>, <span class="stringliteral">&quot;Whether to publish ego odometry.&quot;</span>);</div>
 <div class="line"><span class="lineno">   20</span>  this-&gt;<a class="code hl_function" href="#acff2a1d20d0718cc360e0bc67489f702">declareAndLoadParameter</a>(<span class="stringliteral">&quot;publish_ego_vehicle_state&quot;</span>, <a class="code hl_variable" href="#a44de1f244ad6a447ebb87a6c22797a26">publish_ego_vehicle_state_</a>,</div>
-<div class="line"><span class="lineno">   21</span>                                <span class="stringliteral">&quot;Whether to publish the ego vehicle state.&quot;</span>);</div>
+<div class="line"><span class="lineno">   21</span>                                <span class="stringliteral">&quot;Whether to publish the ego vehicle state in fixed_frame_id.&quot;</span>);</div>
 <div class="line"><span class="lineno">   22</span>  this-&gt;<a class="code hl_function" href="#acff2a1d20d0718cc360e0bc67489f702">declareAndLoadParameter</a>(<span class="stringliteral">&quot;publish_ego_imu&quot;</span>, <a class="code hl_variable" href="#ae468797e2ad3b625d742e93e36479114">publish_ego_imu_</a>, <span class="stringliteral">&quot;Whether to publish the ego IMU.&quot;</span>);</div>
 <div class="line"><span class="lineno">   23</span> </div>
 <div class="line"><span class="lineno">   24</span>  this-&gt;<a class="code hl_function" href="#acff2a1d20d0718cc360e0bc67489f702">declareAndLoadParameter</a>(<span class="stringliteral">&quot;simulation_vehicle_frame_id_to_vehicle_frame_id&quot;</span>,</div>
@@ -583,7 +583,7 @@ template&lt;typename T &gt; </div>
 <div class="line"><span class="lineno">  335</span> </div>
 <div class="line"><span class="lineno">  336</span>    <span class="comment">// initialize state</span></div>
 <div class="line"><span class="lineno">  337</span>    pm::ObjectState object_state;</div>
-<div class="line"><span class="lineno">  338</span>    perception_msgs::object_access::initializeState(object_state, 1);</div>
+<div class="line"><span class="lineno">  338</span>    perception_msgs::object_access::initializeState(object_state, pm::EGO::MODEL_ID);</div>
 <div class="line"><span class="lineno">  339</span>    object_state.reference_point = ego_data.state.reference_point;</div>
 <div class="line"><span class="lineno">  340</span> </div>
 <div class="line"><span class="lineno">  341</span>    <span class="comment">// update trajectory state</span></div>
@@ -630,30 +630,19 @@ template&lt;typename T &gt; </div>
 <div class="line"><span class="lineno">  382</span>  }</div>
 <div class="line"><span class="lineno">  383</span> </div>
 <div class="line"><span class="lineno">  384</span>  <span class="keywordflow">if</span> (<a class="code hl_variable" href="#a44de1f244ad6a447ebb87a6c22797a26">publish_ego_vehicle_state_</a>) {</div>
-<div class="line"><span class="lineno">  385</span>    pm::ObjectState ego_vehicle_state;</div>
-<div class="line"><span class="lineno">  386</span>    perception_msgs::object_access::initializeState(ego_vehicle_state, pm::EGO::MODEL_ID);</div>
-<div class="line"><span class="lineno">  387</span>    ego_vehicle_state.header = ego_data.state.header;</div>
-<div class="line"><span class="lineno">  388</span>    <span class="keywordflow">if</span> (perception_msgs::object_access::hasSteeringAngleAck(ego_data.state.model_id)) {</div>
-<div class="line"><span class="lineno">  389</span>      perception_msgs::object_access::setSteeringAngleAck(ego_vehicle_state,</div>
-<div class="line"><span class="lineno">  390</span>                                                          perception_msgs::object_access::getSteeringAngleAck(ego_data.state));</div>
-<div class="line"><span class="lineno">  391</span>    }</div>
-<div class="line"><span class="lineno">  392</span>    <span class="keywordflow">if</span> (perception_msgs::object_access::hasSteeringAngleRateAck(ego_data.state.model_id)) {</div>
-<div class="line"><span class="lineno">  393</span>      perception_msgs::object_access::setSteeringAngleRateAck(</div>
-<div class="line"><span class="lineno">  394</span>          ego_vehicle_state, perception_msgs::object_access::getSteeringAngleRateAck(ego_data.state));</div>
-<div class="line"><span class="lineno">  395</span>    }</div>
-<div class="line"><span class="lineno">  396</span>    <a class="code hl_variable" href="#ae0a6bfdb16cbfc6538b7922ca4ffc7b6">pub_ego_vehicle_state_</a>-&gt;publish(ego_vehicle_state);</div>
-<div class="line"><span class="lineno">  397</span>  }</div>
-<div class="line"><span class="lineno">  398</span> </div>
-<div class="line"><span class="lineno">  399</span>  <span class="keywordflow">if</span> (<a class="code hl_variable" href="#ae468797e2ad3b625d742e93e36479114">publish_ego_imu_</a>) {</div>
-<div class="line"><span class="lineno">  400</span>    sensor_msgs::msg::Imu ego_imu;</div>
-<div class="line"><span class="lineno">  401</span>    ego_imu.header.stamp = ego_data.state.header.stamp;</div>
-<div class="line"><span class="lineno">  402</span>    ego_imu.header.frame_id = <a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>;</div>
-<div class="line"><span class="lineno">  403</span>    ego_imu.orientation_covariance[0] = -1.0;</div>
-<div class="line"><span class="lineno">  404</span>    ego_imu.angular_velocity_covariance[0] = -1.0;</div>
-<div class="line"><span class="lineno">  405</span>    ego_imu.linear_acceleration = perception_msgs::object_access::getAcceleration(ego_data.state);</div>
-<div class="line"><span class="lineno">  406</span>    <a class="code hl_variable" href="#a18705292ea9740edf04a1bfe7aac2c08">pub_ego_imu_</a>-&gt;publish(ego_imu);</div>
-<div class="line"><span class="lineno">  407</span>  }</div>
-<div class="line"><span class="lineno">  408</span>}</div>
+<div class="line"><span class="lineno">  385</span>    <a class="code hl_variable" href="#ae0a6bfdb16cbfc6538b7922ca4ffc7b6">pub_ego_vehicle_state_</a>-&gt;publish(ego_data.state);</div>
+<div class="line"><span class="lineno">  386</span>  }</div>
+<div class="line"><span class="lineno">  387</span> </div>
+<div class="line"><span class="lineno">  388</span>  <span class="keywordflow">if</span> (<a class="code hl_variable" href="#ae468797e2ad3b625d742e93e36479114">publish_ego_imu_</a>) {</div>
+<div class="line"><span class="lineno">  389</span>    sensor_msgs::msg::Imu ego_imu;</div>
+<div class="line"><span class="lineno">  390</span>    ego_imu.header.stamp = ego_data.state.header.stamp;</div>
+<div class="line"><span class="lineno">  391</span>    ego_imu.header.frame_id = <a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>;</div>
+<div class="line"><span class="lineno">  392</span>    ego_imu.orientation_covariance[0] = -1.0;</div>
+<div class="line"><span class="lineno">  393</span>    ego_imu.angular_velocity_covariance[0] = -1.0;</div>
+<div class="line"><span class="lineno">  394</span>    ego_imu.linear_acceleration = perception_msgs::object_access::getAcceleration(ego_data.state);</div>
+<div class="line"><span class="lineno">  395</span>    <a class="code hl_variable" href="#a18705292ea9740edf04a1bfe7aac2c08">pub_ego_imu_</a>-&gt;publish(ego_imu);</div>
+<div class="line"><span class="lineno">  396</span>  }</div>
+<div class="line"><span class="lineno">  397</span>}</div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a01e6271ecb93b5b171036fe0038ec3c7"><div class="ttname"><a href="#a01e6271ecb93b5b171036fe0038ec3c7">simulation_adapter::SimulationAdapter::tf2_buffer_</a></div><div class="ttdeci">std::unique_ptr&lt; tf2_ros::Buffer &gt; tf2_buffer_</div><div class="ttdoc">tf2 buffer for transform lookups</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00221">simulation_adapter.hpp:221</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a18705292ea9740edf04a1bfe7aac2c08"><div class="ttname"><a href="#a18705292ea9740edf04a1bfe7aac2c08">simulation_adapter::SimulationAdapter::pub_ego_imu_</a></div><div class="ttdeci">rclcpp::Publisher&lt; sensor_msgs::msg::Imu &gt;::SharedPtr pub_ego_imu_</div><div class="ttdoc">Publisher for ego IMU containing linear acceleration only.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00201">simulation_adapter.hpp:201</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a2c6258c7bcceee26813dce39b0e34040"><div class="ttname"><a href="#a2c6258c7bcceee26813dce39b0e34040">simulation_adapter::SimulationAdapter::pub_ego_data_</a></div><div class="ttdeci">rclcpp::Publisher&lt; pm::EgoData &gt;::SharedPtr pub_ego_data_</div><div class="ttdoc">Publisher for ego data in vehicle/fixed frame.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00186">simulation_adapter.hpp:186</a></div></div>
@@ -719,90 +708,90 @@ template&lt;typename T &gt; </div>
 
 <p>Timer callback that initializes the static TF link between simulation and driving-stack frames. </p>
 
-<p class="definition">Definition at line <a class="el" href="simulation__adapter_8cpp_source.html#l00446">446</a> of file <a class="el" href="simulation__adapter_8cpp_source.html">simulation_adapter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  446</span>                                                        {</div>
-<div class="line"><span class="lineno">  447</span>  <span class="comment">/* set up a transformation link between fixed_frame_id and vehicle_frame_id</span></div>
-<div class="line"><span class="lineno">  448</span><span class="comment"></span> </div>
-<div class="line"><span class="lineno">  449</span><span class="comment">           /        utm_&lt;zone&gt;     \</span></div>
-<div class="line"><span class="lineno">  450</span><span class="comment">          /                         \</span></div>
-<div class="line"><span class="lineno">  451</span><span class="comment">         / static                    \ static (published by lanelet2_map_server)</span></div>
-<div class="line"><span class="lineno">  452</span><span class="comment">        /  (published by              \</span></div>
-<div class="line"><span class="lineno">  453</span><span class="comment">       /     rspecific simulation      \</span></div>
-<div class="line"><span class="lineno">  454</span><span class="comment">    simulation_fixed_frame_id         fixed_frame_id</span></div>
-<div class="line"><span class="lineno">  455</span><span class="comment">      |</span></div>
-<div class="line"><span class="lineno">  456</span><span class="comment">      dynamic (published by specific simulation)</span></div>
-<div class="line"><span class="lineno">  457</span><span class="comment">      |</span></div>
-<div class="line"><span class="lineno">  458</span><span class="comment">      v</span></div>
-<div class="line"><span class="lineno">  459</span><span class="comment">    simulation_vehicle_frame_id ---static---&gt; vehicle_frame_id</span></div>
-<div class="line"><span class="lineno">  460</span><span class="comment">  */</span></div>
-<div class="line"><span class="lineno">  461</span> </div>
-<div class="line"><span class="lineno">  462</span>  <span class="keyword">auto</span> timezero = tf2::TimePointZero;</div>
-<div class="line"><span class="lineno">  463</span> </div>
-<div class="line"><span class="lineno">  464</span>  <span class="keywordflow">try</span> {</div>
-<div class="line"><span class="lineno">  465</span>    <span class="comment">// check if desired transformation is already defined</span></div>
-<div class="line"><span class="lineno">  466</span>    <a class="code hl_variable" href="#a01e6271ecb93b5b171036fe0038ec3c7">tf2_buffer_</a>-&gt;lookupTransform(<a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>, <a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>, timezero);</div>
-<div class="line"><span class="lineno">  467</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="#a2fb1ce140f56be00f36e43d3dfb2a942">tf_init_timer_</a> &amp;&amp; !<a class="code hl_variable" href="#a2fb1ce140f56be00f36e43d3dfb2a942">tf_init_timer_</a>-&gt;is_canceled()) {</div>
-<div class="line"><span class="lineno">  468</span>      <a class="code hl_variable" href="#a2fb1ce140f56be00f36e43d3dfb2a942">tf_init_timer_</a>-&gt;cancel();</div>
-<div class="line"><span class="lineno">  469</span>      RCLCPP_INFO(this-&gt;get_logger(), <span class="stringliteral">&quot;Static transformation from &#39;%s&#39; to &#39;%s&#39; is now available&quot;</span>, <a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>.c_str(),</div>
-<div class="line"><span class="lineno">  470</span>                  <a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>.c_str());</div>
-<div class="line"><span class="lineno">  471</span>    }</div>
-<div class="line"><span class="lineno">  472</span>    <span class="keywordflow">return</span>;</div>
-<div class="line"><span class="lineno">  473</span>  } <span class="keywordflow">catch</span> (<span class="keyword">const</span> tf2::TransformException&amp;) {</div>
-<div class="line"><span class="lineno">  474</span>    RCLCPP_DEBUG(this-&gt;get_logger(), <span class="stringliteral">&quot;Transformation from &#39;%s&#39; to &#39;%s&#39; not yet available, retrying ...&quot;</span>, <a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>.c_str(),</div>
-<div class="line"><span class="lineno">  475</span>                 <a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>.c_str());</div>
-<div class="line"><span class="lineno">  476</span> </div>
-<div class="line"><span class="lineno">  477</span>    <span class="comment">// step 1: simulation_fixed_frame_id -&gt; fixed_frame_id</span></div>
-<div class="line"><span class="lineno">  478</span>    <span class="keywordflow">try</span> {</div>
-<div class="line"><span class="lineno">  479</span>      <a class="code hl_variable" href="#a01e6271ecb93b5b171036fe0038ec3c7">tf2_buffer_</a>-&gt;lookupTransform(<a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>, <a class="code hl_variable" href="#a3512399cc9d244781f31ad2afee8d8d4">simulation_fixed_frame_id_</a>, timezero);</div>
-<div class="line"><span class="lineno">  480</span>    } <span class="keywordflow">catch</span> (<span class="keyword">const</span> tf2::TransformException&amp; ex) {</div>
-<div class="line"><span class="lineno">  481</span>      RCLCPP_WARN(this-&gt;get_logger(),</div>
-<div class="line"><span class="lineno">  482</span>                  <span class="stringliteral">&quot;Transformation from &#39;%s&#39; to &#39;%s&#39; is not available. Should be provided using a shared parent &quot;</span></div>
-<div class="line"><span class="lineno">  483</span>                  <span class="stringliteral">&quot;utm frame.&quot;</span>,</div>
-<div class="line"><span class="lineno">  484</span>                  <a class="code hl_variable" href="#a3512399cc9d244781f31ad2afee8d8d4">simulation_fixed_frame_id_</a>.c_str(), <a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>.c_str());</div>
-<div class="line"><span class="lineno">  485</span>      RCLCPP_WARN(this-&gt;get_logger(), <span class="stringliteral">&quot;\tSkipped ...&quot;</span>);</div>
-<div class="line"><span class="lineno">  486</span>      <span class="keywordflow">return</span>;</div>
-<div class="line"><span class="lineno">  487</span>    }</div>
-<div class="line"><span class="lineno">  488</span> </div>
-<div class="line"><span class="lineno">  489</span>    <span class="comment">// step 2: simulation_fixed_frame_id -&gt; simulation_vehicle_frame_id</span></div>
-<div class="line"><span class="lineno">  490</span>    <span class="keywordflow">try</span> {</div>
-<div class="line"><span class="lineno">  491</span>      <a class="code hl_variable" href="#a01e6271ecb93b5b171036fe0038ec3c7">tf2_buffer_</a>-&gt;lookupTransform(<a class="code hl_variable" href="#a58097e114fb6390aa0981900e0cb9ddc">simulation_vehicle_frame_id_</a>, <a class="code hl_variable" href="#a3512399cc9d244781f31ad2afee8d8d4">simulation_fixed_frame_id_</a>, timezero);</div>
-<div class="line"><span class="lineno">  492</span>    } <span class="keywordflow">catch</span> (<span class="keyword">const</span> tf2::TransformException&amp; ex) {</div>
-<div class="line"><span class="lineno">  493</span>      RCLCPP_WARN(this-&gt;get_logger(), <span class="stringliteral">&quot;\tTransformation from &#39;%s&#39; to &#39;%s&#39; not available&quot;</span>, <a class="code hl_variable" href="#a3512399cc9d244781f31ad2afee8d8d4">simulation_fixed_frame_id_</a>.c_str(),</div>
-<div class="line"><span class="lineno">  494</span>                  <a class="code hl_variable" href="#a58097e114fb6390aa0981900e0cb9ddc">simulation_vehicle_frame_id_</a>.c_str());</div>
-<div class="line"><span class="lineno">  495</span>      RCLCPP_WARN(this-&gt;get_logger(), <span class="stringliteral">&quot;\tSkipped ...&quot;</span>);</div>
-<div class="line"><span class="lineno">  496</span>      <span class="keywordflow">return</span>;</div>
-<div class="line"><span class="lineno">  497</span>    }</div>
-<div class="line"><span class="lineno">  498</span> </div>
-<div class="line"><span class="lineno">  499</span>    <span class="comment">// step 3: simulation_vehicle_frame_id -&gt; vehicle_frame_id</span></div>
-<div class="line"><span class="lineno">  500</span>    <span class="keywordflow">try</span> {</div>
-<div class="line"><span class="lineno">  501</span>      <a class="code hl_variable" href="#a01e6271ecb93b5b171036fe0038ec3c7">tf2_buffer_</a>-&gt;lookupTransform(<a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>, <a class="code hl_variable" href="#a58097e114fb6390aa0981900e0cb9ddc">simulation_vehicle_frame_id_</a>, timezero);</div>
-<div class="line"><span class="lineno">  502</span>    } <span class="keywordflow">catch</span> (<span class="keyword">const</span> tf2::TransformException&amp; ex) {</div>
-<div class="line"><span class="lineno">  503</span>      RCLCPP_WARN(this-&gt;get_logger(), <span class="stringliteral">&quot;\tTransformation from &#39;%s&#39; to &#39;%s&#39; is not available:  %s&quot;</span>,</div>
-<div class="line"><span class="lineno">  504</span>                  <a class="code hl_variable" href="#a58097e114fb6390aa0981900e0cb9ddc">simulation_vehicle_frame_id_</a>.c_str(), <a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>.c_str(), ex.what());</div>
-<div class="line"><span class="lineno">  505</span> </div>
-<div class="line"><span class="lineno">  506</span>      <span class="comment">// publish static transformation from simulation_vehicle_frame_id to vehicle_frame_id</span></div>
-<div class="line"><span class="lineno">  507</span>      gm::TransformStamped ego_vehicle_to_vehicle_frame;</div>
-<div class="line"><span class="lineno">  508</span>      ego_vehicle_to_vehicle_frame.header.stamp = this-&gt;get_clock()-&gt;now();</div>
-<div class="line"><span class="lineno">  509</span>      ego_vehicle_to_vehicle_frame.header.frame_id = <a class="code hl_variable" href="#a58097e114fb6390aa0981900e0cb9ddc">simulation_vehicle_frame_id_</a>;</div>
-<div class="line"><span class="lineno">  510</span>      ego_vehicle_to_vehicle_frame.child_frame_id = <a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>;</div>
+<p class="definition">Definition at line <a class="el" href="simulation__adapter_8cpp_source.html#l00435">435</a> of file <a class="el" href="simulation__adapter_8cpp_source.html">simulation_adapter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  435</span>                                                        {</div>
+<div class="line"><span class="lineno">  436</span>  <span class="comment">/* set up a transformation link between fixed_frame_id and vehicle_frame_id</span></div>
+<div class="line"><span class="lineno">  437</span><span class="comment"></span> </div>
+<div class="line"><span class="lineno">  438</span><span class="comment">           /        utm_&lt;zone&gt;     \</span></div>
+<div class="line"><span class="lineno">  439</span><span class="comment">          /                         \</span></div>
+<div class="line"><span class="lineno">  440</span><span class="comment">         / static                    \ static (published by lanelet2_map_server)</span></div>
+<div class="line"><span class="lineno">  441</span><span class="comment">        /  (published by              \</span></div>
+<div class="line"><span class="lineno">  442</span><span class="comment">       /     rspecific simulation      \</span></div>
+<div class="line"><span class="lineno">  443</span><span class="comment">    simulation_fixed_frame_id         fixed_frame_id</span></div>
+<div class="line"><span class="lineno">  444</span><span class="comment">      |</span></div>
+<div class="line"><span class="lineno">  445</span><span class="comment">      dynamic (published by specific simulation)</span></div>
+<div class="line"><span class="lineno">  446</span><span class="comment">      |</span></div>
+<div class="line"><span class="lineno">  447</span><span class="comment">      v</span></div>
+<div class="line"><span class="lineno">  448</span><span class="comment">    simulation_vehicle_frame_id ---static---&gt; vehicle_frame_id</span></div>
+<div class="line"><span class="lineno">  449</span><span class="comment">  */</span></div>
+<div class="line"><span class="lineno">  450</span> </div>
+<div class="line"><span class="lineno">  451</span>  <span class="keyword">auto</span> timezero = tf2::TimePointZero;</div>
+<div class="line"><span class="lineno">  452</span> </div>
+<div class="line"><span class="lineno">  453</span>  <span class="keywordflow">try</span> {</div>
+<div class="line"><span class="lineno">  454</span>    <span class="comment">// check if desired transformation is already defined</span></div>
+<div class="line"><span class="lineno">  455</span>    <a class="code hl_variable" href="#a01e6271ecb93b5b171036fe0038ec3c7">tf2_buffer_</a>-&gt;lookupTransform(<a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>, <a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>, timezero);</div>
+<div class="line"><span class="lineno">  456</span>    <span class="keywordflow">if</span> (<a class="code hl_variable" href="#a2fb1ce140f56be00f36e43d3dfb2a942">tf_init_timer_</a> &amp;&amp; !<a class="code hl_variable" href="#a2fb1ce140f56be00f36e43d3dfb2a942">tf_init_timer_</a>-&gt;is_canceled()) {</div>
+<div class="line"><span class="lineno">  457</span>      <a class="code hl_variable" href="#a2fb1ce140f56be00f36e43d3dfb2a942">tf_init_timer_</a>-&gt;cancel();</div>
+<div class="line"><span class="lineno">  458</span>      RCLCPP_INFO(this-&gt;get_logger(), <span class="stringliteral">&quot;Static transformation from &#39;%s&#39; to &#39;%s&#39; is now available&quot;</span>, <a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>.c_str(),</div>
+<div class="line"><span class="lineno">  459</span>                  <a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>.c_str());</div>
+<div class="line"><span class="lineno">  460</span>    }</div>
+<div class="line"><span class="lineno">  461</span>    <span class="keywordflow">return</span>;</div>
+<div class="line"><span class="lineno">  462</span>  } <span class="keywordflow">catch</span> (<span class="keyword">const</span> tf2::TransformException&amp;) {</div>
+<div class="line"><span class="lineno">  463</span>    RCLCPP_DEBUG(this-&gt;get_logger(), <span class="stringliteral">&quot;Transformation from &#39;%s&#39; to &#39;%s&#39; not yet available, retrying ...&quot;</span>, <a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>.c_str(),</div>
+<div class="line"><span class="lineno">  464</span>                 <a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>.c_str());</div>
+<div class="line"><span class="lineno">  465</span> </div>
+<div class="line"><span class="lineno">  466</span>    <span class="comment">// step 1: simulation_fixed_frame_id -&gt; fixed_frame_id</span></div>
+<div class="line"><span class="lineno">  467</span>    <span class="keywordflow">try</span> {</div>
+<div class="line"><span class="lineno">  468</span>      <a class="code hl_variable" href="#a01e6271ecb93b5b171036fe0038ec3c7">tf2_buffer_</a>-&gt;lookupTransform(<a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>, <a class="code hl_variable" href="#a3512399cc9d244781f31ad2afee8d8d4">simulation_fixed_frame_id_</a>, timezero);</div>
+<div class="line"><span class="lineno">  469</span>    } <span class="keywordflow">catch</span> (<span class="keyword">const</span> tf2::TransformException&amp; ex) {</div>
+<div class="line"><span class="lineno">  470</span>      RCLCPP_WARN(this-&gt;get_logger(),</div>
+<div class="line"><span class="lineno">  471</span>                  <span class="stringliteral">&quot;Transformation from &#39;%s&#39; to &#39;%s&#39; is not available. Should be provided using a shared parent &quot;</span></div>
+<div class="line"><span class="lineno">  472</span>                  <span class="stringliteral">&quot;utm frame.&quot;</span>,</div>
+<div class="line"><span class="lineno">  473</span>                  <a class="code hl_variable" href="#a3512399cc9d244781f31ad2afee8d8d4">simulation_fixed_frame_id_</a>.c_str(), <a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>.c_str());</div>
+<div class="line"><span class="lineno">  474</span>      RCLCPP_WARN(this-&gt;get_logger(), <span class="stringliteral">&quot;\tSkipped ...&quot;</span>);</div>
+<div class="line"><span class="lineno">  475</span>      <span class="keywordflow">return</span>;</div>
+<div class="line"><span class="lineno">  476</span>    }</div>
+<div class="line"><span class="lineno">  477</span> </div>
+<div class="line"><span class="lineno">  478</span>    <span class="comment">// step 2: simulation_fixed_frame_id -&gt; simulation_vehicle_frame_id</span></div>
+<div class="line"><span class="lineno">  479</span>    <span class="keywordflow">try</span> {</div>
+<div class="line"><span class="lineno">  480</span>      <a class="code hl_variable" href="#a01e6271ecb93b5b171036fe0038ec3c7">tf2_buffer_</a>-&gt;lookupTransform(<a class="code hl_variable" href="#a58097e114fb6390aa0981900e0cb9ddc">simulation_vehicle_frame_id_</a>, <a class="code hl_variable" href="#a3512399cc9d244781f31ad2afee8d8d4">simulation_fixed_frame_id_</a>, timezero);</div>
+<div class="line"><span class="lineno">  481</span>    } <span class="keywordflow">catch</span> (<span class="keyword">const</span> tf2::TransformException&amp; ex) {</div>
+<div class="line"><span class="lineno">  482</span>      RCLCPP_WARN(this-&gt;get_logger(), <span class="stringliteral">&quot;\tTransformation from &#39;%s&#39; to &#39;%s&#39; not available&quot;</span>, <a class="code hl_variable" href="#a3512399cc9d244781f31ad2afee8d8d4">simulation_fixed_frame_id_</a>.c_str(),</div>
+<div class="line"><span class="lineno">  483</span>                  <a class="code hl_variable" href="#a58097e114fb6390aa0981900e0cb9ddc">simulation_vehicle_frame_id_</a>.c_str());</div>
+<div class="line"><span class="lineno">  484</span>      RCLCPP_WARN(this-&gt;get_logger(), <span class="stringliteral">&quot;\tSkipped ...&quot;</span>);</div>
+<div class="line"><span class="lineno">  485</span>      <span class="keywordflow">return</span>;</div>
+<div class="line"><span class="lineno">  486</span>    }</div>
+<div class="line"><span class="lineno">  487</span> </div>
+<div class="line"><span class="lineno">  488</span>    <span class="comment">// step 3: simulation_vehicle_frame_id -&gt; vehicle_frame_id</span></div>
+<div class="line"><span class="lineno">  489</span>    <span class="keywordflow">try</span> {</div>
+<div class="line"><span class="lineno">  490</span>      <a class="code hl_variable" href="#a01e6271ecb93b5b171036fe0038ec3c7">tf2_buffer_</a>-&gt;lookupTransform(<a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>, <a class="code hl_variable" href="#a58097e114fb6390aa0981900e0cb9ddc">simulation_vehicle_frame_id_</a>, timezero);</div>
+<div class="line"><span class="lineno">  491</span>    } <span class="keywordflow">catch</span> (<span class="keyword">const</span> tf2::TransformException&amp; ex) {</div>
+<div class="line"><span class="lineno">  492</span>      RCLCPP_WARN(this-&gt;get_logger(), <span class="stringliteral">&quot;\tTransformation from &#39;%s&#39; to &#39;%s&#39; is not available:  %s&quot;</span>,</div>
+<div class="line"><span class="lineno">  493</span>                  <a class="code hl_variable" href="#a58097e114fb6390aa0981900e0cb9ddc">simulation_vehicle_frame_id_</a>.c_str(), <a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>.c_str(), ex.what());</div>
+<div class="line"><span class="lineno">  494</span> </div>
+<div class="line"><span class="lineno">  495</span>      <span class="comment">// publish static transformation from simulation_vehicle_frame_id to vehicle_frame_id</span></div>
+<div class="line"><span class="lineno">  496</span>      gm::TransformStamped ego_vehicle_to_vehicle_frame;</div>
+<div class="line"><span class="lineno">  497</span>      ego_vehicle_to_vehicle_frame.header.stamp = this-&gt;get_clock()-&gt;now();</div>
+<div class="line"><span class="lineno">  498</span>      ego_vehicle_to_vehicle_frame.header.frame_id = <a class="code hl_variable" href="#a58097e114fb6390aa0981900e0cb9ddc">simulation_vehicle_frame_id_</a>;</div>
+<div class="line"><span class="lineno">  499</span>      ego_vehicle_to_vehicle_frame.child_frame_id = <a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>;</div>
+<div class="line"><span class="lineno">  500</span> </div>
+<div class="line"><span class="lineno">  501</span>      ego_vehicle_to_vehicle_frame.transform.translation.x = <a class="code hl_variable" href="#a9bbed0bdaa5b6d75a41c51e76387b135">simulation_vehicle_frame_id_to_vehicle_frame_id_</a>;</div>
+<div class="line"><span class="lineno">  502</span>      ego_vehicle_to_vehicle_frame.transform.translation.y = 0.0;</div>
+<div class="line"><span class="lineno">  503</span>      ego_vehicle_to_vehicle_frame.transform.translation.z = 0.0;</div>
+<div class="line"><span class="lineno">  504</span> </div>
+<div class="line"><span class="lineno">  505</span>      tf2::Quaternion q;</div>
+<div class="line"><span class="lineno">  506</span>      q.setRPY(0, 0, 0);</div>
+<div class="line"><span class="lineno">  507</span>      ego_vehicle_to_vehicle_frame.transform.rotation.x = q.x();</div>
+<div class="line"><span class="lineno">  508</span>      ego_vehicle_to_vehicle_frame.transform.rotation.y = q.y();</div>
+<div class="line"><span class="lineno">  509</span>      ego_vehicle_to_vehicle_frame.transform.rotation.z = q.z();</div>
+<div class="line"><span class="lineno">  510</span>      ego_vehicle_to_vehicle_frame.transform.rotation.w = q.w();</div>
 <div class="line"><span class="lineno">  511</span> </div>
-<div class="line"><span class="lineno">  512</span>      ego_vehicle_to_vehicle_frame.transform.translation.x = <a class="code hl_variable" href="#a9bbed0bdaa5b6d75a41c51e76387b135">simulation_vehicle_frame_id_to_vehicle_frame_id_</a>;</div>
-<div class="line"><span class="lineno">  513</span>      ego_vehicle_to_vehicle_frame.transform.translation.y = 0.0;</div>
-<div class="line"><span class="lineno">  514</span>      ego_vehicle_to_vehicle_frame.transform.translation.z = 0.0;</div>
-<div class="line"><span class="lineno">  515</span> </div>
-<div class="line"><span class="lineno">  516</span>      tf2::Quaternion q;</div>
-<div class="line"><span class="lineno">  517</span>      q.setRPY(0, 0, 0);</div>
-<div class="line"><span class="lineno">  518</span>      ego_vehicle_to_vehicle_frame.transform.rotation.x = q.x();</div>
-<div class="line"><span class="lineno">  519</span>      ego_vehicle_to_vehicle_frame.transform.rotation.y = q.y();</div>
-<div class="line"><span class="lineno">  520</span>      ego_vehicle_to_vehicle_frame.transform.rotation.z = q.z();</div>
-<div class="line"><span class="lineno">  521</span>      ego_vehicle_to_vehicle_frame.transform.rotation.w = q.w();</div>
-<div class="line"><span class="lineno">  522</span> </div>
-<div class="line"><span class="lineno">  523</span>      <a class="code hl_variable" href="#a27b947761a5e681027b2574e4a6ebf98">static_br_tf_</a>-&gt;sendTransform(ego_vehicle_to_vehicle_frame);</div>
-<div class="line"><span class="lineno">  524</span>      RCLCPP_INFO(this-&gt;get_logger(), <span class="stringliteral">&quot;\tTransformation from &#39;%s&#39; to &#39;%s&#39; was published&quot;</span>, <a class="code hl_variable" href="#a58097e114fb6390aa0981900e0cb9ddc">simulation_vehicle_frame_id_</a>.c_str(),</div>
-<div class="line"><span class="lineno">  525</span>                  <a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>.c_str());</div>
-<div class="line"><span class="lineno">  526</span>    }</div>
-<div class="line"><span class="lineno">  527</span>  }</div>
-<div class="line"><span class="lineno">  528</span>}</div>
+<div class="line"><span class="lineno">  512</span>      <a class="code hl_variable" href="#a27b947761a5e681027b2574e4a6ebf98">static_br_tf_</a>-&gt;sendTransform(ego_vehicle_to_vehicle_frame);</div>
+<div class="line"><span class="lineno">  513</span>      RCLCPP_INFO(this-&gt;get_logger(), <span class="stringliteral">&quot;\tTransformation from &#39;%s&#39; to &#39;%s&#39; was published&quot;</span>, <a class="code hl_variable" href="#a58097e114fb6390aa0981900e0cb9ddc">simulation_vehicle_frame_id_</a>.c_str(),</div>
+<div class="line"><span class="lineno">  514</span>                  <a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>.c_str());</div>
+<div class="line"><span class="lineno">  515</span>    }</div>
+<div class="line"><span class="lineno">  516</span>  }</div>
+<div class="line"><span class="lineno">  517</span>}</div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a27b947761a5e681027b2574e4a6ebf98"><div class="ttname"><a href="#a27b947761a5e681027b2574e4a6ebf98">simulation_adapter::SimulationAdapter::static_br_tf_</a></div><div class="ttdeci">std::unique_ptr&lt; tf2_ros::StaticTransformBroadcaster &gt; static_br_tf_</div><div class="ttdoc">Static transform broadcaster for publishing the vehicle frame link.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00231">simulation_adapter.hpp:231</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a2fb1ce140f56be00f36e43d3dfb2a942"><div class="ttname"><a href="#a2fb1ce140f56be00f36e43d3dfb2a942">simulation_adapter::SimulationAdapter::tf_init_timer_</a></div><div class="ttdeci">rclcpp::TimerBase::SharedPtr tf_init_timer_</div><div class="ttdoc">Timer for repeatedly attempting to initialize the vehicle frame transform.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00216">simulation_adapter.hpp:216</a></div></div>
 </div><!-- fragment -->
@@ -918,42 +907,42 @@ template&lt;typename T &gt; </div>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="simulation__adapter_8cpp_source.html#l00410">410</a> of file <a class="el" href="simulation__adapter_8cpp_source.html">simulation_adapter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  410</span>                                                                                {</div>
-<div class="line"><span class="lineno">  411</span>  <span class="keyword">auto</span> timeout = rclcpp::Duration::from_seconds(0.1);</div>
-<div class="line"><span class="lineno">  412</span> </div>
-<div class="line"><span class="lineno">  413</span>  <span class="comment">// Option A: transform object_list to fixed_frame_id</span></div>
-<div class="line"><span class="lineno">  414</span>  pm::ObjectList msg_object_list_fixed;</div>
-<div class="line"><span class="lineno">  415</span> </div>
-<div class="line"><span class="lineno">  416</span>  gm::TransformStamped to_map_tf;</div>
-<div class="line"><span class="lineno">  417</span>  <span class="keywordflow">try</span> {</div>
-<div class="line"><span class="lineno">  418</span>    to_map_tf = <a class="code hl_variable" href="#a01e6271ecb93b5b171036fe0038ec3c7">tf2_buffer_</a>-&gt;lookupTransform(<a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>, msg-&gt;header.frame_id, msg-&gt;header.stamp, timeout);</div>
-<div class="line"><span class="lineno">  419</span>  } <span class="keywordflow">catch</span> (tf2::TransformException&amp; ex) {</div>
-<div class="line"><span class="lineno">  420</span>    RCLCPP_WARN(this-&gt;get_logger(), <span class="stringliteral">&quot;Transformation from &#39;%s&#39; to &#39;%s&#39; is not available.&quot;</span>, msg-&gt;header.frame_id.c_str(),</div>
-<div class="line"><span class="lineno">  421</span>                <a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>.c_str());</div>
-<div class="line"><span class="lineno">  422</span>    <span class="keywordflow">return</span>;</div>
-<div class="line"><span class="lineno">  423</span>  }</div>
-<div class="line"><span class="lineno">  424</span>  tf2::doTransform(*msg, msg_object_list_fixed, to_map_tf);</div>
-<div class="line"><span class="lineno">  425</span> </div>
-<div class="line"><span class="lineno">  426</span>  <span class="comment">// publish object list in fixed_frame_id</span></div>
-<div class="line"><span class="lineno">  427</span>  <a class="code hl_variable" href="#a8fec53b09992fe02883dbff920f7a783">pub_object_list_fixed_</a>-&gt;publish(msg_object_list_fixed);</div>
-<div class="line"><span class="lineno">  428</span> </div>
-<div class="line"><span class="lineno">  429</span>  <span class="comment">// Option B: transform object list to vehicle_frame_id_</span></div>
-<div class="line"><span class="lineno">  430</span>  pm::ObjectList msg_object_list;</div>
-<div class="line"><span class="lineno">  431</span> </div>
-<div class="line"><span class="lineno">  432</span>  gm::TransformStamped to_vehicle_frame_tf;</div>
-<div class="line"><span class="lineno">  433</span>  <span class="keywordflow">try</span> {</div>
-<div class="line"><span class="lineno">  434</span>    to_vehicle_frame_tf = <a class="code hl_variable" href="#a01e6271ecb93b5b171036fe0038ec3c7">tf2_buffer_</a>-&gt;lookupTransform(<a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>, msg-&gt;header.frame_id, msg-&gt;header.stamp, timeout);</div>
-<div class="line"><span class="lineno">  435</span>  } <span class="keywordflow">catch</span> (tf2::TransformException&amp; ex) {</div>
-<div class="line"><span class="lineno">  436</span>    RCLCPP_WARN(this-&gt;get_logger(), <span class="stringliteral">&quot;Skipping object list transform from &#39;%s&#39; to &#39;%s&#39;: %s&quot;</span>, msg-&gt;header.frame_id.c_str(),</div>
-<div class="line"><span class="lineno">  437</span>                <a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>.c_str(), ex.what());</div>
-<div class="line"><span class="lineno">  438</span>    <span class="keywordflow">return</span>;</div>
-<div class="line"><span class="lineno">  439</span>  }</div>
-<div class="line"><span class="lineno">  440</span>  tf2::doTransform(*msg, msg_object_list, to_vehicle_frame_tf);</div>
-<div class="line"><span class="lineno">  441</span> </div>
-<div class="line"><span class="lineno">  442</span>  <span class="comment">// publish object_list in vehicle_frame_id</span></div>
-<div class="line"><span class="lineno">  443</span>  <a class="code hl_variable" href="#a99943a5a867ca830d5fde9057a14df51">pub_object_list_</a>-&gt;publish(msg_object_list);</div>
-<div class="line"><span class="lineno">  444</span>}</div>
+<p class="definition">Definition at line <a class="el" href="simulation__adapter_8cpp_source.html#l00399">399</a> of file <a class="el" href="simulation__adapter_8cpp_source.html">simulation_adapter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  399</span>                                                                                {</div>
+<div class="line"><span class="lineno">  400</span>  <span class="keyword">auto</span> timeout = rclcpp::Duration::from_seconds(0.1);</div>
+<div class="line"><span class="lineno">  401</span> </div>
+<div class="line"><span class="lineno">  402</span>  <span class="comment">// Option A: transform object_list to fixed_frame_id</span></div>
+<div class="line"><span class="lineno">  403</span>  pm::ObjectList msg_object_list_fixed;</div>
+<div class="line"><span class="lineno">  404</span> </div>
+<div class="line"><span class="lineno">  405</span>  gm::TransformStamped to_map_tf;</div>
+<div class="line"><span class="lineno">  406</span>  <span class="keywordflow">try</span> {</div>
+<div class="line"><span class="lineno">  407</span>    to_map_tf = <a class="code hl_variable" href="#a01e6271ecb93b5b171036fe0038ec3c7">tf2_buffer_</a>-&gt;lookupTransform(<a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>, msg-&gt;header.frame_id, msg-&gt;header.stamp, timeout);</div>
+<div class="line"><span class="lineno">  408</span>  } <span class="keywordflow">catch</span> (tf2::TransformException&amp; ex) {</div>
+<div class="line"><span class="lineno">  409</span>    RCLCPP_WARN(this-&gt;get_logger(), <span class="stringliteral">&quot;Transformation from &#39;%s&#39; to &#39;%s&#39; is not available.&quot;</span>, msg-&gt;header.frame_id.c_str(),</div>
+<div class="line"><span class="lineno">  410</span>                <a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>.c_str());</div>
+<div class="line"><span class="lineno">  411</span>    <span class="keywordflow">return</span>;</div>
+<div class="line"><span class="lineno">  412</span>  }</div>
+<div class="line"><span class="lineno">  413</span>  tf2::doTransform(*msg, msg_object_list_fixed, to_map_tf);</div>
+<div class="line"><span class="lineno">  414</span> </div>
+<div class="line"><span class="lineno">  415</span>  <span class="comment">// publish object list in fixed_frame_id</span></div>
+<div class="line"><span class="lineno">  416</span>  <a class="code hl_variable" href="#a8fec53b09992fe02883dbff920f7a783">pub_object_list_fixed_</a>-&gt;publish(msg_object_list_fixed);</div>
+<div class="line"><span class="lineno">  417</span> </div>
+<div class="line"><span class="lineno">  418</span>  <span class="comment">// Option B: transform object list to vehicle_frame_id_</span></div>
+<div class="line"><span class="lineno">  419</span>  pm::ObjectList msg_object_list;</div>
+<div class="line"><span class="lineno">  420</span> </div>
+<div class="line"><span class="lineno">  421</span>  gm::TransformStamped to_vehicle_frame_tf;</div>
+<div class="line"><span class="lineno">  422</span>  <span class="keywordflow">try</span> {</div>
+<div class="line"><span class="lineno">  423</span>    to_vehicle_frame_tf = <a class="code hl_variable" href="#a01e6271ecb93b5b171036fe0038ec3c7">tf2_buffer_</a>-&gt;lookupTransform(<a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>, msg-&gt;header.frame_id, msg-&gt;header.stamp, timeout);</div>
+<div class="line"><span class="lineno">  424</span>  } <span class="keywordflow">catch</span> (tf2::TransformException&amp; ex) {</div>
+<div class="line"><span class="lineno">  425</span>    RCLCPP_WARN(this-&gt;get_logger(), <span class="stringliteral">&quot;Skipping object list transform from &#39;%s&#39; to &#39;%s&#39;: %s&quot;</span>, msg-&gt;header.frame_id.c_str(),</div>
+<div class="line"><span class="lineno">  426</span>                <a class="code hl_variable" href="#aa111dfe83f55967fab0198dfdbcdf3e8">vehicle_frame_id_</a>.c_str(), ex.what());</div>
+<div class="line"><span class="lineno">  427</span>    <span class="keywordflow">return</span>;</div>
+<div class="line"><span class="lineno">  428</span>  }</div>
+<div class="line"><span class="lineno">  429</span>  tf2::doTransform(*msg, msg_object_list, to_vehicle_frame_tf);</div>
+<div class="line"><span class="lineno">  430</span> </div>
+<div class="line"><span class="lineno">  431</span>  <span class="comment">// publish object_list in vehicle_frame_id</span></div>
+<div class="line"><span class="lineno">  432</span>  <a class="code hl_variable" href="#a99943a5a867ca830d5fde9057a14df51">pub_object_list_</a>-&gt;publish(msg_object_list);</div>
+<div class="line"><span class="lineno">  433</span>}</div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a8fec53b09992fe02883dbff920f7a783"><div class="ttname"><a href="#a8fec53b09992fe02883dbff920f7a783">simulation_adapter::SimulationAdapter::pub_object_list_fixed_</a></div><div class="ttdeci">rclcpp::Publisher&lt; pm::ObjectList &gt;::SharedPtr pub_object_list_fixed_</div><div class="ttdoc">Publisher for object list in fixed frame.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00211">simulation_adapter.hpp:211</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a99943a5a867ca830d5fde9057a14df51"><div class="ttname"><a href="#a99943a5a867ca830d5fde9057a14df51">simulation_adapter::SimulationAdapter::pub_object_list_</a></div><div class="ttdeci">rclcpp::Publisher&lt; pm::ObjectList &gt;::SharedPtr pub_object_list_</div><div class="ttdoc">Publisher for object list in vehicle frame.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00206">simulation_adapter.hpp:206</a></div></div>
 </div><!-- fragment -->
@@ -1143,7 +1132,7 @@ template&lt;typename T &gt; </div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a6bcd8157c4380f9b64fb70784f655703"><div class="ttname"><a href="#a6bcd8157c4380f9b64fb70784f655703">simulation_adapter::SimulationAdapter::kEgoDataTopic</a></div><div class="ttdeci">const std::string kEgoDataTopic</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00240">simulation_adapter.hpp:240</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a6c94bfce5ff81bd6373fd5dfb5535d12"><div class="ttname"><a href="#a6c94bfce5ff81bd6373fd5dfb5535d12">simulation_adapter::SimulationAdapter::kInputTrajectoryTopic</a></div><div class="ttdeci">const std::string kInputTrajectoryTopic</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00237">simulation_adapter.hpp:237</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a81df3f17171cd21eab3c496987dbde26"><div class="ttname"><a href="#a81df3f17171cd21eab3c496987dbde26">simulation_adapter::SimulationAdapter::mapInfoCallback</a></div><div class="ttdeci">void mapInfoCallback(const sm::String::ConstSharedPtr &amp;msg)</div><div class="ttdoc">Sets map for the lanelet2 map server based on the current simulation map name.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8cpp_source.html#l00250">simulation_adapter.cpp:250</a></div></div>
-<div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a906dcec91ff7ba52d2b9976770952412"><div class="ttname"><a href="#a906dcec91ff7ba52d2b9976770952412">simulation_adapter::SimulationAdapter::objectListCallback</a></div><div class="ttdeci">void objectListCallback(const pm::ObjectList::ConstSharedPtr &amp;msg)</div><div class="ttdoc">Converts incoming object list to fixed_frame_id and vehicle_frame_id frames.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8cpp_source.html#l00410">simulation_adapter.cpp:410</a></div></div>
+<div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a906dcec91ff7ba52d2b9976770952412"><div class="ttname"><a href="#a906dcec91ff7ba52d2b9976770952412">simulation_adapter::SimulationAdapter::objectListCallback</a></div><div class="ttdeci">void objectListCallback(const pm::ObjectList::ConstSharedPtr &amp;msg)</div><div class="ttdoc">Converts incoming object list to fixed_frame_id and vehicle_frame_id frames.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8cpp_source.html#l00399">simulation_adapter.cpp:399</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a912723974b2c2cf719aa679f02653d65"><div class="ttname"><a href="#a912723974b2c2cf719aa679f02653d65">simulation_adapter::SimulationAdapter::parameters_callback_</a></div><div class="ttdeci">OnSetParametersCallbackHandle::SharedPtr parameters_callback_</div><div class="ttdoc">Callback handle for dynamic parameter reconfiguration.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00151">simulation_adapter.hpp:151</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a91a18258414d91350c543da0c0868843"><div class="ttname"><a href="#a91a18258414d91350c543da0c0868843">simulation_adapter::SimulationAdapter::kInputMapInfoTopic</a></div><div class="ttdeci">const std::string kInputMapInfoTopic</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00234">simulation_adapter.hpp:234</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_a954aa3274f8ebbe308c047b0e7e974e3"><div class="ttname"><a href="#a954aa3274f8ebbe308c047b0e7e974e3">simulation_adapter::SimulationAdapter::kEgoImuTopic</a></div><div class="ttdeci">const std::string kEgoImuTopic</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00243">simulation_adapter.hpp:243</a></div></div>
@@ -1151,9 +1140,9 @@ template&lt;typename T &gt; </div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_aadd37c512541451aadb98815f03a0e17"><div class="ttname"><a href="#aadd37c512541451aadb98815f03a0e17">simulation_adapter::SimulationAdapter::kObjectListFixedTopic</a></div><div class="ttdeci">const std::string kObjectListFixedTopic</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00245">simulation_adapter.hpp:245</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_ab37a06563a7ff9814fb08ef72f2c3819"><div class="ttname"><a href="#ab37a06563a7ff9814fb08ef72f2c3819">simulation_adapter::SimulationAdapter::kInputObjectListTopic</a></div><div class="ttdeci">const std::string kInputObjectListTopic</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00236">simulation_adapter.hpp:236</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_ab45928ddc1cf4208c6480a6c4c565f08"><div class="ttname"><a href="#ab45928ddc1cf4208c6480a6c4c565f08">simulation_adapter::SimulationAdapter::parametersCallback</a></div><div class="ttdeci">rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector&lt; rclcpp::Parameter &gt; &amp;parameters)</div><div class="ttdoc">Handles reconfiguration when a parameter value is changed.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8cpp_source.html#l00127">simulation_adapter.cpp:127</a></div></div>
-<div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_ab6598bd3b633f77bc5a88913d3d28e5e"><div class="ttname"><a href="#ab6598bd3b633f77bc5a88913d3d28e5e">simulation_adapter::SimulationAdapter::initializeVehicleFrameTransform</a></div><div class="ttdeci">void initializeVehicleFrameTransform()</div><div class="ttdoc">Timer callback that initializes the static TF link between simulation and driving-stack frames.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8cpp_source.html#l00446">simulation_adapter.cpp:446</a></div></div>
+<div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_ab6598bd3b633f77bc5a88913d3d28e5e"><div class="ttname"><a href="#ab6598bd3b633f77bc5a88913d3d28e5e">simulation_adapter::SimulationAdapter::initializeVehicleFrameTransform</a></div><div class="ttdeci">void initializeVehicleFrameTransform()</div><div class="ttdoc">Timer callback that initializes the static TF link between simulation and driving-stack frames.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8cpp_source.html#l00435">simulation_adapter.cpp:435</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_abdf7376d6cf0a06ad78cfd7927f2e096"><div class="ttname"><a href="#abdf7376d6cf0a06ad78cfd7927f2e096">simulation_adapter::SimulationAdapter::sub_map_info_</a></div><div class="ttdeci">rclcpp::Subscription&lt; sm::String &gt;::SharedPtr sub_map_info_</div><div class="ttdoc">Subscriber for simulation map info (latching QoS)</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00166">simulation_adapter.hpp:166</a></div></div>
-<div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_acd7fd6f092073908b81d5916c3f71fbf"><div class="ttname"><a href="#acd7fd6f092073908b81d5916c3f71fbf">simulation_adapter::SimulationAdapter::trajectoryCallback</a></div><div class="ttdeci">void trajectoryCallback(const tp::Trajectory::ConstSharedPtr &amp;msg)</div><div class="ttdoc">Stores and transforms the latest planned trajectory to fixed_frame_id.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8cpp_source.html#l00530">simulation_adapter.cpp:530</a></div></div>
+<div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_acd7fd6f092073908b81d5916c3f71fbf"><div class="ttname"><a href="#acd7fd6f092073908b81d5916c3f71fbf">simulation_adapter::SimulationAdapter::trajectoryCallback</a></div><div class="ttdeci">void trajectoryCallback(const tp::Trajectory::ConstSharedPtr &amp;msg)</div><div class="ttdoc">Stores and transforms the latest planned trajectory to fixed_frame_id.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8cpp_source.html#l00519">simulation_adapter.cpp:519</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_ad24d492c9123e6da3e55ee35af57d75a"><div class="ttname"><a href="#ad24d492c9123e6da3e55ee35af57d75a">simulation_adapter::SimulationAdapter::sub_trajectory_</a></div><div class="ttdeci">rclcpp::Subscription&lt; tp::Trajectory &gt;::SharedPtr sub_trajectory_</div><div class="ttdoc">Subscriber for incoming planned trajectory.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00181">simulation_adapter.hpp:181</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_adcd840526409be10e277f9433ef8df50"><div class="ttname"><a href="#adcd840526409be10e277f9433ef8df50">simulation_adapter::SimulationAdapter::kInputEgoDataTopic</a></div><div class="ttdeci">const std::string kInputEgoDataTopic</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00235">simulation_adapter.hpp:235</a></div></div>
 <div class="ttc" id="aclasssimulation__adapter_1_1SimulationAdapter_html_ade3ab79e312ab97d9aea67a3477041bb"><div class="ttname"><a href="#ade3ab79e312ab97d9aea67a3477041bb">simulation_adapter::SimulationAdapter::reentrant_callback_group_</a></div><div class="ttdeci">rclcpp::CallbackGroup::SharedPtr reentrant_callback_group_</div><div class="ttdoc">Callback group for callbacks that may run concurrently.</div><div class="ttdef"><b>Definition</b> <a href="simulation__adapter_8hpp_source.html#l00156">simulation_adapter.hpp:156</a></div></div>
@@ -1191,25 +1180,25 @@ template&lt;typename T &gt; </div>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="simulation__adapter_8cpp_source.html#l00530">530</a> of file <a class="el" href="simulation__adapter_8cpp_source.html">simulation_adapter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  530</span>                                                                                {</div>
-<div class="line"><span class="lineno">  531</span>  <span class="keywordflow">if</span> (msg-&gt;type_id != trajectory_planning_msgs::msg::DRIVABLE::TYPE_ID) {</div>
-<div class="line"><span class="lineno">  532</span>    RCLCPP_WARN(this-&gt;get_logger(),</div>
-<div class="line"><span class="lineno">  533</span>                <span class="stringliteral">&quot;Invalid trajectory type, planned trajectory states are only filled for trajectories of type DRIVABLE&quot;</span>);</div>
+<p class="definition">Definition at line <a class="el" href="simulation__adapter_8cpp_source.html#l00519">519</a> of file <a class="el" href="simulation__adapter_8cpp_source.html">simulation_adapter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  519</span>                                                                                {</div>
+<div class="line"><span class="lineno">  520</span>  <span class="keywordflow">if</span> (msg-&gt;type_id != trajectory_planning_msgs::msg::DRIVABLE::TYPE_ID) {</div>
+<div class="line"><span class="lineno">  521</span>    RCLCPP_WARN(this-&gt;get_logger(),</div>
+<div class="line"><span class="lineno">  522</span>                <span class="stringliteral">&quot;Invalid trajectory type, planned trajectory states are only filled for trajectories of type DRIVABLE&quot;</span>);</div>
+<div class="line"><span class="lineno">  523</span>    <span class="keywordflow">return</span>;</div>
+<div class="line"><span class="lineno">  524</span>  }</div>
+<div class="line"><span class="lineno">  525</span> </div>
+<div class="line"><span class="lineno">  526</span>  <span class="comment">// transform trajectory to fixed_frame_id frame</span></div>
+<div class="line"><span class="lineno">  527</span>  <span class="keywordflow">try</span> {</div>
+<div class="line"><span class="lineno">  528</span>    <span class="keyword">auto</span> transformed_trajectory = <a class="code hl_variable" href="#a01e6271ecb93b5b171036fe0038ec3c7">tf2_buffer_</a>-&gt;transform(*msg, <a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>, tf2::durationFromSec(0.01));</div>
+<div class="line"><span class="lineno">  529</span>    std::lock_guard&lt;std::mutex&gt; lock(<a class="code hl_variable" href="#a92901a72e0125e0c9ffe18ad2ec6c547">trajectory_planned_mutex_</a>);</div>
+<div class="line"><span class="lineno">  530</span>    <a class="code hl_variable" href="#a9ad904e4d0ebe547414933451e505f63">trajectory_planned_</a> = std::move(transformed_trajectory);</div>
+<div class="line"><span class="lineno">  531</span>  } <span class="keywordflow">catch</span> (tf2::TransformException&amp; ex) {</div>
+<div class="line"><span class="lineno">  532</span>    RCLCPP_WARN(this-&gt;get_logger(), <span class="stringliteral">&quot;Trajectory could not be transformed from &#39;%s&#39; to &#39;%s&#39;&quot;</span>, msg-&gt;header.frame_id.c_str(),</div>
+<div class="line"><span class="lineno">  533</span>                <a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>.c_str());</div>
 <div class="line"><span class="lineno">  534</span>    <span class="keywordflow">return</span>;</div>
 <div class="line"><span class="lineno">  535</span>  }</div>
-<div class="line"><span class="lineno">  536</span> </div>
-<div class="line"><span class="lineno">  537</span>  <span class="comment">// transform trajectory to fixed_frame_id frame</span></div>
-<div class="line"><span class="lineno">  538</span>  <span class="keywordflow">try</span> {</div>
-<div class="line"><span class="lineno">  539</span>    <span class="keyword">auto</span> transformed_trajectory = <a class="code hl_variable" href="#a01e6271ecb93b5b171036fe0038ec3c7">tf2_buffer_</a>-&gt;transform(*msg, <a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>, tf2::durationFromSec(0.01));</div>
-<div class="line"><span class="lineno">  540</span>    std::lock_guard&lt;std::mutex&gt; lock(<a class="code hl_variable" href="#a92901a72e0125e0c9ffe18ad2ec6c547">trajectory_planned_mutex_</a>);</div>
-<div class="line"><span class="lineno">  541</span>    <a class="code hl_variable" href="#a9ad904e4d0ebe547414933451e505f63">trajectory_planned_</a> = std::move(transformed_trajectory);</div>
-<div class="line"><span class="lineno">  542</span>  } <span class="keywordflow">catch</span> (tf2::TransformException&amp; ex) {</div>
-<div class="line"><span class="lineno">  543</span>    RCLCPP_WARN(this-&gt;get_logger(), <span class="stringliteral">&quot;Trajectory could not be transformed from &#39;%s&#39; to &#39;%s&#39;&quot;</span>, msg-&gt;header.frame_id.c_str(),</div>
-<div class="line"><span class="lineno">  544</span>                <a class="code hl_variable" href="#a59e257347e51cbd355565670de8ec8b9">fixed_frame_id_</a>.c_str());</div>
-<div class="line"><span class="lineno">  545</span>    <span class="keywordflow">return</span>;</div>
-<div class="line"><span class="lineno">  546</span>  }</div>
-<div class="line"><span class="lineno">  547</span>}</div>
+<div class="line"><span class="lineno">  536</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
