@@ -306,20 +306,21 @@ void SimulationAdapter::egoDataCallback(const pm::EgoData::ConstSharedPtr& msg) 
   tf2::doTransform(*msg, ego_data, to_map_tf);
 
   // Move the reported position from simulation_vehicle_frame_id to vehicle_frame_id. This is only a pose/reference-point
-  // correction; velocity and acceleration are kept as provided by the simulation.
+  // correction; velocity and acceleration are kept as provided by the simulation. The shift is rigid, so the position
+  // covariance is kept (reset_covariance = false).
   tf2::Quaternion vehicle_orientation;
   tf2::fromMsg(perception_msgs::object_access::getOrientation(ego_data.state), vehicle_orientation);
   const tf2::Vector3 vehicle_offset(simulation_vehicle_frame_id_to_vehicle_frame_id_, 0.0, 0.0);
   const tf2::Vector3 offset_in_map = tf2::quatRotate(vehicle_orientation, vehicle_offset);
 
-  perception_msgs::object_access::setX(ego_data, perception_msgs::object_access::getX(ego_data.state) + offset_in_map.x());
-  perception_msgs::object_access::setY(ego_data, perception_msgs::object_access::getY(ego_data.state) + offset_in_map.y());
-  perception_msgs::object_access::setZ(ego_data, perception_msgs::object_access::getZ(ego_data.state) + offset_in_map.z());
+  perception_msgs::object_access::setX(ego_data, perception_msgs::object_access::getX(ego_data.state) + offset_in_map.x(), false);
+  perception_msgs::object_access::setY(ego_data, perception_msgs::object_access::getY(ego_data.state) + offset_in_map.y(), false);
+  perception_msgs::object_access::setZ(ego_data, perception_msgs::object_access::getZ(ego_data.state) + offset_in_map.z(), false);
 
   ego_data.state.reference_point.value = pm::ObjectReferencePoint::REAR_AXLE_GROUND;
   ego_data.state.reference_point.translation_to_geometric_center.x = -simulation_vehicle_frame_id_to_vehicle_frame_id_;
   ego_data.state.reference_point.translation_to_geometric_center.z = msg->height / 2.0;
-  perception_msgs::object_access::setZ(ego_data, perception_msgs::object_access::getZ(ego_data.state) - msg->height / 2.0);
+  perception_msgs::object_access::setZ(ego_data, perception_msgs::object_access::getZ(ego_data.state) - msg->height / 2.0, false);
 
   // add planned trajectory to ego_data if exists
   tp::Trajectory trajectory_planned_snapshot;
