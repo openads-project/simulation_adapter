@@ -148,19 +148,19 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Process exit code. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="simulation__adapter_8cpp_source.html#l00547">547</a> of file <a class="el" href="simulation__adapter_8cpp_source.html">simulation_adapter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  547</span>                                 {</div>
-<div class="line"><span class="lineno">  548</span>  rclcpp::init(argc, argv);</div>
-<div class="line"><span class="lineno">  549</span>  <span class="keyword">auto</span> node = std::make_shared&lt;simulation_adapter::SimulationAdapter&gt;();</div>
-<div class="line"><span class="lineno">  550</span>  rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), node-&gt;getNumThreads());</div>
-<div class="line"><span class="lineno">  551</span>  RCLCPP_INFO(node-&gt;get_logger(), <span class="stringliteral">&quot;Spinning node &#39;%s&#39; with %s (%d threads)&quot;</span>, node-&gt;get_fully_qualified_name(),</div>
-<div class="line"><span class="lineno">  552</span>              <span class="stringliteral">&quot;MultiThreadedExecutor&quot;</span>, node-&gt;getNumThreads());</div>
-<div class="line"><span class="lineno">  553</span>  executor.add_node(node);</div>
-<div class="line"><span class="lineno">  554</span>  executor.spin();</div>
-<div class="line"><span class="lineno">  555</span>  rclcpp::shutdown();</div>
-<div class="line"><span class="lineno">  556</span> </div>
-<div class="line"><span class="lineno">  557</span>  <span class="keywordflow">return</span> 0;</div>
-<div class="line"><span class="lineno">  558</span>}</div>
+<p class="definition">Definition at line <a class="el" href="simulation__adapter_8cpp_source.html#l00548">548</a> of file <a class="el" href="simulation__adapter_8cpp_source.html">simulation_adapter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  548</span>                                 {</div>
+<div class="line"><span class="lineno">  549</span>  rclcpp::init(argc, argv);</div>
+<div class="line"><span class="lineno">  550</span>  <span class="keyword">auto</span> node = std::make_shared&lt;simulation_adapter::SimulationAdapter&gt;();</div>
+<div class="line"><span class="lineno">  551</span>  rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), node-&gt;getNumThreads());</div>
+<div class="line"><span class="lineno">  552</span>  RCLCPP_INFO(node-&gt;get_logger(), <span class="stringliteral">&quot;Spinning node &#39;%s&#39; with %s (%d threads)&quot;</span>, node-&gt;get_fully_qualified_name(),</div>
+<div class="line"><span class="lineno">  553</span>              <span class="stringliteral">&quot;MultiThreadedExecutor&quot;</span>, node-&gt;getNumThreads());</div>
+<div class="line"><span class="lineno">  554</span>  executor.add_node(node);</div>
+<div class="line"><span class="lineno">  555</span>  executor.spin();</div>
+<div class="line"><span class="lineno">  556</span>  rclcpp::shutdown();</div>
+<div class="line"><span class="lineno">  557</span> </div>
+<div class="line"><span class="lineno">  558</span>  <span class="keywordflow">return</span> 0;</div>
+<div class="line"><span class="lineno">  559</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
